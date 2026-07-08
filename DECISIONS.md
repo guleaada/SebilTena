@@ -71,6 +71,64 @@ build brief ("make reasonable choices and record them"). Each is revisable.
 - PWA frontend, service worker, offline registry subset, voice → M3/M6.
 - `fly.toml` + `Dockerfile` → M8.
 
+## Milestone 2 (scan pipeline — `aiClient` + `/api/scan`)
+
+### The design change vs. the original spec (per M2 brief)
+- **Anchor is format-agnostic and multi-field**, not a reg-no regex. `matchAnchor`
+  (`src/match.js`) matches label tokens/lines against the registry across three
+  columns — `registration_no`, `product_name`, `active_ingredient`. Works on real
+  Ethiopian labels whatever their numbering scheme, and survives smudged/missing
+  reg numbers. A miss across all three is the counterfeit signal.
+
+### Thresholds & tunables (all in `src/config.js`, env-overridable)
+- **`fuzzyThreshold = 0.82`** (`MATCH_FUZZY_THRESHOLD`) — Tier-2 acceptance on
+  character-bigram Dice similarity. Starting value per brief; tune against real
+  label photos.
+- **`regNoMinLen = 5`** — minimum normalized reg-no length for a Tier-1 exact
+  substring hit (guards trivial false positives).
+- **`ocrMinConfidence = 55`** — Tesseract confidence (0–100) treated as usable.
+  Note: escalation to vision is driven by a Tier-3 *miss*, not raw OCR confidence,
+  since a Tier-1/Tier-2 hit is reliable even from noisy OCR.
+- **`aiTimeoutMs = 12000`** per-provider vision timeout.
+- **`visionAcceptConfidence = ['high','medium']`** — a provider returning `low`
+  falls through to the next, then to the conservative default.
+
+### Provider models (config.models, env-overridable — exact IDs NOT load-bearing)
+- Groq: `meta-llama/llama-4-scout-17b-16e-instruct` (`GROQ_VISION_MODEL`)
+- OpenRouter: `google/gemini-2.0-flash-001` (`OPENROUTER_VISION_MODEL`)
+- Gemini: `gemini-2.0-flash` (`GEMINI_VISION_MODEL`)
+- Order Groq → OpenRouter → Gemini; skip any provider whose API key is unset.
+  With no keys (dev default) the chain returns `confidence:'low'` and the caller
+  applies the conservative default — no crash.
+
+### Matching internals
+- **Similarity = character-bigram Dice coefficient** (`similarity()`), dependency-
+  free, order-forgiving, tolerant of OCR noise. Chosen over Levenshtein for word-
+  order robustness on multi-word product names.
+- **Tier-1 matches against a normalized blob** of the whole read, so OCR splitting
+  a number into separate tokens ("ETH","FUN","0142","17") still resolves.
+- `extractRegCandidate()` logs a best-effort "what number did we read" (longest
+  alphanumeric token containing a digit) — never used for a matching decision.
+
+### Endpoint & reuse
+- `/api/scan` reuses `verify.js` verbatim for the VERIFIED payload — no dosage/
+  safety logic duplicated. `runScan` is dependency-injectable (`ocr`, `readLabel`,
+  `verifyNumber`, `db`) so the whole flow is tested without network/keys
+  (`scripts/test-scan.js`, 41 assertions, `npm run test:scan`).
+- **CONFIRM handoff:** on a Tier-2 fuzzy match the response returns
+  `needsConfirmation:true` + `confirmRegistrationNo`; the client reveals dosage
+  only by then calling the existing `POST /api/verify-number` with that number.
+  Dosage/PPE/first-aid are withheld until then.
+- **OCR is server-side here** (M2 API path) and resilient — any Tesseract failure
+  returns empty text so the flow degrades to vision/conservative, never throws. In
+  M3 the same OCR runs client-side for offline use.
+
+### Verified end-to-end (real server-side Tesseract, synthetic labels)
+- Clear Mancozeb label → VERIFIED via Tier-1 **without any vision call**, dosages
+  from DB, headline in Amharic, geotagged scan row written.
+- Malathion label with reg-no worn off → CONFIRM (Tier-2), dosage withheld.
+- Unknown "Super Grow Booster" label, no vision keys → conservative UNCONFIRMED.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

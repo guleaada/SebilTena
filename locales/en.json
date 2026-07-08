@@ -6,9 +6,11 @@
     "EXPIRED": "Registration expired",
     "SUSPENDED": "Suspended — do not use",
     "BANNED": "Banned — DO NOT USE",
-    "UNCONFIRMED": "Could not confirm this product"
+    "UNCONFIRMED": "Could not confirm this product",
+    "CONFIRM": "Confirm the product"
   },
   "msg": {
+    "confirm": "We think we recognised this product but we are not sure. Check the name and active ingredient shown, and confirm only if they match your bottle. Do not use it until you confirm.",
     "verified": "This product is registered. See the correct dose, safety gear and waiting period below.",
     "unregistered": "This registration number is not in the official registry. Do not use this product. Contact your extension agent or SMS the number to check.",
     "expired": "This product's registration has expired. Do not use it. Contact your extension agent.",

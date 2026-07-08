@@ -72,6 +72,30 @@ is **not** permitted — those fields are stored, per-language, as reviewed fact
 Until reviewed, non-English locales fall back to English rather than to a
 machine guess.
 
+## The Tier-2 fuzzy-match confirm rule (Milestone 2 — do not skip)
+
+The scan pipeline identifies a product by matching label text against the
+registry across three fields (`registration_no`, `product_name`,
+`active_ingredient`). The match **tier** decides what is safe to show:
+
+| Tier | How it matched | Certainty | What the farmer sees |
+|------|----------------|-----------|----------------------|
+| **1** | Exact registration-number hit | High | Hand off to `verify.js` → full VERIFIED record **incl. dosage** |
+| **2** | Fuzzy name / active-ingredient hit | A guess | **CONFIRM state only** — "Is this your product? [name / active ingredient]". **Withhold all dosage, PPE and first-aid** until the farmer confirms. Only then call `verify.js`. |
+| **3** | Nothing clears threshold | — | UNREGISTERED / POSSIBLE COUNTERFEIT, red warning, **no dosage** |
+| — | All vision providers failed / low confidence | — | Conservative default (UNCONFIRMED), **no dosage** |
+
+**Why:** showing a dosage for the *wrong* product — because a fuzzy match looked
+close — is exactly the failure this project exists to prevent. A fuzzy match is
+an identity *hypothesis*, never a licence to reveal a safety fact. Do not
+"optimize" the CONFIRM step away.
+
+`aiClient` (the vision chain) and the OCR layer **only ever produce an identity
+candidate** (registration number / product name / active ingredient). They are
+never a source of a dosage, first-aid, PPE or PHI value. `readLabel()` strips
+every key except those four identity fields before returning, even if a model
+volunteers more. `verify.js` remains the ONLY source of safety facts.
+
 ## Auditability
 
 Every scan verdict is logged to the `scans` table (status, confidence, matched

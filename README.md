@@ -13,9 +13,14 @@ See [SAFETY.md](SAFETY.md). Do not break this boundary.
 
 ## Status
 
-Milestone 1 complete: Express + libSQL (Turso / local-SQLite fallback), schema,
-seed script with sample rows, and `/api/verify-number`. See
-[DECISIONS.md](DECISIONS.md) for the build log and the milestone roadmap.
+Milestones 1–2 complete:
+- **M1** — Express + libSQL (Turso / local-SQLite fallback), schema, seed script,
+  `/api/verify-number`.
+- **M2** — scan pipeline: `lib/aiClient.js` vision fallback chain
+  (Groq → OpenRouter → Gemini) and `/api/scan` with Tesseract-first OCR and a
+  format-agnostic, multi-field anchor match. See [DECISIONS.md](DECISIONS.md).
+
+Run the pipeline tests (no network / API keys needed): `npm run test:scan`.
 
 ## Quick start (local dev)
 
@@ -62,6 +67,25 @@ Response fields: `status`, `confidence`, `warningLevel` (`safe|warning|danger`),
 `speak`, `headline`, `message`, `disclaimer` (all localized), `product`,
 `safety` (`hazard_class`, `ppe_required`, `first_aid`, `approved_crops`),
 `dosages`.
+
+### `POST /api/scan`
+Photograph → verdict. Runs Tesseract-first OCR, then the multi-field anchor
+match, then the vision fallback chain only on a miss. Reuses `verify.js` for the
+VERIFIED payload and logs a geotagged row to `scans`.
+
+```bash
+curl -s -X POST http://localhost:3000/api/scan \
+  -H 'Content-Type: application/json' \
+  -d '{"imageBase64":"<base64 or data URL>","lang":"am","lat":8.98,"lon":38.76}'
+```
+
+Outcomes: **Tier 1** exact reg-no → `VERIFIED` (or `BANNED`/`EXPIRED`/`SUSPENDED`)
+with the full `verify` payload · **Tier 2** fuzzy name/ingredient →
+`CONFIRM` (`needsConfirmation:true`, dosage withheld; confirm via
+`/api/verify-number` using `confirmRegistrationNo`) · **Tier 3** →
+`UNREGISTERED` · no vision available → conservative `UNCONFIRMED`. No
+dosage/first-aid/PPE value ever originates from OCR or the LLM — all trace to a
+`verify.js` DB lookup.
 
 ## Seeding the real registry
 

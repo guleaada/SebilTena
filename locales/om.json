@@ -7,9 +7,11 @@
     "EXPIRED": "Galmeen isaa yeroon darbeera",
     "SUSPENDED": "Dhorkameera — hin fayyadamiinaa",
     "BANNED": "Guutummaatti dhorkameera — HIN FAYYADAMIINAA",
-    "UNCONFIRMED": "Oomisha kana mirkaneessuu hin dandeenye"
+    "UNCONFIRMED": "Oomisha kana mirkaneessuu hin dandeenye",
+    "CONFIRM": "Oomisha mirkaneessi"
   },
   "msg": {
+    "confirm": "Oomisha kana adda baafne jennee yaadna garuu mirkanaa'aa miti. Maqaa fi qabiyyee sochoosaa mul'atu ilaali; yoo qaruuraa kee waliin wal simu qofa mirkaneessi. Hanga mirkaneessitutti hin fayyadamiin.",
     "verified": "Oomishni kun galmaa'eera. Hamma sirrii, meeshaa nageenyaa fi yeroo eegumsaa gadiitti ilaali.",
     "unregistered": "Lakkoofsi galmee kun kuusaa oomishaalee galmaa'anii keessa hin jiru. Oomisha kana hin fayyadamiin. Ogeessa qonnaa kee quunnami ykn lakkoofsa SMS'n ergi.",
     "expired": "Galmeen oomisha kanaa yeroon darbeera. Hin fayyadamiin. Ogeessa qonnaa kee quunnami.",

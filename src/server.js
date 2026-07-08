@@ -2,6 +2,7 @@ import express from "express";
 import "dotenv/config";
 import { db, dbMode, initSchema } from "./db.js";
 import { verifyNumber } from "./verify.js";
+import { runScan } from "./scan.js";
 
 const app = express();
 app.use(express.json({ limit: "12mb" })); // headroom for base64 images (M2)
@@ -30,6 +31,19 @@ app.post("/api/verify-number", async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("verify-number error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// POST /api/scan { imageBase64, lang, lat?, lon? } -> runs the scan pipeline
+// (Section 3). Reuses verify.js for the VERIFIED payload; logs a geotagged row.
+app.post("/api/scan", async (req, res) => {
+  try {
+    const { imageBase64, lang, lat, lon } = req.body || {};
+    const result = await runScan({ imageBase64, lang: lang || "en", lat, lon });
+    res.json(result);
+  } catch (err) {
+    console.error("scan error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });
