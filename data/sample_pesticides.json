@@ -1,0 +1,476 @@
+{
+  "_meta": {
+    "note": "ILLUSTRATIVE SAMPLE DATA for demoing the full pipeline. Registration numbers, dates, first-aid and dosage strings are plausible placeholders, NOT authoritative. Before any real deployment these rows MUST be replaced by scripts/seed.js ingesting the official MoA Plant Health Regulatory Directorate 2022 list (~1,011 products). Nothing here may be treated as agronomic advice.",
+    "reg_no_format": "ETH-<TYPE>-<SEQ>/<YY>  (TYPE: FUN fungicide, INS insecticide, HRB herbicide) — placeholder scheme, see DECISIONS.md",
+    "who_hazard_classes": "Ia extremely / Ib highly / II moderately / III slightly hazardous / U unlikely acute hazard"
+  },
+  "extension_agents": [
+    { "id": 1, "name": "Abebe Tadesse", "phone": "+251911000001", "region": "Oromia" },
+    { "id": 2, "name": "Selamawit Girma", "phone": "+251911000002", "region": "Amhara" },
+    { "id": 3, "name": "Hawi Bekele", "phone": "+251911000003", "region": "SNNPR" }
+  ],
+  "pesticides": [
+    {
+      "id": 1,
+      "registration_no": "ETH-FUN-0142/17",
+      "product_name": "Mancozeb 80% WP",
+      "active_ingredient": "Mancozeb 800 g/kg",
+      "formulation": "Wettable Powder (WP)",
+      "registrant": "Adama Agricultural Solutions",
+      "registration_date": "2017-05-12",
+      "expiry_date": "2027-05-12",
+      "status": "registered",
+      "hazard_class": "U",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove contaminated clothing. Wash skin with plenty of soap and water.",
+        "eyes": "Rinse eyes with clean running water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth, sip water, get medical help.",
+        "inhalation": "Move to fresh air and rest. Get medical help if breathing is hard."
+      },
+      "approved_crops": ["potato", "tomato", "onion", "wheat", "coffee"],
+      "dosages": [
+        { "crop": "potato", "dose_per_unit": "2.5 kg per hectare", "application_notes": "Apply at first sign of late blight; repeat every 7-10 days.", "pre_harvest_interval_days": 7 },
+        { "crop": "tomato", "dose_per_unit": "2 kg per hectare", "application_notes": "Preventive spray; do not exceed 3 applications per season.", "pre_harvest_interval_days": 7 },
+        { "crop": "onion", "dose_per_unit": "2 kg per hectare", "application_notes": "For purple blotch and downy mildew.", "pre_harvest_interval_days": 10 }
+      ]
+    },
+    {
+      "id": 2,
+      "registration_no": "ETH-INS-0231/16",
+      "product_name": "Malathion 50% EC",
+      "active_ingredient": "Malathion 500 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "Kel Chemicals",
+      "registration_date": "2016-09-03",
+      "expiry_date": "2026-09-03",
+      "status": "registered",
+      "hazard_class": "III",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with soap and water for 15 minutes.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. This is an organophosphate — get medical help immediately; atropine may be needed.",
+        "inhalation": "Move to fresh air immediately. Seek medical help if symptoms appear."
+      },
+      "approved_crops": ["wheat", "sorghum", "vegetables", "stored_grain"],
+      "dosages": [
+        { "crop": "wheat", "dose_per_unit": "1.5 L per hectare", "application_notes": "Against aphids; spray in early morning or late afternoon.", "pre_harvest_interval_days": 7 },
+        { "crop": "vegetables", "dose_per_unit": "2 ml per litre of water", "application_notes": "For aphids and thrips; ensure full leaf coverage.", "pre_harvest_interval_days": 7 }
+      ]
+    },
+    {
+      "id": 3,
+      "registration_no": "ETH-HRB-0088/18",
+      "product_name": "2,4-D Amine 720 SL",
+      "active_ingredient": "2,4-D dimethylamine salt 720 g/L",
+      "formulation": "Soluble Liquid (SL)",
+      "registrant": "Nufarm",
+      "registration_date": "2018-02-20",
+      "expiry_date": "2028-02-20",
+      "status": "registered",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Wash affected skin with soap and water.",
+        "eyes": "Rinse eyes with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
+        "inhalation": "Move to fresh air. Seek medical help if unwell."
+      },
+      "approved_crops": ["wheat", "barley", "teff", "maize"],
+      "dosages": [
+        { "crop": "wheat", "dose_per_unit": "1 L per hectare", "application_notes": "Post-emergence against broadleaf weeds; avoid spray drift to broadleaf crops.", "pre_harvest_interval_days": 45 },
+        { "crop": "teff", "dose_per_unit": "0.8 L per hectare", "application_notes": "Apply at tillering stage; do not apply near flowering.", "pre_harvest_interval_days": 45 }
+      ]
+    },
+    {
+      "id": 4,
+      "registration_no": "ETH-HRB-0301/19",
+      "product_name": "Glyphosate 360 SL",
+      "active_ingredient": "Glyphosate IPA salt 360 g/L",
+      "formulation": "Soluble Liquid (SL)",
+      "registrant": "Syngenta",
+      "registration_date": "2019-07-15",
+      "expiry_date": "2029-07-15",
+      "status": "registered",
+      "hazard_class": "III",
+      "ppe_required": ["gloves", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Wash with plenty of soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth, sip water, get medical help.",
+        "inhalation": "Move to fresh air and rest."
+      },
+      "approved_crops": ["non_crop", "pre_plant", "coffee"],
+      "dosages": [
+        { "crop": "non_crop", "dose_per_unit": "3 L per hectare", "application_notes": "Total weed control on fallow land; apply to actively growing weeds.", "pre_harvest_interval_days": 0 },
+        { "crop": "coffee", "dose_per_unit": "4 ml per litre of water", "application_notes": "Directed spray between rows only; never on green stems or leaves.", "pre_harvest_interval_days": 14 }
+      ]
+    },
+    {
+      "id": 5,
+      "registration_no": "ETH-INS-0177/18",
+      "product_name": "Karate 5% EC (Lambda-cyhalothrin)",
+      "active_ingredient": "Lambda-cyhalothrin 50 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "Syngenta",
+      "registration_date": "2018-04-10",
+      "expiry_date": "2028-04-10",
+      "status": "registered",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing; wash skin with soap and water. Tingling of skin is usually temporary.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
+        "inhalation": "Move to fresh air. Seek medical help if breathing is affected."
+      },
+      "approved_crops": ["cotton", "maize", "vegetables", "coffee"],
+      "dosages": [
+        { "crop": "cotton", "dose_per_unit": "300 ml per hectare", "application_notes": "Against bollworm; rotate with a different mode of action.", "pre_harvest_interval_days": 14 },
+        { "crop": "maize", "dose_per_unit": "0.5 ml per litre of water", "application_notes": "For fall armyworm; direct spray into the whorl.", "pre_harvest_interval_days": 14 }
+      ]
+    },
+    {
+      "id": 6,
+      "registration_no": "ETH-INS-0210/15",
+      "product_name": "Dursban 48% EC (Chlorpyrifos)",
+      "active_ingredient": "Chlorpyrifos 480 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "Corteva",
+      "registration_date": "2015-11-01",
+      "expiry_date": "2027-11-01",
+      "status": "suspended",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin thoroughly with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Organophosphate — get medical help immediately; atropine may be needed.",
+        "inhalation": "Move to fresh air at once and get medical help."
+      },
+      "approved_crops": ["cotton", "maize", "coffee"],
+      "dosages": []
+    },
+    {
+      "id": 7,
+      "registration_no": "ETH-FUN-0155/19",
+      "product_name": "Ridomil Gold MZ 68 WG",
+      "active_ingredient": "Metalaxyl-M 40 g/kg + Mancozeb 640 g/kg",
+      "formulation": "Water Dispersible Granule (WG)",
+      "registrant": "Syngenta",
+      "registration_date": "2019-03-22",
+      "expiry_date": "2029-03-22",
+      "status": "registered",
+      "hazard_class": "III",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth, sip water, get medical help.",
+        "inhalation": "Move to fresh air and rest."
+      },
+      "approved_crops": ["potato", "tomato", "grape", "onion"],
+      "dosages": [
+        { "crop": "potato", "dose_per_unit": "2.5 kg per hectare", "application_notes": "Systemic + contact control of late blight; apply preventively.", "pre_harvest_interval_days": 14 },
+        { "crop": "tomato", "dose_per_unit": "25 g per 10 litres of water", "application_notes": "For downy mildew and late blight.", "pre_harvest_interval_days": 14 }
+      ]
+    },
+    {
+      "id": 8,
+      "registration_no": "ETH-INS-0064/16",
+      "product_name": "Diazinon 60% EC",
+      "active_ingredient": "Diazinon 600 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "Adama Agricultural Solutions",
+      "registration_date": "2016-06-30",
+      "expiry_date": "2026-06-30",
+      "status": "registered",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Organophosphate — get medical help immediately; atropine may be needed.",
+        "inhalation": "Move to fresh air immediately and seek medical help."
+      },
+      "approved_crops": ["coffee", "vegetables", "cereals"],
+      "dosages": [
+        { "crop": "coffee", "dose_per_unit": "2 ml per litre of water", "application_notes": "Against antestia bug; spray to run-off.", "pre_harvest_interval_days": 21 },
+        { "crop": "vegetables", "dose_per_unit": "1.5 ml per litre of water", "application_notes": "For leaf miners and aphids.", "pre_harvest_interval_days": 14 }
+      ]
+    },
+    {
+      "id": 9,
+      "registration_no": "ETH-INS-0198/18",
+      "product_name": "Cypermethrin 10% EC",
+      "active_ingredient": "Cypermethrin 100 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "Kel Chemicals",
+      "registration_date": "2018-08-14",
+      "expiry_date": "2028-08-14",
+      "status": "registered",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Wash skin with soap and water. Facial tingling is usually temporary.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
+        "inhalation": "Move to fresh air. Seek medical help if unwell."
+      },
+      "approved_crops": ["cotton", "vegetables"],
+      "dosages": [
+        { "crop": "cotton", "dose_per_unit": "400 ml per hectare", "application_notes": "Against bollworm and aphids.", "pre_harvest_interval_days": 14 },
+        { "crop": "vegetables", "dose_per_unit": "1 ml per litre of water", "application_notes": "For caterpillars and aphids.", "pre_harvest_interval_days": 7 }
+      ]
+    },
+    {
+      "id": 10,
+      "registration_no": "ETH-INS-0245/17",
+      "product_name": "Selecron 720 EC (Profenofos)",
+      "active_ingredient": "Profenofos 720 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "Syngenta",
+      "registration_date": "2017-10-05",
+      "expiry_date": "2027-10-05",
+      "status": "registered",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Organophosphate — get medical help immediately; atropine may be needed.",
+        "inhalation": "Move to fresh air immediately and seek medical help."
+      },
+      "approved_crops": ["cotton", "tomato"],
+      "dosages": [
+        { "crop": "cotton", "dose_per_unit": "1 L per hectare", "application_notes": "Against bollworm and whitefly.", "pre_harvest_interval_days": 21 },
+        { "crop": "tomato", "dose_per_unit": "2 ml per litre of water", "application_notes": "For leaf miner; observe pre-harvest interval strictly.", "pre_harvest_interval_days": 14 }
+      ]
+    },
+    {
+      "id": 11,
+      "registration_no": "ETH-FUN-0120/16",
+      "product_name": "Kocide 2000 (Copper hydroxide)",
+      "active_ingredient": "Copper hydroxide 538 g/kg (as Cu)",
+      "formulation": "Water Dispersible Granule (WG)",
+      "registrant": "Certis",
+      "registration_date": "2016-01-18",
+      "expiry_date": "2026-01-18",
+      "status": "registered",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth, sip water, get medical help.",
+        "inhalation": "Move to fresh air and rest."
+      },
+      "approved_crops": ["coffee", "tomato", "citrus"],
+      "dosages": [
+        { "crop": "coffee", "dose_per_unit": "3 kg per hectare", "application_notes": "For coffee berry disease; preventive cover spray.", "pre_harvest_interval_days": 7 },
+        { "crop": "tomato", "dose_per_unit": "2.5 g per litre of water", "application_notes": "For bacterial spot and early blight.", "pre_harvest_interval_days": 3 }
+      ]
+    },
+    {
+      "id": 12,
+      "registration_no": "ETH-INS-0189/18",
+      "product_name": "Decis 2.5 EC (Deltamethrin)",
+      "active_ingredient": "Deltamethrin 25 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "Bayer",
+      "registration_date": "2018-05-25",
+      "expiry_date": "2028-05-25",
+      "status": "registered",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Wash skin with soap and water. Tingling is usually temporary.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
+        "inhalation": "Move to fresh air. Seek medical help if breathing is affected."
+      },
+      "approved_crops": ["cotton", "maize", "vegetables"],
+      "dosages": [
+        { "crop": "maize", "dose_per_unit": "0.5 L per hectare", "application_notes": "For fall armyworm; direct into the whorl.", "pre_harvest_interval_days": 7 },
+        { "crop": "vegetables", "dose_per_unit": "0.5 ml per litre of water", "application_notes": "For caterpillars and beetles.", "pre_harvest_interval_days": 3 }
+      ]
+    },
+    {
+      "id": 13,
+      "registration_no": "ETH-HRB-0102/17",
+      "product_name": "Atrazine 500 SC",
+      "active_ingredient": "Atrazine 500 g/L",
+      "formulation": "Suspension Concentrate (SC)",
+      "registrant": "Adama Agricultural Solutions",
+      "registration_date": "2017-03-08",
+      "expiry_date": "2027-03-08",
+      "status": "registered",
+      "hazard_class": "III",
+      "ppe_required": ["gloves", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
+        "inhalation": "Move to fresh air and rest."
+      },
+      "approved_crops": ["maize", "sorghum", "sugarcane"],
+      "dosages": [
+        { "crop": "maize", "dose_per_unit": "2 L per hectare", "application_notes": "Pre- or early post-emergence for broadleaf and grass weeds.", "pre_harvest_interval_days": 60 },
+        { "crop": "sorghum", "dose_per_unit": "1.5 L per hectare", "application_notes": "Pre-emergence; ensure adequate soil moisture.", "pre_harvest_interval_days": 60 }
+      ]
+    },
+    {
+      "id": 14,
+      "registration_no": "ETH-HRB-0134/18",
+      "product_name": "Stomp 500 EC (Pendimethalin)",
+      "active_ingredient": "Pendimethalin 500 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "BASF",
+      "registration_date": "2018-11-12",
+      "expiry_date": "2028-11-12",
+      "status": "registered",
+      "hazard_class": "III",
+      "ppe_required": ["gloves", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Wash skin with soap and water; the orange stain is harmless.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
+        "inhalation": "Move to fresh air and rest."
+      },
+      "approved_crops": ["onion", "maize", "cotton"],
+      "dosages": [
+        { "crop": "onion", "dose_per_unit": "3 L per hectare", "application_notes": "Pre-emergence weed control; apply to moist soil.", "pre_harvest_interval_days": 45 },
+        { "crop": "cotton", "dose_per_unit": "3.5 L per hectare", "application_notes": "Pre-emergence for annual grasses and broadleaf weeds.", "pre_harvest_interval_days": 60 }
+      ]
+    },
+    {
+      "id": 15,
+      "registration_no": "ETH-INS-0009/05",
+      "product_name": "Endosulfan 35% EC",
+      "active_ingredient": "Endosulfan 350 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "(historical)",
+      "registration_date": "2005-04-01",
+      "expiry_date": "2015-04-01",
+      "status": "banned",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Get emergency medical help immediately.",
+        "inhalation": "Move to fresh air immediately and seek medical help."
+      },
+      "approved_crops": [],
+      "dosages": []
+    },
+    {
+      "id": 16,
+      "registration_no": "ETH-INS-0002/98",
+      "product_name": "DDT 75% WP",
+      "active_ingredient": "DDT 750 g/kg",
+      "formulation": "Wettable Powder (WP)",
+      "registrant": "(historical)",
+      "registration_date": "1998-01-01",
+      "expiry_date": "2008-01-01",
+      "status": "banned",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Get emergency medical help immediately.",
+        "inhalation": "Move to fresh air immediately and seek medical help."
+      },
+      "approved_crops": [],
+      "dosages": []
+    },
+    {
+      "id": 17,
+      "registration_no": "ETH-INS-0011/03",
+      "product_name": "Methyl parathion 50% EC",
+      "active_ingredient": "Methyl parathion 500 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "(historical)",
+      "registration_date": "2003-01-01",
+      "expiry_date": "2013-01-01",
+      "status": "banned",
+      "hazard_class": "Ia",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with soap and water immediately.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Extremely toxic organophosphate — get emergency medical help NOW; atropine required.",
+        "inhalation": "Move to fresh air immediately and get emergency medical help."
+      },
+      "approved_crops": [],
+      "dosages": []
+    },
+    {
+      "id": 18,
+      "registration_no": "ETH-INS-0057/13",
+      "product_name": "Dimethoate 40% EC",
+      "active_ingredient": "Dimethoate 400 g/L",
+      "formulation": "Emulsifiable Concentrate (EC)",
+      "registrant": "Kel Chemicals",
+      "registration_date": "2013-06-30",
+      "expiry_date": "2023-06-30",
+      "status": "registered",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Organophosphate — get medical help immediately; atropine may be needed.",
+        "inhalation": "Move to fresh air immediately and seek medical help."
+      },
+      "approved_crops": ["coffee", "vegetables", "cereals"],
+      "dosages": [
+        { "crop": "vegetables", "dose_per_unit": "1.5 ml per litre of water", "application_notes": "For aphids and fruit flies.", "pre_harvest_interval_days": 14 }
+      ]
+    },
+    {
+      "id": 19,
+      "registration_no": "ETH-INS-0015/06",
+      "product_name": "Carbofuran 5% G",
+      "active_ingredient": "Carbofuran 50 g/kg",
+      "formulation": "Granule (G)",
+      "registrant": "(historical)",
+      "registration_date": "2006-01-01",
+      "expiry_date": "2016-01-01",
+      "status": "banned",
+      "hazard_class": "Ib",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "Do NOT induce vomiting. Carbamate — get emergency medical help immediately; atropine required.",
+        "inhalation": "Move to fresh air immediately and get emergency medical help."
+      },
+      "approved_crops": [],
+      "dosages": []
+    },
+    {
+      "id": 20,
+      "registration_no": "ETH-HRB-0044/12",
+      "product_name": "Paraquat 200 SL (Gramoxone)",
+      "active_ingredient": "Paraquat dichloride 200 g/L",
+      "formulation": "Soluble Liquid (SL)",
+      "registrant": "(restricted)",
+      "registration_date": "2012-05-01",
+      "expiry_date": "2024-05-01",
+      "status": "suspended",
+      "hazard_class": "II",
+      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "first_aid": {
+        "skin": "Remove clothing and wash skin with plenty of soap and water.",
+        "eyes": "Rinse with clean water for at least 15 minutes.",
+        "ingestion": "EXTREMELY dangerous even in small amounts. Do NOT induce vomiting. Get emergency medical help IMMEDIATELY.",
+        "inhalation": "Move to fresh air immediately and get medical help."
+      },
+      "approved_crops": [],
+      "dosages": []
+    }
+  ]
+}

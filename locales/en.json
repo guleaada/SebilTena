@@ -1,0 +1,22 @@
+{
+  "_lang": "English",
+  "status": {
+    "VERIFIED": "Verified — registered product",
+    "UNREGISTERED": "Not registered — possible counterfeit",
+    "EXPIRED": "Registration expired",
+    "SUSPENDED": "Suspended — do not use",
+    "BANNED": "Banned — DO NOT USE",
+    "UNCONFIRMED": "Could not confirm this product"
+  },
+  "msg": {
+    "verified": "This product is registered. See the correct dose, safety gear and waiting period below.",
+    "unregistered": "This registration number is not in the official registry. Do not use this product. Contact your extension agent or SMS the number to check.",
+    "expired": "This product's registration has expired. Do not use it. Contact your extension agent.",
+    "suspended": "This product has been suspended by regulators. Do not use it. Contact your extension agent.",
+    "banned": "This product is BANNED. Do not use it, do not buy it. It can seriously harm you, others and the environment.",
+    "conservative": "Could not confirm this product. Do not use until checked. Contact your extension agent or SMS the number."
+  },
+  "disclaimer": {
+    "official": "Official information. If unsure, contact your extension agent."
+  }
+}

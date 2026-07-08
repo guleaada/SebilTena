@@ -1,0 +1,23 @@
+{
+  "_lang": "Afaan Oromoo (Afaan Oromo)",
+  "_status": "DRAFT — requires native-speaker + agronomist review before deployment (see DECISIONS.md)",
+  "status": {
+    "VERIFIED": "Mirkanaa'e — oomisha galmaa'e",
+    "UNREGISTERED": "Hin galmoofne — oomisha sobaa ta'uu danda'a",
+    "EXPIRED": "Galmeen isaa yeroon darbeera",
+    "SUSPENDED": "Dhorkameera — hin fayyadamiinaa",
+    "BANNED": "Guutummaatti dhorkameera — HIN FAYYADAMIINAA",
+    "UNCONFIRMED": "Oomisha kana mirkaneessuu hin dandeenye"
+  },
+  "msg": {
+    "verified": "Oomishni kun galmaa'eera. Hamma sirrii, meeshaa nageenyaa fi yeroo eegumsaa gadiitti ilaali.",
+    "unregistered": "Lakkoofsi galmee kun kuusaa oomishaalee galmaa'anii keessa hin jiru. Oomisha kana hin fayyadamiin. Ogeessa qonnaa kee quunnami ykn lakkoofsa SMS'n ergi.",
+    "expired": "Galmeen oomisha kanaa yeroon darbeera. Hin fayyadamiin. Ogeessa qonnaa kee quunnami.",
+    "suspended": "Oomishni kun to'attootaan dhorkameera. Hin fayyadamiin. Ogeessa qonnaa kee quunnami.",
+    "banned": "Oomishni kun guutummaatti dhorkameera. Hin fayyadamiin, hin bitiin. Si, namoota biroo fi naannoo miidhuu danda'a.",
+    "conservative": "Oomisha kana mirkaneessuu hin dandeenye. Hanga mirkanaa'utti hin fayyadamiin. Ogeessa qonnaa kee quunnami ykn lakkoofsa SMS'n ergi."
+  },
+  "disclaimer": {
+    "official": "Odeeffannoo qajeelaa. Yoo shakkite, ogeessa qonnaa kee quunnami."
+  }
+}

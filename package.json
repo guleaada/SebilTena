@@ -1,0 +1,22 @@
+{
+  "name": "medaguard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MedaGuard — safe pesticide use & counterfeit detection for Ethiopian smallholder farmers. The AI is a retriever, not an adviser.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node scripts/seed.js",
+    "reset-db": "node scripts/seed.js --reset"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
