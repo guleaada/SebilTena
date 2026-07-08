@@ -7,3 +7,7 @@ node_modules/
 .DS_Store
 data/registered_pesticides.csv
 data/registered_pesticides.xlsx
+
+# Tesseract downloaded language data
+eng.traineddata
+*.traineddata
