@@ -95,7 +95,7 @@
     "Ib": "Highly dangerous",
     "II": "Moderately dangerous",
     "III": "Slightly dangerous",
-    "U": "Unlikely to be dangerous in normal use"
+    "U": "Unlikely to be dangerous when used correctly"
   },
   "route": {
     "skin": "On the skin",

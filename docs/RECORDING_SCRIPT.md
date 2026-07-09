@@ -1,5 +1,10 @@
 # MedaGuard — Native Speaker Recording Script
 
+**Version 1.1** (addendum folded in): added the `hazard_unlikely` clip (§2), and
+the nine `aid_*` first-aid clips (§3) are now used for **every** product, known
+or unknown — they are the highest-priority recordings. See the priority order at
+the end.
+
 **Purpose:** These are all the phrases MedaGuard speaks aloud to farmers. Recording them once per language gives us perfect pronunciation, full offline operation, and coverage for languages no text-to-speech provider supports.
 
 **Languages needed:** Amharic · Afaan Oromo · Sidaamu Afoo · Tigrinya · Somali · Wolaytta
@@ -51,7 +56,7 @@
 | `ppe_boots` | Boots |
 | `ppe_goggles` | Eye goggles |
 | `ppe_overall` | Long clothing that covers your body |
-| `hazard_unlikely` | Unlikely to be dangerous when used normally |
+| `hazard_unlikely` | This product is unlikely to be dangerous when used correctly. |
 | `hazard_low` | Low danger (slightly hazardous) |
 | `hazard_moderate` | Moderate danger |
 | `hazard_high` | High danger |
@@ -77,7 +82,14 @@
 | `emergency_next_step` | Next step |
 | `emergency_stay_calm` | Stay calm. Follow these steps. |
 
-### Universal first-aid steps (used when the product is unknown)
+### First-aid steps — used for EVERY product (record these with the most care)
+
+These nine `aid_*` clips are **the most important recordings in the entire
+project** — they are what a person hears when someone has been poisoned. The app
+builds each product's first-aid instructions by playing these same nine clips in
+the right order for the chemical involved (and it uses them for unknown products
+too). Please record them **calm, clear, and unhurried — the way you would speak
+to a frightened neighbour.**
 
 | key | Meaning to convey |
 |---|---|
@@ -126,6 +138,12 @@ Record each number **on its own**, as a single spoken word.
 
 ---
 
-**Total: ~80 clips per language.** A focused session takes about an hour. Emergency section (Section 3) is the priority if time is limited.
+**Total: ~81 clips per language.** A focused session takes about an hour.
+
+**Priority order if time is short:**
+1. The nine `aid_*` first-aid clips (§3) — used for every product.
+2. The rest of the EMERGENCY section (§3).
+3. The verdicts (§1).
+4. Everything else.
 
 **Send back:** one folder per language, named with the language code, containing the MP3 files named exactly by their key.
