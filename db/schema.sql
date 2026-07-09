@@ -15,8 +15,9 @@ CREATE TABLE IF NOT EXISTS pesticides (
   status TEXT CHECK(status IN ('registered','banned','suspended')) DEFAULT 'registered',
   hazard_class TEXT,          -- WHO acute hazard class (Ia, Ib, II, III, U)
   ppe_required TEXT,          -- JSON array of gear
-  first_aid TEXT,             -- JSON: {skin, eyes, ingestion, inhalation}
+  first_aid TEXT,             -- JSON: { route: [aid_code, ...] } — controlled vocab (src/aidCodes.js)
   approved_crops TEXT,        -- JSON array
+  reviewed INTEGER DEFAULT 0, -- 1 only after toxicologist sign-off (SAFETY.md release gate)
   created_at TEXT DEFAULT (datetime('now'))
 );
 

@@ -53,7 +53,6 @@
     gloves: "🧤", face_mask: "😷", goggles: "🥽", long_sleeves: "👕", boots: "🥾",
   };
   const ROUTE_EMOJI = { skin: "🤚", eyes: "👁️", swallowed: "👄", breathed: "🫁" };
-  const ROUTE_TO_KEY = { skin: "skin", eyes: "eyes", swallowed: "ingestion", breathed: "inhalation" };
   const VERDICT = {
     VERIFIED:     { tone: "safe",    symbol: "✓" },
     CONFIRM:      { tone: "caution", symbol: "?" },
@@ -490,9 +489,6 @@
   }
 
   // ---- Emergency: one-tap, offline poison-control flow -------------------
-  const toSteps = (text) =>
-    String(text || "").split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
-
   // Load the emergency bundle: memory -> localStorage -> opportunistic network.
   // Never blocks the UI (emergency must open instantly with no network call).
   async function loadEmergencyBundle() {
@@ -581,21 +577,21 @@
   }
 
   function renderFirstAid(route) {
-    // Resolve steps as {text, key}. Product-specific = DB first_aid text split
-    // into sentences (no atomic clip -> TTS/text). Universal = ordered atomic
-    // aid_* clips with localized text. Pure retrieval — never generated.
+    // SINGLE rendering path. Steps are ALWAYS aid_* codes — product-specific if
+    // the product covers this route, else the universal fallback. There is no
+    // free-text branch. Each code -> localized text (aid.*) + recorded clip, so
+    // product and universal first-aid are voiced + localized identically.
     const bundle = state.bundle;
     const ing = state.emergencyProduct;
     const rec = ing && bundle && bundle.first_aid && bundle.first_aid[ing];
-    const productText = rec ? rec[ROUTE_TO_KEY[route]] : null;
-    let steps, forName, isProduct;
-    if (productText) {
-      steps = toSteps(productText).map((text) => ({ text, key: null }));
-      forName = rec.product_name || ing; isProduct = true;
-    } else {
-      steps = (ROUTE_UNIVERSAL_STEPS[route] || []).map((key) => ({ key, text: t("aid." + key) }));
-      forName = null; isProduct = false;
-    }
+    const productCodes = rec && rec.routes && Array.isArray(rec.routes[route]) ? rec.routes[route] : null;
+    const isProduct = Boolean(productCodes && productCodes.length);
+    // Universal fallback: bundle's copy when cached, else the embedded constant
+    // (so the emergency path works even with an empty cache).
+    const universal = (bundle && bundle.universal) || ROUTE_UNIVERSAL_STEPS;
+    const codes = isProduct ? productCodes : (universal[route] || ROUTE_UNIVERSAL_STEPS[route] || []);
+    const forName = isProduct ? (rec.product_name || ing) : null;
+    const steps = codes.map((key) => ({ key, text: t("aid." + key) }));
 
     const root = $("#emergencyRoot");
     root.innerHTML = "";

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db, dbMode, initSchema } from "../src/db.js";
+import { validateFirstAid } from "../src/aidCodes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -91,11 +92,17 @@ async function resetSeedTables() {
 }
 
 async function insertPesticide(p) {
+  // Validate first_aid against the controlled vocabulary. Fail LOUDLY — a bad
+  // code must never reach the DB (it would surface silently in an emergency).
+  const errors = validateFirstAid(p.first_aid ?? {}, `${p.product_name} (${p.registration_no})`);
+  if (errors.length) {
+    throw new Error("Invalid first_aid in seed data:\n  " + errors.join("\n  "));
+  }
   await db.execute({
     sql: `INSERT INTO pesticides
       (id, registration_no, product_name, active_ingredient, formulation, registrant,
-       registration_date, expiry_date, status, hazard_class, ppe_required, first_aid, approved_crops)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       registration_date, expiry_date, status, hazard_class, ppe_required, first_aid, approved_crops, reviewed)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     args: [
       p.id ?? null,
       p.registration_no,
@@ -110,6 +117,7 @@ async function insertPesticide(p) {
       JSON.stringify(p.ppe_required ?? []),
       JSON.stringify(p.first_aid ?? {}),
       JSON.stringify(p.approved_crops ?? []),
+      p.reviewed === true ? 1 : 0,
     ],
   });
 }

@@ -5,9 +5,24 @@
     "who_hazard_classes": "Ia extremely / Ib highly / II moderately / III slightly hazardous / U unlikely acute hazard"
   },
   "extension_agents": [
-    { "id": 1, "name": "Abebe Tadesse", "phone": "+251911000001", "region": "Oromia" },
-    { "id": 2, "name": "Selamawit Girma", "phone": "+251911000002", "region": "Amhara" },
-    { "id": 3, "name": "Hawi Bekele", "phone": "+251911000003", "region": "SNNPR" }
+    {
+      "id": 1,
+      "name": "Abebe Tadesse",
+      "phone": "+251911000001",
+      "region": "Oromia"
+    },
+    {
+      "id": 2,
+      "name": "Selamawit Girma",
+      "phone": "+251911000002",
+      "region": "Amhara"
+    },
+    {
+      "id": 3,
+      "name": "Hawi Bekele",
+      "phone": "+251911000003",
+      "region": "SNNPR"
+    }
   ],
   "pesticides": [
     {
@@ -21,19 +36,62 @@
       "expiry_date": "2027-05-12",
       "status": "registered",
       "hazard_class": "U",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove contaminated clothing. Wash skin with plenty of soap and water.",
-        "eyes": "Rinse eyes with clean running water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth, sip water, get medical help.",
-        "inhalation": "Move to fresh air and rest. Get medical help if breathing is hard."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help"
+        ]
       },
-      "approved_crops": ["potato", "tomato", "onion", "wheat", "coffee"],
+      "approved_crops": [
+        "potato",
+        "tomato",
+        "onion",
+        "wheat",
+        "coffee"
+      ],
       "dosages": [
-        { "crop": "potato", "dose_per_unit": "2.5 kg per hectare", "application_notes": "Apply at first sign of late blight; repeat every 7-10 days.", "pre_harvest_interval_days": 7 },
-        { "crop": "tomato", "dose_per_unit": "2 kg per hectare", "application_notes": "Preventive spray; do not exceed 3 applications per season.", "pre_harvest_interval_days": 7 },
-        { "crop": "onion", "dose_per_unit": "2 kg per hectare", "application_notes": "For purple blotch and downy mildew.", "pre_harvest_interval_days": 10 }
-      ]
+        {
+          "crop": "potato",
+          "dose_per_unit": "2.5 kg per hectare",
+          "application_notes": "Apply at first sign of late blight; repeat every 7-10 days.",
+          "pre_harvest_interval_days": 7
+        },
+        {
+          "crop": "tomato",
+          "dose_per_unit": "2 kg per hectare",
+          "application_notes": "Preventive spray; do not exceed 3 applications per season.",
+          "pre_harvest_interval_days": 7
+        },
+        {
+          "crop": "onion",
+          "dose_per_unit": "2 kg per hectare",
+          "application_notes": "For purple blotch and downy mildew.",
+          "pre_harvest_interval_days": 10
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 2,
@@ -46,18 +104,58 @@
       "expiry_date": "2026-09-03",
       "status": "registered",
       "hazard_class": "III",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with soap and water for 15 minutes.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. This is an organophosphate — get medical help immediately; atropine may be needed.",
-        "inhalation": "Move to fresh air immediately. Seek medical help if symptoms appear."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
-      "approved_crops": ["wheat", "sorghum", "vegetables", "stored_grain"],
+      "approved_crops": [
+        "wheat",
+        "sorghum",
+        "vegetables",
+        "stored_grain"
+      ],
       "dosages": [
-        { "crop": "wheat", "dose_per_unit": "1.5 L per hectare", "application_notes": "Against aphids; spray in early morning or late afternoon.", "pre_harvest_interval_days": 7 },
-        { "crop": "vegetables", "dose_per_unit": "2 ml per litre of water", "application_notes": "For aphids and thrips; ensure full leaf coverage.", "pre_harvest_interval_days": 7 }
-      ]
+        {
+          "crop": "wheat",
+          "dose_per_unit": "1.5 L per hectare",
+          "application_notes": "Against aphids; spray in early morning or late afternoon.",
+          "pre_harvest_interval_days": 7
+        },
+        {
+          "crop": "vegetables",
+          "dose_per_unit": "2 ml per litre of water",
+          "application_notes": "For aphids and thrips; ensure full leaf coverage.",
+          "pre_harvest_interval_days": 7
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 3,
@@ -70,18 +168,54 @@
       "expiry_date": "2028-02-20",
       "status": "registered",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Wash affected skin with soap and water.",
-        "eyes": "Rinse eyes with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
-        "inhalation": "Move to fresh air. Seek medical help if unwell."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help"
+        ]
       },
-      "approved_crops": ["wheat", "barley", "teff", "maize"],
+      "approved_crops": [
+        "wheat",
+        "barley",
+        "teff",
+        "maize"
+      ],
       "dosages": [
-        { "crop": "wheat", "dose_per_unit": "1 L per hectare", "application_notes": "Post-emergence against broadleaf weeds; avoid spray drift to broadleaf crops.", "pre_harvest_interval_days": 45 },
-        { "crop": "teff", "dose_per_unit": "0.8 L per hectare", "application_notes": "Apply at tillering stage; do not apply near flowering.", "pre_harvest_interval_days": 45 }
-      ]
+        {
+          "crop": "wheat",
+          "dose_per_unit": "1 L per hectare",
+          "application_notes": "Post-emergence against broadleaf weeds; avoid spray drift to broadleaf crops.",
+          "pre_harvest_interval_days": 45
+        },
+        {
+          "crop": "teff",
+          "dose_per_unit": "0.8 L per hectare",
+          "application_notes": "Apply at tillering stage; do not apply near flowering.",
+          "pre_harvest_interval_days": 45
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 4,
@@ -94,18 +228,53 @@
       "expiry_date": "2029-07-15",
       "status": "registered",
       "hazard_class": "III",
-      "ppe_required": ["gloves", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Wash with plenty of soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth, sip water, get medical help.",
-        "inhalation": "Move to fresh air and rest."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help"
+        ]
       },
-      "approved_crops": ["non_crop", "pre_plant", "coffee"],
+      "approved_crops": [
+        "non_crop",
+        "pre_plant",
+        "coffee"
+      ],
       "dosages": [
-        { "crop": "non_crop", "dose_per_unit": "3 L per hectare", "application_notes": "Total weed control on fallow land; apply to actively growing weeds.", "pre_harvest_interval_days": 0 },
-        { "crop": "coffee", "dose_per_unit": "4 ml per litre of water", "application_notes": "Directed spray between rows only; never on green stems or leaves.", "pre_harvest_interval_days": 14 }
-      ]
+        {
+          "crop": "non_crop",
+          "dose_per_unit": "3 L per hectare",
+          "application_notes": "Total weed control on fallow land; apply to actively growing weeds.",
+          "pre_harvest_interval_days": 0
+        },
+        {
+          "crop": "coffee",
+          "dose_per_unit": "4 ml per litre of water",
+          "application_notes": "Directed spray between rows only; never on green stems or leaves.",
+          "pre_harvest_interval_days": 14
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 5,
@@ -118,18 +287,58 @@
       "expiry_date": "2028-04-10",
       "status": "registered",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing; wash skin with soap and water. Tingling of skin is usually temporary.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
-        "inhalation": "Move to fresh air. Seek medical help if breathing is affected."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
-      "approved_crops": ["cotton", "maize", "vegetables", "coffee"],
+      "approved_crops": [
+        "cotton",
+        "maize",
+        "vegetables",
+        "coffee"
+      ],
       "dosages": [
-        { "crop": "cotton", "dose_per_unit": "300 ml per hectare", "application_notes": "Against bollworm; rotate with a different mode of action.", "pre_harvest_interval_days": 14 },
-        { "crop": "maize", "dose_per_unit": "0.5 ml per litre of water", "application_notes": "For fall armyworm; direct spray into the whorl.", "pre_harvest_interval_days": 14 }
-      ]
+        {
+          "crop": "cotton",
+          "dose_per_unit": "300 ml per hectare",
+          "application_notes": "Against bollworm; rotate with a different mode of action.",
+          "pre_harvest_interval_days": 14
+        },
+        {
+          "crop": "maize",
+          "dose_per_unit": "0.5 ml per litre of water",
+          "application_notes": "For fall armyworm; direct spray into the whorl.",
+          "pre_harvest_interval_days": 14
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 6,
@@ -142,15 +351,44 @@
       "expiry_date": "2027-11-01",
       "status": "suspended",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin thoroughly with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Organophosphate — get medical help immediately; atropine may be needed.",
-        "inhalation": "Move to fresh air at once and get medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
-      "approved_crops": ["cotton", "maize", "coffee"],
-      "dosages": []
+      "approved_crops": [
+        "cotton",
+        "maize",
+        "coffee"
+      ],
+      "dosages": [],
+      "reviewed": false
     },
     {
       "id": 7,
@@ -163,18 +401,55 @@
       "expiry_date": "2029-03-22",
       "status": "registered",
       "hazard_class": "III",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth, sip water, get medical help.",
-        "inhalation": "Move to fresh air and rest."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help"
+        ]
       },
-      "approved_crops": ["potato", "tomato", "grape", "onion"],
+      "approved_crops": [
+        "potato",
+        "tomato",
+        "grape",
+        "onion"
+      ],
       "dosages": [
-        { "crop": "potato", "dose_per_unit": "2.5 kg per hectare", "application_notes": "Systemic + contact control of late blight; apply preventively.", "pre_harvest_interval_days": 14 },
-        { "crop": "tomato", "dose_per_unit": "25 g per 10 litres of water", "application_notes": "For downy mildew and late blight.", "pre_harvest_interval_days": 14 }
-      ]
+        {
+          "crop": "potato",
+          "dose_per_unit": "2.5 kg per hectare",
+          "application_notes": "Systemic + contact control of late blight; apply preventively.",
+          "pre_harvest_interval_days": 14
+        },
+        {
+          "crop": "tomato",
+          "dose_per_unit": "25 g per 10 litres of water",
+          "application_notes": "For downy mildew and late blight.",
+          "pre_harvest_interval_days": 14
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 8,
@@ -187,18 +462,57 @@
       "expiry_date": "2026-06-30",
       "status": "registered",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Organophosphate — get medical help immediately; atropine may be needed.",
-        "inhalation": "Move to fresh air immediately and seek medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
-      "approved_crops": ["coffee", "vegetables", "cereals"],
+      "approved_crops": [
+        "coffee",
+        "vegetables",
+        "cereals"
+      ],
       "dosages": [
-        { "crop": "coffee", "dose_per_unit": "2 ml per litre of water", "application_notes": "Against antestia bug; spray to run-off.", "pre_harvest_interval_days": 21 },
-        { "crop": "vegetables", "dose_per_unit": "1.5 ml per litre of water", "application_notes": "For leaf miners and aphids.", "pre_harvest_interval_days": 14 }
-      ]
+        {
+          "crop": "coffee",
+          "dose_per_unit": "2 ml per litre of water",
+          "application_notes": "Against antestia bug; spray to run-off.",
+          "pre_harvest_interval_days": 21
+        },
+        {
+          "crop": "vegetables",
+          "dose_per_unit": "1.5 ml per litre of water",
+          "application_notes": "For leaf miners and aphids.",
+          "pre_harvest_interval_days": 14
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 9,
@@ -211,18 +525,56 @@
       "expiry_date": "2028-08-14",
       "status": "registered",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Wash skin with soap and water. Facial tingling is usually temporary.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
-        "inhalation": "Move to fresh air. Seek medical help if unwell."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
-      "approved_crops": ["cotton", "vegetables"],
+      "approved_crops": [
+        "cotton",
+        "vegetables"
+      ],
       "dosages": [
-        { "crop": "cotton", "dose_per_unit": "400 ml per hectare", "application_notes": "Against bollworm and aphids.", "pre_harvest_interval_days": 14 },
-        { "crop": "vegetables", "dose_per_unit": "1 ml per litre of water", "application_notes": "For caterpillars and aphids.", "pre_harvest_interval_days": 7 }
-      ]
+        {
+          "crop": "cotton",
+          "dose_per_unit": "400 ml per hectare",
+          "application_notes": "Against bollworm and aphids.",
+          "pre_harvest_interval_days": 14
+        },
+        {
+          "crop": "vegetables",
+          "dose_per_unit": "1 ml per litre of water",
+          "application_notes": "For caterpillars and aphids.",
+          "pre_harvest_interval_days": 7
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 10,
@@ -235,18 +587,56 @@
       "expiry_date": "2027-10-05",
       "status": "registered",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Organophosphate — get medical help immediately; atropine may be needed.",
-        "inhalation": "Move to fresh air immediately and seek medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
-      "approved_crops": ["cotton", "tomato"],
+      "approved_crops": [
+        "cotton",
+        "tomato"
+      ],
       "dosages": [
-        { "crop": "cotton", "dose_per_unit": "1 L per hectare", "application_notes": "Against bollworm and whitefly.", "pre_harvest_interval_days": 21 },
-        { "crop": "tomato", "dose_per_unit": "2 ml per litre of water", "application_notes": "For leaf miner; observe pre-harvest interval strictly.", "pre_harvest_interval_days": 14 }
-      ]
+        {
+          "crop": "cotton",
+          "dose_per_unit": "1 L per hectare",
+          "application_notes": "Against bollworm and whitefly.",
+          "pre_harvest_interval_days": 21
+        },
+        {
+          "crop": "tomato",
+          "dose_per_unit": "2 ml per litre of water",
+          "application_notes": "For leaf miner; observe pre-harvest interval strictly.",
+          "pre_harvest_interval_days": 14
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 11,
@@ -259,18 +649,54 @@
       "expiry_date": "2026-01-18",
       "status": "registered",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth, sip water, get medical help.",
-        "inhalation": "Move to fresh air and rest."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help"
+        ]
       },
-      "approved_crops": ["coffee", "tomato", "citrus"],
+      "approved_crops": [
+        "coffee",
+        "tomato",
+        "citrus"
+      ],
       "dosages": [
-        { "crop": "coffee", "dose_per_unit": "3 kg per hectare", "application_notes": "For coffee berry disease; preventive cover spray.", "pre_harvest_interval_days": 7 },
-        { "crop": "tomato", "dose_per_unit": "2.5 g per litre of water", "application_notes": "For bacterial spot and early blight.", "pre_harvest_interval_days": 3 }
-      ]
+        {
+          "crop": "coffee",
+          "dose_per_unit": "3 kg per hectare",
+          "application_notes": "For coffee berry disease; preventive cover spray.",
+          "pre_harvest_interval_days": 7
+        },
+        {
+          "crop": "tomato",
+          "dose_per_unit": "2.5 g per litre of water",
+          "application_notes": "For bacterial spot and early blight.",
+          "pre_harvest_interval_days": 3
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 12,
@@ -283,18 +709,57 @@
       "expiry_date": "2028-05-25",
       "status": "registered",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Wash skin with soap and water. Tingling is usually temporary.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
-        "inhalation": "Move to fresh air. Seek medical help if breathing is affected."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
-      "approved_crops": ["cotton", "maize", "vegetables"],
+      "approved_crops": [
+        "cotton",
+        "maize",
+        "vegetables"
+      ],
       "dosages": [
-        { "crop": "maize", "dose_per_unit": "0.5 L per hectare", "application_notes": "For fall armyworm; direct into the whorl.", "pre_harvest_interval_days": 7 },
-        { "crop": "vegetables", "dose_per_unit": "0.5 ml per litre of water", "application_notes": "For caterpillars and beetles.", "pre_harvest_interval_days": 3 }
-      ]
+        {
+          "crop": "maize",
+          "dose_per_unit": "0.5 L per hectare",
+          "application_notes": "For fall armyworm; direct into the whorl.",
+          "pre_harvest_interval_days": 7
+        },
+        {
+          "crop": "vegetables",
+          "dose_per_unit": "0.5 ml per litre of water",
+          "application_notes": "For caterpillars and beetles.",
+          "pre_harvest_interval_days": 3
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 13,
@@ -307,18 +772,53 @@
       "expiry_date": "2027-03-08",
       "status": "registered",
       "hazard_class": "III",
-      "ppe_required": ["gloves", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
-        "inhalation": "Move to fresh air and rest."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help"
+        ]
       },
-      "approved_crops": ["maize", "sorghum", "sugarcane"],
+      "approved_crops": [
+        "maize",
+        "sorghum",
+        "sugarcane"
+      ],
       "dosages": [
-        { "crop": "maize", "dose_per_unit": "2 L per hectare", "application_notes": "Pre- or early post-emergence for broadleaf and grass weeds.", "pre_harvest_interval_days": 60 },
-        { "crop": "sorghum", "dose_per_unit": "1.5 L per hectare", "application_notes": "Pre-emergence; ensure adequate soil moisture.", "pre_harvest_interval_days": 60 }
-      ]
+        {
+          "crop": "maize",
+          "dose_per_unit": "2 L per hectare",
+          "application_notes": "Pre- or early post-emergence for broadleaf and grass weeds.",
+          "pre_harvest_interval_days": 60
+        },
+        {
+          "crop": "sorghum",
+          "dose_per_unit": "1.5 L per hectare",
+          "application_notes": "Pre-emergence; ensure adequate soil moisture.",
+          "pre_harvest_interval_days": 60
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 14,
@@ -331,18 +831,53 @@
       "expiry_date": "2028-11-12",
       "status": "registered",
       "hazard_class": "III",
-      "ppe_required": ["gloves", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Wash skin with soap and water; the orange stain is harmless.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Rinse mouth and get medical help.",
-        "inhalation": "Move to fresh air and rest."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help"
+        ]
       },
-      "approved_crops": ["onion", "maize", "cotton"],
+      "approved_crops": [
+        "onion",
+        "maize",
+        "cotton"
+      ],
       "dosages": [
-        { "crop": "onion", "dose_per_unit": "3 L per hectare", "application_notes": "Pre-emergence weed control; apply to moist soil.", "pre_harvest_interval_days": 45 },
-        { "crop": "cotton", "dose_per_unit": "3.5 L per hectare", "application_notes": "Pre-emergence for annual grasses and broadleaf weeds.", "pre_harvest_interval_days": 60 }
-      ]
+        {
+          "crop": "onion",
+          "dose_per_unit": "3 L per hectare",
+          "application_notes": "Pre-emergence weed control; apply to moist soil.",
+          "pre_harvest_interval_days": 45
+        },
+        {
+          "crop": "cotton",
+          "dose_per_unit": "3.5 L per hectare",
+          "application_notes": "Pre-emergence for annual grasses and broadleaf weeds.",
+          "pre_harvest_interval_days": 60
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 15,
@@ -355,15 +890,40 @@
       "expiry_date": "2015-04-01",
       "status": "banned",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Get emergency medical help immediately.",
-        "inhalation": "Move to fresh air immediately and seek medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
       "approved_crops": [],
-      "dosages": []
+      "dosages": [],
+      "reviewed": false
     },
     {
       "id": 16,
@@ -376,15 +936,40 @@
       "expiry_date": "2008-01-01",
       "status": "banned",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Get emergency medical help immediately.",
-        "inhalation": "Move to fresh air immediately and seek medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
       "approved_crops": [],
-      "dosages": []
+      "dosages": [],
+      "reviewed": false
     },
     {
       "id": 17,
@@ -397,15 +982,40 @@
       "expiry_date": "2013-01-01",
       "status": "banned",
       "hazard_class": "Ia",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with soap and water immediately.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Extremely toxic organophosphate — get emergency medical help NOW; atropine required.",
-        "inhalation": "Move to fresh air immediately and get emergency medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
       "approved_crops": [],
-      "dosages": []
+      "dosages": [],
+      "reviewed": false
     },
     {
       "id": 18,
@@ -418,17 +1028,51 @@
       "expiry_date": "2023-06-30",
       "status": "registered",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Organophosphate — get medical help immediately; atropine may be needed.",
-        "inhalation": "Move to fresh air immediately and seek medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
-      "approved_crops": ["coffee", "vegetables", "cereals"],
+      "approved_crops": [
+        "coffee",
+        "vegetables",
+        "cereals"
+      ],
       "dosages": [
-        { "crop": "vegetables", "dose_per_unit": "1.5 ml per litre of water", "application_notes": "For aphids and fruit flies.", "pre_harvest_interval_days": 14 }
-      ]
+        {
+          "crop": "vegetables",
+          "dose_per_unit": "1.5 ml per litre of water",
+          "application_notes": "For aphids and fruit flies.",
+          "pre_harvest_interval_days": 14
+        }
+      ],
+      "reviewed": false
     },
     {
       "id": 19,
@@ -441,15 +1085,40 @@
       "expiry_date": "2016-01-01",
       "status": "banned",
       "hazard_class": "Ib",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "Do NOT induce vomiting. Carbamate — get emergency medical help immediately; atropine required.",
-        "inhalation": "Move to fresh air immediately and get emergency medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
       "approved_crops": [],
-      "dosages": []
+      "dosages": [],
+      "reviewed": false
     },
     {
       "id": 20,
@@ -462,15 +1131,40 @@
       "expiry_date": "2024-05-01",
       "status": "suspended",
       "hazard_class": "II",
-      "ppe_required": ["gloves", "face_mask", "goggles", "long_sleeves", "boots"],
+      "ppe_required": [
+        "gloves",
+        "face_mask",
+        "goggles",
+        "long_sleeves",
+        "boots"
+      ],
       "first_aid": {
-        "skin": "Remove clothing and wash skin with plenty of soap and water.",
-        "eyes": "Rinse with clean water for at least 15 minutes.",
-        "ingestion": "EXTREMELY dangerous even in small amounts. Do NOT induce vomiting. Get emergency medical help IMMEDIATELY.",
-        "inhalation": "Move to fresh air immediately and get medical help."
+        "skin": [
+          "aid_remove_clothes",
+          "aid_rinse_skin",
+          "aid_keep_container",
+          "aid_seek_help"
+        ],
+        "eyes": [
+          "aid_rinse_eyes",
+          "aid_seek_help"
+        ],
+        "swallowed": [
+          "aid_do_not_vomit",
+          "aid_no_food_drink",
+          "aid_keep_container",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ],
+        "breathed": [
+          "aid_move_air",
+          "aid_seek_help",
+          "aid_if_unconscious"
+        ]
       },
       "approved_crops": [],
-      "dosages": []
+      "dosages": [],
+      "reviewed": false
     }
   ]
 }
