@@ -52,6 +52,15 @@ async function setLastVerified(db, phone, product, nowIso) {
     args: [product.registration_no, product.id, product.active_ingredient, nowIso, phone],
   });
 }
+async function getAgent(db, region) {
+  if (region) {
+    const r = await db.execute({ sql: "SELECT name, phone FROM extension_agents WHERE region = ? LIMIT 1", args: [region] });
+    if (r.rows.length) return r.rows[0];
+  }
+  const r = await db.execute("SELECT name, phone FROM extension_agents LIMIT 1");
+  return r.rows[0] || null;
+}
+
 async function logSms(db, { regNo, pesticideId, status, confidence, region, lang }) {
   try {
     await db.execute({
@@ -113,10 +122,12 @@ export async function handleInbound(inbound, deps = {}) {
 
     case "HELP":
     case "ROUTE": {
-      // Part A: emergency menu only. Part B delivers the first-aid steps.
       const lang = knownLang || "en";
-      await logSms(db, { status: "EMERGENCY", region, lang });
-      return send(client, db, from, [T.emergencyMenuText(lang)], { status: "EMERGENCY", region, lang });
+      if (cmd.type === "HELP" && !cmd.route) {
+        await logSms(db, { status: "EMERGENCY", region, lang });
+        return send(client, db, from, [T.emergencyMenuText(lang)], { status: "EMERGENCY", region, lang });
+      }
+      return emergencyReply({ db, client, getFirstAid, from, route: cmd.route, user, lang, region, nowMs });
     }
 
     case "CROP": {
@@ -158,6 +169,25 @@ export async function handleInbound(inbound, deps = {}) {
       return send(client, db, from, [msg], { status: "SMS_HELP", region, lang });
     }
   }
+}
+
+// Emergency first-aid by SMS (M5 Part B). Never gates on identifying a product;
+// uses the recent VERIFIED product's steps if fresh, else the universal steps.
+// Steps come from firstaid.js as CODES -> reviewed aid.* strings. No prose here.
+async function emergencyReply({ db, client, getFirstAid, from, route, user, lang, region, nowMs }) {
+  const fresh = user?.last_verified_at && nowMs - Date.parse(user.last_verified_at) <= config.smsSessionTtlMin * 60_000;
+  const ingredient = fresh ? user.last_active_ingredient : null;
+
+  const fa = await getFirstAid(ingredient || "", route, lang); // codes only
+  const stepTexts = (fa.steps || []).map((c) => t(lang, `aid.${c}`));
+  const seekText = t(lang, "aid.aid_seek_help");
+
+  const agent = await getAgent(db, region);
+  const call = T.callLine(agent?.phone, config.poisonCentre, lang);
+
+  const messages = T.packEmergency({ steps: stepTexts, seekText, call, lang });
+  await logSms(db, { pesticideId: fresh ? user.last_pesticide_id : null, status: "EMERGENCY", region, lang });
+  return send(client, db, from, messages, { status: "EMERGENCY", region, lang });
 }
 
 // Fit each outbound to <=2 segments, log encoding + segment count, send.

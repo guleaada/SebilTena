@@ -132,6 +132,65 @@ async function main() {
     check("HELP bypasses the rate limiter", /FIRST AID/.test(helpSent.at(-1).message), helpSent.at(-1).message);
   }
 
+  // ---- Part B: Emergency first aid -----------------------------------------
+  console.log("\nEmergency (Part B)");
+  {
+    const { sent } = await sms("HELP", { from: newPhone() });
+    check("HELP -> route menu", /FIRST AID/.test(sent.at(-1).message) && /SWALLOWED/.test(sent.at(-1).message));
+  }
+  {
+    // Bare route word, no product context -> universal steps.
+    const from = await withLang("en");
+    const { sent } = await sms("SWALLOWED", { from });
+    const first = sent[0].message;
+    check("bare route -> first aid delivered", sent.length >= 1 && /1\./.test(first), first);
+    check("first message contains aid_seek_help", /health centre/i.test(first), first);
+    check("first message contains a phone number", /\+251/.test(first), first);
+    check("emergency <= 2 messages", sent.length <= 2);
+    for (const m of sent) check("each emergency msg <= 2 segments", segmentCount(m.message) <= 2, m.message);
+  }
+  {
+    // HELP SWALLOWED (route on the HELP line).
+    const from = await withLang("en");
+    const { sent } = await sms("HELP SWALLOWED", { from });
+    check("HELP <route> -> first aid", /health centre/i.test(sent[0].message));
+  }
+  {
+    // Amharic bare route word (ተውጦ = swallowed) -> Amharic first aid.
+    const from = await withLang("am");
+    const { sent } = await sms("ተውጦ", { from });
+    check("Amharic route word recognized", /ጤና ጣቢያ/.test(sent[0].message), sent[0].message);
+    check("Amharic emergency is UCS2", detectEncoding(sent[0].message) === "UCS2");
+  }
+  {
+    // Afaan Oromo route word (liqimse = swallowed).
+    const from = await withLang("om");
+    const { sent } = await sms("liqimse", { from });
+    check("Afaan Oromo route word recognized", /buufata fayyaatti/i.test(sent[0].message), sent[0].message);
+  }
+  {
+    // Product context: verify Mancozeb, then emergency uses its steps.
+    const from = await withLang("en");
+    await sms("ETH-FUN-0142/17", { from });
+    const { sent } = await sms("SKIN", { from });
+    check("emergency with product context still delivers + seek+phone", /health centre/i.test(sent[0].message) && /\+251/.test(sent[0].message));
+  }
+  {
+    // Emergency is never rate-limited (fresh limiter already exhausted).
+    const from = newPhone();
+    const limiter = createRateLimiter({ max: 1 });
+    await sms("ETH-INS-0009/05", { from, limiter }); // uses the one allowance
+    const { sent } = await sms("SWALLOWED", { from, limiter }); // must still work
+    check("SWALLOWED bypasses rate limit", /health centre/i.test(sent[0].message));
+  }
+  {
+    // Emergency logged with result_status EMERGENCY.
+    const before = Number((await db.execute("SELECT COUNT(*) n FROM scans WHERE channel='sms' AND result_status='EMERGENCY'")).rows[0].n);
+    await sms("BREATHED", { from: await withLang("en") });
+    const after = Number((await db.execute("SELECT COUNT(*) n FROM scans WHERE channel='sms' AND result_status='EMERGENCY'")).rows[0].n);
+    check("emergency logged as EMERGENCY", after > before);
+  }
+
   // ---- Logging --------------------------------------------------------------
   console.log("\nLogging");
   {
