@@ -128,5 +128,24 @@
     "aid_keep_container": "Qabduu qorichaa ogeessa fayyaatti argisiisuuf kaa'i.",
     "aid_seek_help": "Nama sana battalumatti gara buufata fayyaatti geessi.",
     "aid_if_unconscious": "Yoo namichi dammaqaa hin taane, cinaacha isaatiin ciibsiitii battalumatti gargaarsa argadhu."
+  },
+  "sms": {
+    "verified": "Galmaa'eera: {product}. Hamma argachuuf CROP <midhaan> ergi.",
+    "unregistered": "HIN GALMOOFNE! Sobaa ta'uu danda'a. Hin fayyadamin. Ogeessa gaafadhu.",
+    "banned": "DHORKAMEERA! Hin fayyadamin.",
+    "expired": "Galmeen darbeera. Hanga mirkanaa'utti hin fayyadamin.",
+    "suspended": "Dhorkameera. Hanga mirkanaa'utti hin fayyadamin.",
+    "unconfirmed": "Mirkaneessuu hin dandeenye. Hanga mirkanaa'utti hin fayyadamin.",
+    "help": "Lakkoofsa galmee ergi. Hamma: CROP <midhaan>. Gargaarsa: HELP. Afaan: LANG am/om/ti/so/sid/wal.",
+    "lang_set": "Afaan gara {lang} jijjiirame.",
+    "lang_bad": "Afaan hin beekamne. Fayyadami: am om ti so sid wal en.",
+    "dose": "{crop}: {dose}. Sassaabuu dura guyyaa {phi} eegi.",
+    "dose_nophi": "{crop}: {dose}.",
+    "crop_uncovered": "{crop}f hin hayyamamne. Ogeessa gaafadhu.",
+    "no_product": "Duraan lakkoofsa galmee ergi, sana booda CROP <midhaan>.",
+    "emergency_menu": "GARGAARSA. Deebisi: GOGAA / IJA / LIQIMSE / HARGANE",
+    "call_line": "Bilbili {agent}. Sarara summii {poison}.",
+    "rate_limited": "Ergaan baay'ee. Xiqqo eegii yaali.",
+    "crop_unknown": "Midhaan hin beekamne. CROP sana booda maqaa midhaanii ergi."
   }
 }

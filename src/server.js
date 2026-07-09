@@ -7,12 +7,15 @@ import { verifyNumber } from "./verify.js";
 import { runScan } from "./scan.js";
 import { getDosage } from "./dosage.js";
 import { getFirstAid, getEmergencyBundle } from "./firstaid.js";
+import { config } from "./config.js";
+import { handleInbound } from "./sms/handler.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
 
 const app = express();
 app.use(express.json({ limit: "12mb" })); // headroom for base64 images (M2)
+app.use(express.urlencoded({ extended: false })); // Africa's Talking posts form-encoded
 
 // --- Static: PWA shell + locale JSON (reused by the frontend and SW) --------
 app.use("/locales", express.static(path.join(ROOT, "locales")));
@@ -90,6 +93,29 @@ app.get("/api/emergency-bundle", async (req, res) => {
     res.json(await getEmergencyBundle(req.query.lang || "en"));
   } catch (err) {
     console.error("emergency-bundle error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// POST /api/sms/webhook — Africa's Talking inbound SMS. Guarded by a shared
+// secret when configured; parses { from, text, to, linkId, date }; replies via
+// verify.js / dosage.js / firstaid.js (M5). Never trusts unauthenticated posts.
+app.post("/api/sms/webhook", async (req, res) => {
+  if (config.smsWebhookSecret) {
+    const provided = req.get("x-webhook-secret") || req.query.secret;
+    if (provided !== config.smsWebhookSecret) {
+      return res.status(401).json({ ok: false, error: "unauthorized" });
+    }
+  } else {
+    console.warn("[sms] AT_WEBHOOK_SECRET unset — webhook is UNGUARDED (dev only).");
+  }
+  try {
+    const { from, text, to, linkId, date } = req.body || {};
+    if (!from) return res.status(400).json({ ok: false, error: "missing_from" });
+    const result = await handleInbound({ from, text, to, linkId, date });
+    res.json({ ok: true, status: result.status, replies: result.replies.length });
+  } catch (err) {
+    console.error("sms webhook error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });

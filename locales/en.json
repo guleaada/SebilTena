@@ -127,5 +127,24 @@
     "aid_keep_container": "Keep the pesticide container to show the health worker.",
     "aid_seek_help": "Take the person to a health centre immediately.",
     "aid_if_unconscious": "If the person is not awake, lay them on their side and get help immediately."
+  },
+  "sms": {
+    "verified": "Registered: {product}. Text CROP <name> for the dose.",
+    "unregistered": "NOT REGISTERED. May be fake. Do NOT use. Ask your agent.",
+    "banned": "BANNED. Do NOT use this product.",
+    "expired": "EXPIRED registration. Do NOT use until checked.",
+    "suspended": "SUSPENDED. Do NOT use until checked.",
+    "unconfirmed": "Could not confirm. Do NOT use until checked.",
+    "help": "Text a registration number for status. CROP <name> for dose. HELP for first aid. LANG am/om/ti/so/sid/wal.",
+    "lang_set": "Language set to {lang}.",
+    "lang_bad": "Unknown language. Use: am om ti so sid wal en.",
+    "dose": "{crop}: {dose}. Wait {phi} days before harvest.",
+    "dose_nophi": "{crop}: {dose}.",
+    "crop_uncovered": "Not approved for {crop}. Ask your extension agent.",
+    "no_product": "Text a registration number first, then CROP <name>.",
+    "emergency_menu": "FIRST AID. Reply: SKIN / EYES / SWALLOWED / BREATHED",
+    "call_line": "Call {agent}. Poison line {poison}.",
+    "rate_limited": "Too many messages. Please wait a while and try again.",
+    "crop_unknown": "Crop not recognized. Text CROP then the crop name."
   }
 }

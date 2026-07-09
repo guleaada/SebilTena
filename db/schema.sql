@@ -43,6 +43,20 @@ CREATE TABLE IF NOT EXISTS scans (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- SMS channel (M5): per-phone language preference + short-lived "last verified
+-- product" session so `CROP <name>` and emergency-with-context work by text.
+CREATE TABLE IF NOT EXISTS sms_users (
+  phone TEXT PRIMARY KEY,
+  lang TEXT,
+  region TEXT,
+  last_reg_no TEXT,
+  last_pesticide_id INTEGER,
+  last_active_ingredient TEXT,
+  last_verified_at TEXT,          -- ISO; TTL-checked for CROP / emergency context
+  created_at TEXT DEFAULT (datetime('now')),
+  last_seen TEXT
+);
+
 CREATE TABLE IF NOT EXISTS extension_agents (
   id INTEGER PRIMARY KEY,
   name TEXT, phone TEXT, region TEXT

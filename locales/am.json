@@ -128,5 +128,24 @@
     "aid_keep_container": "ለጤና ባለሙያው ለማሳየት የፀረ-ተባይ ዕቃውን ይያዙ።",
     "aid_seek_help": "ሰውየውን ወዲያውኑ ወደ ጤና ጣቢያ ይውሰዱ።",
     "aid_if_unconscious": "ሰውየው ንቃተ ህሊና ከሌለው በጎኑ አስተኝተው ወዲያውኑ እርዳታ ያግኙ።"
+  },
+  "sms": {
+    "verified": "ተመዝግቧል: {product}። ለመጠን CROP <ሰብል> ይላኩ።",
+    "unregistered": "አልተመዘገበም! ሀሰተኛ ሊሆን ይችላል። አይጠቀሙ። ባለሙያ ያነጋግሩ።",
+    "banned": "የተከለከለ! አይጠቀሙ።",
+    "expired": "ምዝገባ ጊዜው አልፎበታል። እስኪረጋገጥ አይጠቀሙ።",
+    "suspended": "ታግዷል። እስኪረጋገጥ አይጠቀሙ።",
+    "unconfirmed": "ማረጋገጥ አልተቻለም። እስኪረጋገጥ አይጠቀሙ።",
+    "help": "የምዝገባ ቁጥር ይላኩ። ለመጠን CROP <ሰብል>። ለእርዳታ HELP። ቋንቋ LANG am/om/ti/so/sid/wal።",
+    "lang_set": "ቋንቋ ወደ {lang} ተቀናብሯል።",
+    "lang_bad": "ያልታወቀ ቋንቋ። ይጠቀሙ: am om ti so sid wal en።",
+    "dose": "{crop}: {dose}። ከመሰብሰብ በፊት {phi} ቀናት ይጠብቁ።",
+    "dose_nophi": "{crop}: {dose}።",
+    "crop_uncovered": "ለ{crop} አልተፈቀደም። ባለሙያ ያነጋግሩ።",
+    "no_product": "መጀመሪያ የምዝገባ ቁጥር ይላኩ፣ ከዚያ CROP <ሰብል>።",
+    "emergency_menu": "የመጀመሪያ እርዳታ። ይላኩ: ቆዳ / ዓይን / ተውጦ / ተነፈሰ",
+    "call_line": "ይደውሉ {agent}። የመርዝ መስመር {poison}።",
+    "rate_limited": "በጣም ብዙ መልዕክቶች። ትንሽ ቆይተው ይሞክሩ።",
+    "crop_unknown": "ሰብሉ አልታወቀም። CROP ከዚያ የሰብሉን ስም ይላኩ።"
   }
 }

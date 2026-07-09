@@ -26,6 +26,17 @@ export const config = {
   // real national poison-information line before deployment.
   poisonCentre: process.env.POISON_CENTRE_NUMBER || "+251-11-XXXXXXX",
 
+  // --- SMS channel (M5) ---
+  // Shared secret guarding /api/sms/webhook. If set, inbound posts must present
+  // it (?secret= or x-webhook-secret header); if unset, dev allows (logs a warn).
+  smsWebhookSecret: process.env.AT_WEBHOOK_SECRET || "",
+  // Non-emergency inbound messages allowed per phone per hour (cost guard).
+  smsRateLimitPerHour: num(process.env.SMS_RATE_LIMIT_PER_HOUR, 20),
+  // How long a "last verified product" stays usable for CROP / emergency context.
+  smsSessionTtlMin: num(process.env.SMS_SESSION_TTL_MIN, 30),
+  // Max inbound characters processed (defensive cap before any handling).
+  smsInboundMaxChars: num(process.env.SMS_INBOUND_MAX_CHARS, 160),
+
   // Vision models per provider (all vision-capable). Overridable so exact model
   // IDs are never load-bearing — see DECISIONS.md.
   models: {
