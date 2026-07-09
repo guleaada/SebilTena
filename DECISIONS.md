@@ -338,6 +338,57 @@ returned recordings drop in by exact key. Changes:
   ppe_overall, hazard_low, disclaimer, …`; universal skin → `emergency_stay_calm,
   aid_remove_clothes, …`).
 
+## Milestone 5 (SMS channel — `/api/sms/webhook`)
+
+### Encoding budgets drive the whole reply design (`src/sms/encoding.js`)
+- Ethiopic script (Amharic, Tigrinya, Sidaamu Afoo) forces **UCS-2: 70 chars/
+  segment, 67 concatenated**. Latin (Somali, Afaan Oromo, English) gets **GSM-7:
+  160/153**. Detection is by content against the real GSM-7 charset + extension
+  table, not by language guess.
+- **Verdict-first, always.** Every reply leads with the danger word so it
+  survives truncation or a dropped segment. Replies are fitted to **≤2 segments**;
+  `fitToSegments` trims the *tail*, never the front. Every outbound logs encoding
+  + segment count (`[sms:out]`).
+
+### No fuzzy matching over SMS (deliberate)
+- SMS accepts **exact registration-number matches only**. The Tier-2 CONFIRM flow
+  needs a reliable back-and-forth a panicking/feature-phone farmer may not
+  complete, and a wrong confirm is a wrong dose. A non-command, non-reg message
+  with no digits → help text; a reg-like unknown → UNREGISTERED (never a dose).
+
+### Session / TTL
+- `sms_users` stores the per-phone language preference and a **30-min TTL'd**
+  last-VERIFIED product (`SMS_SESSION_TTL_MIN`). `CROP <name>` and emergency
+  product-context both require that freshness; otherwise CROP asks for a reg
+  number and emergency falls back to `UNIVERSAL_STEPS`. Last product is stored
+  only on a VERIFIED result (not banned/expired), so CROP can't dose a bad
+  product.
+
+### Emergency by SMS
+- `HELP` → route menu; `HELP <route>` or a **bare route word** → first aid
+  immediately. Route words recognized in all six languages + English + 1-4
+  numeric shortcuts (`src/sms/commands.js`); ti/so/sid/wal words are best-effort
+  and need native review (English + numerics always work).
+- Steps are `aid_*` **codes** from `firstaid.js` → reviewed `aid.*` strings; no
+  prose in the SMS layer. `packEmergency` guarantees `aid_seek_help` + a phone
+  number (regional agent + poison centre) in the **first** message, ≤2 messages.
+- **Emergency bypasses the rate limiter** — never throttle someone who may be
+  dying.
+
+### Abuse / cost / auth
+- Rate limit: **in-memory sliding window, 20/hr/phone** (`SMS_RATE_LIMIT_PER_HOUR`).
+  In-memory = per-process; behind multiple instances move to a shared store
+  (Redis/Turso). Fine for M5 / single instance.
+- Inbound is sanitized (control chars stripped) and hard-capped at 160 chars;
+  raw inbound is **never echoed** back into a reply.
+- Webhook guarded by a shared secret (`AT_WEBHOOK_SECRET`): unauthenticated posts
+  → 401. Unset in dev logs an "UNGUARDED" warning. (AT IP allowlist can be added
+  at the proxy later.)
+- Africa's Talking client is behind `src/sms/client.js` (log-only without creds,
+  mockable for tests). 44 offline SMS assertions in `scripts/test-sms.js`.
+- SMS templates (`sms.*`) drafted for en/am/om; ti/so/sid/wal fall back to
+  English — same DRAFT/native-review caveat as the rest of the locales.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

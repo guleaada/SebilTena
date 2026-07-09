@@ -1,6 +1,7 @@
 // M5 SMS tests — offline, mock Africa's Talking client, real seeded DB.
 //   node scripts/test-sms.js
 //
+import fsSync from "node:fs";
 import { db, initSchema } from "../src/db.js";
 import { detectEncoding, segmentCount, fitToSegments } from "../src/sms/encoding.js";
 import { handleInbound } from "../src/sms/handler.js";
@@ -199,6 +200,42 @@ async function main() {
     await sms("ETH-INS-0009/05", { from });
     const after = Number((await db.execute("SELECT COUNT(*) n FROM scans WHERE channel='sms'")).rows[0].n);
     check("SMS interaction logged to scans(channel=sms)", after > before);
+  }
+
+  // ---- Part C: provenance + encoding-by-language ---------------------------
+  console.log("\nProvenance & encoding (Part C)");
+  {
+    // No safety prose may be defined in the SMS layer — dose/first-aid text must
+    // come from verify.js / dosage.js / firstaid.js (+ aid.* locale), never here.
+    const dir = new URL("../src/sms/", import.meta.url);
+    const files = fsSync.readdirSync(dir).filter((f) => f.endsWith(".js"));
+    const FORBIDDEN = /kg per hectare|ml per litre|induce vomiting|Do not make the person|health centre|Rinse the (skin|eye)/i;
+    let leaks = 0;
+    for (const f of files) {
+      const src = fsSync.readFileSync(new URL(f, dir), "utf8");
+      if (FORBIDDEN.test(src)) { leaks++; console.error(`   prose leak in ${f}`); }
+    }
+    check("no dose/first-aid prose defined in src/sms/*", leaks === 0);
+  }
+  {
+    // Every emergency step text traces to an aid.* locale string (firstaid codes).
+    const { t } = await import("../src/localize.js");
+    const from = await withLang("en");
+    const { sent } = await sms("EYES", { from });
+    const seek = t("en", "aid.aid_seek_help");
+    const rinse = t("en", "aid.aid_rinse_eyes");
+    check("emergency step text == aid.* locale (traceable to firstaid.js)",
+      sent[0].message.includes(seek) && sent[0].message.includes(rinse), sent[0].message);
+  }
+  {
+    // Afaan Oromo (Latin) reply -> GSM-7; Amharic (Ethiopic) -> UCS-2.
+    const omFrom = await withLang("om");
+    const { sent: omSent } = await sms("ETH-INS-0009/05", { from: omFrom });
+    check("Afaan Oromo reply detected as GSM-7", detectEncoding(omSent.at(-1).message) === "GSM7", omSent.at(-1).message);
+    const amFrom = await withLang("am");
+    const { sent: amSent } = await sms("ETH-INS-0009/05", { from: amFrom });
+    check("Amharic reply detected as UCS-2 and <=2 segments",
+      detectEncoding(amSent.at(-1).message) === "UCS2" && segmentCount(amSent.at(-1).message) <= 2);
   }
 
   console.log(`\n${passed} passed, ${failed} failed`);

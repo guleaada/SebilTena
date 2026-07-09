@@ -157,6 +157,27 @@ forbidden here.
   pending toxicologist sign-off** — see the RELEASE GATE at the top of this file.
   They are data, never model output.
 
+## The SMS channel (Milestone 5 — same rules, different transport)
+
+SMS is a **transport, not different logic.** Every verdict comes from `verify.js`,
+every dose from `dosage.js`, every first-aid step from `firstaid.js` (codes) →
+reviewed `aid.*` strings. **No safety value is defined in `src/sms/*`** — the
+`sms.*` locale entries are verdict/UI copy only. A test greps `src/sms/*.js` for
+first-aid/dose prose and fails if any leaks in.
+
+- **Verdict-first.** Every reply leads with the danger word (`BANNED`, `NOT
+  REGISTERED`, …) so it survives truncation or a dropped SMS segment. Detail is
+  trimmed from the tail; the verdict is never trimmed.
+- **Exact match only.** No fuzzy CONFIRM over SMS — a wrong confirm is a wrong
+  dose. Unknown/garbled → "could not confirm / not registered", never a dose.
+- **Emergency by SMS never gates on identifying a product**, never rate-limits,
+  and guarantees `aid_seek_help` + a phone number in the first message. Steps are
+  controlled-vocabulary codes → reviewed strings; **no LLM, no prose** — the same
+  rule as the in-app emergency path, and subject to the same toxicologist
+  RELEASE GATE above.
+- The webhook is authenticated (shared secret) and inbound text is sanitized and
+  never echoed back.
+
 ## Auditability
 
 Every scan verdict is logged to the `scans` table (status, confidence, matched
