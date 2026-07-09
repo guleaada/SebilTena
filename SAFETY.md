@@ -2,6 +2,39 @@
 
 **Read this before changing anything in `src/verify.js`, `src/aiClient.js` (M2), or the data model. This boundary is the whole product.**
 
+## 🚫 RELEASE GATE — First-aid content must be toxicologist-signed-off
+
+**MedaGuard must not be deployed to production, or used by any real farmer, until
+this gate is cleared. This is a hard gate, not a to-do.**
+
+First aid genuinely differs by chemical class, and a wrong step here injures the
+person it is meant to help. The current per-active-ingredient first-aid data is
+**invented sample data** and has been reviewed by no one.
+
+Requirements before field use:
+
+1. **Authoritative source.** The `aid_*` step vocabulary (`src/aidCodes.js`,
+   `docs/RECORDING_SCRIPT.md` §3) must be derived from an authoritative source —
+   WHO/FAO pesticide first-aid guidance, or Ethiopia's national poison centre.
+2. **Professional sign-off.** The per-active-ingredient `route → [aid_code]`
+   mapping (and the `UNIVERSAL_STEPS` fallback) must be **reviewed and signed off
+   by a toxicologist or poison-control professional**.
+3. **`reviewed` marker.** Until sign-off, every seeded product carries
+   `reviewed: false` (DB column `pesticides.reviewed = 0`). The server prints a
+   loud "NOT CLEARED FOR FIELD USE" warning at startup while any product is
+   unreviewed. Production deploys must refuse to start (or be blocked in CI)
+   while that warning fires.
+4. **Record the sign-off.** When cleared, set `reviewed: true` for the signed
+   rows and record **who signed off, their credential, and the date** here:
+
+   | Date | Reviewer | Credential | Scope (ingredients/universal) |
+   |------|----------|------------|-------------------------------|
+   | _pending_ | _pending_ | _pending_ | _pending_ |
+
+The same sign-off requirement applies to the localized `aid.*` strings and the
+recorded audio clips (a mistranslated first-aid step is as dangerous as a wrong
+one).
+
 ## The one rule
 
 > The AI is a **RETRIEVER**, not an **ADVISER**.
@@ -105,19 +138,24 @@ exposure route via `GET /api/first-aid` (`src/firstaid.js`). A hallucinated
 first-aid instruction could kill someone, so generation is categorically
 forbidden here.
 
-- `getFirstAid()` returns the DB `first_aid` value verbatim (only split into
-  sentences for one-at-a-time display); its `source` is always `db_first_aid`.
-  Provenance is asserted in `scripts/test-firstaid.js`.
-- If an ingredient/route has **no** record, we show the fixed, human-reviewed
-  **UNIVERSAL** fallback (`src/firstaid.js` `UNIVERSAL`, mirrored client-side as
-  `EMBEDDED_UNIVERSAL`). We NEVER improvise a product-specific instruction.
+- **The DB emits a CONTROLLED VOCABULARY, not prose** (M4.5). `pesticides.first_aid`
+  is `{ route: [aid_code, ...] }` where every `aid_code` is in the fixed vocabulary
+  (`src/aidCodes.js`, mirroring `docs/RECORDING_SCRIPT.md` §3). `seed.js` **rejects**
+  any code or route outside the vocabulary. Nothing can drift into ungoverned text,
+  and every step is automatically voiced + localized in all six languages.
+- `getFirstAid()` / `getEmergencyBundle()` return **step codes only — no prose
+  crosses the wire.** The client resolves each code to localized text (`aid.*`) +
+  a recorded clip. Provenance is `db_controlled_vocab`; asserted (and "no free
+  text in the DB") in `scripts/test-firstaid.js`.
+- If a product has **no** codes for a route, we fall back to the fixed
+  `UNIVERSAL_STEPS` code list (`src/aidCodes.js`). There is exactly ONE renderer
+  (`renderFirstAid`) for product and universal alike. We NEVER improvise.
 - The emergency path must work **fully offline** — it reads from the cached
   `/api/emergency-bundle` (localStorage + service-worker cache) or the embedded
   universal fallback. It must never depend on a network call or a model.
-- `UNIVERSAL` and the seeded `first_aid` values are sample/reviewed content;
-  before deployment they must be replaced with authoritative label + poison-
-  centre guidance and translated + recorded per language. They are data, never
-  model output.
+- `UNIVERSAL_STEPS` and the seeded `first_aid` codes are **invented sample data
+  pending toxicologist sign-off** — see the RELEASE GATE at the top of this file.
+  They are data, never model output.
 
 ## Auditability
 

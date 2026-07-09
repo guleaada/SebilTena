@@ -96,8 +96,30 @@ app.get("/api/emergency-bundle", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
+// Release gate: if any seeded product's first-aid is not toxicologist-reviewed,
+// print a loud, unmissable warning. This build is NOT cleared for field use.
+// See SAFETY.md.
+async function checkReviewGate() {
+  try {
+    const r = await db.execute("SELECT COUNT(*) AS n FROM pesticides WHERE reviewed = 0");
+    const unreviewed = Number(r.rows[0].n);
+    if (unreviewed > 0) {
+      const bar = "!".repeat(64);
+      console.warn(`\n${bar}`);
+      console.warn(`!! MedaGuard: ${unreviewed} product(s) have UNREVIEWED first-aid data.`);
+      console.warn("!! First-aid steps have NOT been signed off by a toxicologist /");
+      console.warn("!! poison-control professional. This build is NOT CLEARED FOR FIELD USE.");
+      console.warn("!! See SAFETY.md (First-aid content release gate).");
+      console.warn(`${bar}\n`);
+    }
+  } catch (err) {
+    console.warn("review-gate check failed:", err?.message || err);
+  }
+}
+
 initSchema()
-  .then(() => {
+  .then(async () => {
+    await checkReviewGate();
     app.listen(PORT, () => {
       console.log(`MedaGuard listening on http://localhost:${PORT}  (db: ${dbMode})`);
     });
