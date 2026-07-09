@@ -116,5 +116,16 @@
     "call_help": "Call for help now",
     "call_agent": "Call extension agent",
     "poison_centre": "Poison centre"
+  },
+  "aid": {
+    "aid_move_air": "Move the person to fresh air, away from the chemical.",
+    "aid_remove_clothes": "Remove any clothing that has the chemical on it.",
+    "aid_rinse_skin": "Rinse the skin with clean running water for twenty minutes.",
+    "aid_rinse_eyes": "Rinse the eyes with clean running water for twenty minutes. Keep the eye open.",
+    "aid_do_not_vomit": "Do not make the person vomit.",
+    "aid_no_food_drink": "Do not give food or drink.",
+    "aid_keep_container": "Keep the pesticide container to show the health worker.",
+    "aid_seek_help": "Take the person to a health centre immediately.",
+    "aid_if_unconscious": "If the person is not awake, lay them on their side and get help immediately."
   }
 }

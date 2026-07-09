@@ -1,6 +1,7 @@
-// Generate ENGLISH PLACEHOLDER audio clips for the fixed phrase set, using the
-// macOS `say` command. These are dev placeholders only — real deployments ship
-// native-speaker recordings per language into public/audio/{lang}/.
+// Generate ENGLISH PLACEHOLDER audio clips for the CANONICAL phrase set defined
+// in docs/RECORDING_SCRIPT.md, using the macOS `say` command. These are dev
+// placeholders only — real deployments ship native-speaker recordings (.mp3)
+// named by the same keys into public/audio/{lang}/.
 //
 // No mp3 encoder is available locally (no ffmpeg/lame), so placeholders are
 // .m4a (AAC), which every target browser plays. The manifest records the format
@@ -18,60 +19,79 @@ const AUDIO = path.join(__dirname, "..", "public", "audio");
 const LANGS = ["am", "om", "sid", "ti", "so", "wal"]; // Ethiopian langs: empty, await recordings
 const FORMAT = "m4a";
 
-// Fixed phrase set: key -> English placeholder text.
+// Canonical key -> English placeholder text (the "meaning to convey" column).
 const PHRASES = {
-  verdict_verified: "Verified. This product is registered.",
-  verdict_banned: "Banned. Do not use this product.",
-  verdict_unregistered: "Not registered. This may be a fake product.",
-  verdict_expired: "Registration expired. Do not use it.",
-  verdict_suspended: "Suspended. Do not use this product.",
-  verdict_unconfirmed: "Could not confirm this product. Do not use until checked.",
+  // 1. Verdicts
+  verdict_verified: "This product is registered. It is safe to use as directed.",
   verdict_confirm: "Is this your product?",
+  verdict_unregistered: "Warning. This product is not registered. It may be fake. Do not use it.",
+  verdict_banned: "Stop. This product is banned. Do not use it.",
+  verdict_expired: "Caution. This product's registration has expired. Do not use it until you check.",
+  verdict_unconfirmed: "Could not confirm this product. Do not use it until it is checked.",
+  verdict_offline: "No connection. Please try again when you have signal.",
+  scanning: "Reading the label. Please wait.",
 
-  wear_this: "Wear this protective gear.",
-  dose_is: "The dose is",
-  point: "point",
+  // 2. Safety & dosage
+  dose_is: "The correct amount is",
+  wait_before_harvest: "Wait this many days before harvesting",
   days: "days",
-  wait_before_harvest: "Wait before harvest",
-
+  wear_protection: "Wear protection",
   ppe_gloves: "Gloves",
-  ppe_face_mask: "Face mask",
-  ppe_goggles: "Goggles",
-  ppe_long_sleeves: "Cover your body",
+  ppe_mask: "Face mask",
   ppe_boots: "Boots",
+  ppe_goggles: "Eye goggles",
+  ppe_overall: "Long clothing that covers your body",
+  hazard_low: "Low danger",
+  hazard_moderate: "Moderate danger",
+  hazard_high: "High danger",
+  hazard_extreme: "Extreme danger",
+  crop_not_covered: "This product is not approved for that crop. Ask your extension agent.",
+  ask_agent: "Contact your extension agent",
+  disclaimer: "This is official information. If you are unsure, ask your extension agent.",
+  replay: "Listen again",
 
-  hazard_Ia: "Extremely dangerous",
-  hazard_Ib: "Highly dangerous",
-  hazard_II: "Moderately dangerous",
-  hazard_III: "Slightly dangerous",
-  hazard_U: "Low danger",
-
+  // 3. Emergency
+  emergency_title: "Emergency. Poisoning help.",
+  emergency_ask_route: "How did the poison touch the person?",
   route_skin: "On the skin",
   route_eyes: "In the eyes",
   route_swallowed: "Swallowed",
   route_breathed: "Breathed in",
+  emergency_call_help: "Call for help now",
+  emergency_next_step: "Next step",
+  emergency_stay_calm: "Stay calm. Follow these steps.",
 
-  emergency_title: "Poisoning emergency.",
-  emergency_choose_route: "How did the poison get in? Choose one.",
-  emergency_call_help: "Call for help now.",
-  next: "Next",
-  firstaid_intro: "Get the person away from the pesticide. Follow these steps.",
+  // Universal first-aid steps
+  aid_move_air: "Move the person to fresh air, away from the chemical.",
+  aid_remove_clothes: "Remove any clothing that has the chemical on it.",
+  aid_rinse_skin: "Rinse the skin with clean running water for twenty minutes.",
+  aid_rinse_eyes: "Rinse the eyes with clean running water for twenty minutes. Keep the eye open.",
+  aid_do_not_vomit: "Do not make the person vomit.",
+  aid_no_food_drink: "Do not give food or drink.",
+  aid_keep_container: "Keep the pesticide container to show the health worker.",
+  aid_seek_help: "Take the person to a health centre immediately.",
+  aid_if_unconscious: "If the person is not awake, lay them on their side and get help immediately.",
 
+  // 4. Units (numbers added below)
+  point: "point",
+  unit_ml_per_litre: "millilitres per litre",
+  unit_g_per_litre: "grams per litre",
   unit_kg_per_hectare: "kilograms per hectare",
   unit_l_per_hectare: "litres per hectare",
-  unit_ml_per_litre: "millilitres per litre of water",
-  unit_g_per_litre: "grams per litre of water",
-  unit_kg: "kilograms",
-  unit_l: "litres",
-  unit_ml: "millilitres",
-  unit_g: "grams",
+  unit_ml_per_knapsack: "millilitres per knapsack sprayer",
+
+  // 5. Navigation
+  scan_bottle: "Scan a bottle",
+  yes: "Yes",
+  no: "No",
+  next: "Next",
+  back: "Back",
+  try_again: "Try again",
+  choose_crop: "Choose your crop",
 };
 
-// Atomic number clips for the composer (0..20 + common dose/PHI values).
-const NUMBERS = [
-  ...Array.from({ length: 21 }, (_, i) => i),
-  25, 30, 40, 45, 50, 60, 70, 80, 90, 100,
-];
+// Numbers: 0–20, then the tens 30..100 (21–99 are composed tens+ones at runtime).
+const NUMBERS = [...Array.from({ length: 21 }, (_, i) => i), 30, 40, 50, 60, 70, 80, 90, 100];
 for (const n of NUMBERS) PHRASES[`num_${n}`] = String(n);
 
 function say(text, outPath) {
@@ -80,18 +100,16 @@ function say(text, outPath) {
 
 function main() {
   const enDir = path.join(AUDIO, "en");
+  fs.rmSync(enDir, { recursive: true, force: true }); // clear stale keys
   fs.mkdirSync(enDir, { recursive: true });
 
   const keys = Object.keys(PHRASES);
   let made = 0;
   for (const key of keys) {
-    const out = path.join(enDir, `${key}.${FORMAT}`);
-    say(PHRASES[key], out);
-    made++;
-    if (made % 20 === 0) console.log(`  ...${made}/${keys.length}`);
+    say(PHRASES[key], path.join(enDir, `${key}.${FORMAT}`));
+    if (++made % 20 === 0) console.log(`  ...${made}/${keys.length}`);
   }
 
-  // Empty folders for the six Ethiopian languages (await native recordings).
   for (const lang of LANGS) {
     const dir = path.join(AUDIO, lang);
     fs.mkdirSync(dir, { recursive: true });
@@ -101,14 +119,12 @@ function main() {
   const manifest = {
     _note:
       "English clips are PLACEHOLDERS generated by macOS `say` (.m4a/AAC — no local mp3 encoder). " +
-      "The six Ethiopian language folders are empty, awaiting native-speaker recordings (.mp3). " +
-      "Nothing in the app assumes any language's clips exist; missing clips degrade to icon + colour + text.",
-    format: FORMAT, // default clip extension for lookups; real recordings may override per language
-    formats: { en: FORMAT }, // per-language override map
-    languages: {
-      en: keys,
-      am: [], om: [], sid: [], ti: [], so: [], wal: [],
-    },
+      "Keys are the canonical set from docs/RECORDING_SCRIPT.md. The six Ethiopian language folders " +
+      "are empty, awaiting native-speaker recordings (.mp3). Nothing in the app assumes any language's " +
+      "clips exist; missing clips degrade to icon + colour + text.",
+    format: FORMAT,
+    formats: { en: FORMAT },
+    languages: { en: keys, am: [], om: [], sid: [], ti: [], so: [], wal: [] },
   };
   fs.writeFileSync(path.join(AUDIO, "manifest.json"), JSON.stringify(manifest, null, 2));
 

@@ -301,6 +301,43 @@ Sidaamu Afoo / Wolaytta which no TTS vendor supports.
   first-aid text + translations + native audio recordings are pre-deployment
   work (like the rest of the non-English content).
 
+## Audio reconciliation to the canonical recording script
+
+`docs/RECORDING_SCRIPT.md` (supplied by the project owner) is now the **canonical
+phrase-key inventory** for the ~80 clips native speakers will record. The M4
+placeholder keys were provisional; the app and generator were reconciled so the
+returned recordings drop in by exact key. Changes:
+
+- **Renamed audio keys** to canonical: `reading→scanning`, `no_connection→verdict_offline`,
+  `wear_this→wear_protection`, `ppe_face_mask→ppe_mask`, `ppe_long_sleeves→ppe_overall`,
+  `emergency_choose_route→emergency_ask_route`, `firstaid_intro→emergency_stay_calm`.
+- **Hazard clips** now the canonical 4-level set: WHO `Ia→hazard_extreme,
+  Ib→hazard_high, II→hazard_moderate, III/U→hazard_low` (mapped in app.js;
+  on-screen text still per WHO class from /locales).
+- **Verdict clips**: `SUSPENDED` reuses `verdict_banned` (no separate suspended
+  clip in the script; both say "do not use").
+- **Universal first-aid is now atomic** `aid_*` steps (9 keys) sequenced per
+  route (`ROUTE_UNIVERSAL_STEPS`), each with a recorded clip + localized text
+  (`aid.*` added to en/am/om) — replaces the free-text `UNIVERSAL` split. This
+  makes the offline universal emergency fully voiced by the recordings.
+  Product-specific first-aid stays DB free-text (TTS bridge / future per-product
+  recordings — the script does not cover per-product first-aid).
+- **Number composer** now composes 21–99 from tens+ones (e.g. `45→num_40,num_5`)
+  since only `num_0..20` + tens are recorded. Verified: `2.5→num_2,point,num_5`,
+  `78→num_70,num_8`, `100→num_100`.
+- **Units** aligned to canonical (`unit_ml_per_litre`, `unit_g_per_litre`,
+  `unit_kg_per_hectare`, `unit_l_per_hectare`, `unit_ml_per_knapsack`).
+- **Nav clips** added (`scan_bottle, yes, no, next, back, try_again, choose_crop`)
+  plus `ask_agent, disclaimer, replay` — generated as placeholders for parity;
+  wired where natural (disclaimer spoken after the safety card).
+- `scripts/gen-audio-placeholders.js` rewritten to emit exactly these 85 keys
+  (clears stale keys first); `sw.js` bumped to `v3` and its critical-audio
+  precache list updated (verdicts + emergency + route + all `aid_*`).
+- Verified in preview: manifest has all 85 canonical keys; the app requests only
+  canonical keys (VERIFIED → `verdict_verified, wear_protection, ppe_mask,
+  ppe_overall, hazard_low, disclaimer, …`; universal skin → `emergency_stay_calm,
+  aid_remove_clothes, …`).
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

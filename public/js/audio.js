@@ -146,7 +146,24 @@ window.AudioLayer = (() => {
     return paths;
   }
 
-  // Compose a number (integer 0-100 + one decimal place) from atomic clips.
+  // Atomic clips exist for 0-20 and the tens (30..100); 21-99 are composed
+  // tens + ones (e.g. 45 -> num_40, num_5), matching the recording script.
+  function integerItems(int) {
+    if (int <= 20 || int === 30 || int === 40 || int === 50 || int === 60 ||
+        int === 70 || int === 80 || int === 90 || int === 100) {
+      return [{ key: `num_${int}`, text: String(int) }];
+    }
+    if (int < 100) {
+      const tens = Math.floor(int / 10) * 10;
+      const ones = int % 10;
+      const arr = [{ key: `num_${tens}`, text: String(tens) }];
+      if (ones) arr.push({ key: `num_${ones}`, text: String(ones) });
+      return arr;
+    }
+    return [{ key: `num_${int}`, text: String(int) }]; // >100: no clip -> TTS/text
+  }
+
+  // Compose a number (integer + one decimal place) from atomic clips.
   // e.g. speakNumber(2.5) -> [dose_is?, num_2, point, num_5, unit?]
   function numberItems(n, opts = {}) {
     const items = [];
@@ -154,7 +171,7 @@ window.AudioLayer = (() => {
     const abs = Math.abs(Number(n) || 0);
     const int = Math.trunc(abs);
     const frac = Math.round((abs - int) * 10); // one decimal place
-    items.push({ key: `num_${int}`, text: String(int) });
+    items.push(...integerItems(int));
     if (frac > 0) {
       items.push({ key: "point", text: "point" });
       items.push({ key: `num_${frac}`, text: String(frac) });

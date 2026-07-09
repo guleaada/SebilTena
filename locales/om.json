@@ -117,5 +117,16 @@
     "call_help": "Amma gargaarsa waami",
     "call_agent": "Ogeessa qonnaa bilbili",
     "poison_centre": "Wiirtuu to'annoo summii"
+  },
+  "aid": {
+    "aid_move_air": "Nama sana keemikaalicha irraa fageessuun gara qilleensa qulqulluutti baasi.",
+    "aid_remove_clothes": "Uffata keemikaalii qabu hunda irraa baasi.",
+    "aid_rinse_skin": "Gogaa bishaan qulqulluun daqiiqaa digdamaaf dhiqi.",
+    "aid_rinse_eyes": "Ija bishaan qulqulluun daqiiqaa digdamaaf dhiqi. Ija banaa godhi.",
+    "aid_do_not_vomit": "Namichi akka hin diddigne hin godhin.",
+    "aid_no_food_drink": "Nyaata ykn dhugaatii hin kennin.",
+    "aid_keep_container": "Qabduu qorichaa ogeessa fayyaatti argisiisuuf kaa'i.",
+    "aid_seek_help": "Nama sana battalumatti gara buufata fayyaatti geessi.",
+    "aid_if_unconscious": "Yoo namichi dammaqaa hin taane, cinaacha isaatiin ciibsiitii battalumatti gargaarsa argadhu."
   }
 }

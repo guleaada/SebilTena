@@ -5,7 +5,7 @@
    other clips are cached opportunistically as they play (lean on low-RAM
    phones). The pesticide registry and scan-queue sync are still NOT cached —
    that is M6. API calls are network-first with graceful offline fallback. */
-const CACHE = "medaguard-shell-v2";
+const CACHE = "medaguard-shell-v3";
 
 const SHELL = [
   "/",
@@ -32,13 +32,21 @@ const SHELL = [
 // Safety-critical clip keys precached for EVERY available language (emergency
 // must work offline). Numbers/other clips runtime-cache as used.
 const CRITICAL_AUDIO = [
+  // Verdicts + offline/scanning
   "verdict_verified", "verdict_banned", "verdict_unregistered", "verdict_expired",
-  "verdict_suspended", "verdict_unconfirmed", "verdict_confirm",
+  "verdict_unconfirmed", "verdict_confirm", "verdict_offline", "scanning",
+  // Emergency chrome + routes (must speak offline)
+  "emergency_title", "emergency_ask_route", "emergency_call_help",
+  "emergency_next_step", "emergency_stay_calm",
   "route_skin", "route_eyes", "route_swallowed", "route_breathed",
-  "emergency_title", "emergency_choose_route", "emergency_call_help", "next", "firstaid_intro",
-  "wear_this", "dose_is", "point", "days", "wait_before_harvest",
-  "ppe_gloves", "ppe_face_mask", "ppe_goggles", "ppe_long_sleeves", "ppe_boots",
-  "hazard_Ia", "hazard_Ib", "hazard_II", "hazard_III", "hazard_U",
+  // Universal first-aid steps (must speak offline)
+  "aid_move_air", "aid_remove_clothes", "aid_rinse_skin", "aid_rinse_eyes",
+  "aid_do_not_vomit", "aid_no_food_drink", "aid_keep_container", "aid_seek_help", "aid_if_unconscious",
+  // Safety
+  "wear_protection", "dose_is", "point", "days", "wait_before_harvest",
+  "ask_agent", "disclaimer", "crop_not_covered",
+  "ppe_gloves", "ppe_mask", "ppe_goggles", "ppe_overall", "ppe_boots",
+  "hazard_low", "hazard_moderate", "hazard_high", "hazard_extreme",
 ];
 
 async function precacheAudio(cache) {

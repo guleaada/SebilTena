@@ -10,13 +10,37 @@
   const LANGS = ["am", "om", "sid", "ti", "so", "wal", "en"];
   const FALLBACK = "en";
 
-  // Dose unit phrases -> atomic clip keys (for the audio number composer).
+  // Dose unit phrases -> canonical unit clip keys (docs/RECORDING_SCRIPT.md).
   const UNIT_KEYS = {
     "kg per hectare": "unit_kg_per_hectare",
     "l per hectare": "unit_l_per_hectare",
     "ml per litre of water": "unit_ml_per_litre",
     "g per litre of water": "unit_g_per_litre",
-    kg: "unit_kg", l: "unit_l", ml: "unit_ml", g: "unit_g",
+    "ml per knapsack": "unit_ml_per_knapsack",
+  };
+  // Content -> canonical audio-clip key maps (recording script). Display text
+  // still comes from /locales; only the AUDIO key is canonical here.
+  const VERDICT_AUDIO = {
+    VERIFIED: "verdict_verified", CONFIRM: "verdict_confirm",
+    UNREGISTERED: "verdict_unregistered", BANNED: "verdict_banned",
+    SUSPENDED: "verdict_banned", // no separate suspended clip; "do not use"
+    EXPIRED: "verdict_expired", UNCONFIRMED: "verdict_unconfirmed",
+  };
+  const PPE_AUDIO = {
+    gloves: "ppe_gloves", face_mask: "ppe_mask", goggles: "ppe_goggles",
+    long_sleeves: "ppe_overall", boots: "ppe_boots",
+  };
+  const HAZARD_AUDIO = { // WHO class -> canonical 4-level danger clip
+    Ia: "hazard_extreme", Ib: "hazard_high", II: "hazard_moderate",
+    III: "hazard_low", U: "hazard_low",
+  };
+  // Universal first-aid: ordered atomic aid_* clips per route (used when no
+  // product is identified). Each has a recorded clip + localized display text.
+  const ROUTE_UNIVERSAL_STEPS = {
+    skin: ["aid_remove_clothes", "aid_rinse_skin", "aid_no_food_drink", "aid_keep_container", "aid_seek_help"],
+    eyes: ["aid_rinse_eyes", "aid_keep_container", "aid_seek_help"],
+    swallowed: ["aid_do_not_vomit", "aid_no_food_drink", "aid_keep_container", "aid_seek_help", "aid_if_unconscious"],
+    breathed: ["aid_move_air", "aid_seek_help", "aid_if_unconscious"],
   };
 
   const CROP_EMOJI = {
@@ -30,15 +54,6 @@
   };
   const ROUTE_EMOJI = { skin: "🤚", eyes: "👁️", swallowed: "👄", breathed: "🫁" };
   const ROUTE_TO_KEY = { skin: "skin", eyes: "eyes", swallowed: "ingestion", breathed: "inhalation" };
-  // Last-resort universal first-aid, embedded so the emergency path works even
-  // with an empty cache. Mirrors the server UNIVERSAL constant (retrieval, not
-  // generated). See SAFETY.md.
-  const EMBEDDED_UNIVERSAL = {
-    skin: "Take off contaminated clothes. Wash the skin with plenty of soap and clean water for at least 15 minutes. Get medical help.",
-    eyes: "Rinse the eye with clean running water for at least 15 minutes, keeping the eye open. Get medical help.",
-    swallowed: "Do not make the person vomit. Rinse the mouth. Do not give anything to drink unless a health worker tells you to. Get medical help immediately and bring the product container.",
-    breathed: "Move the person to fresh air at once. Loosen tight clothing. If breathing is difficult, get medical help immediately.",
-  };
   const VERDICT = {
     VERIFIED:     { tone: "safe",    symbol: "✓" },
     CONFIRM:      { tone: "caution", symbol: "?" },
@@ -98,12 +113,12 @@
   const speakSeq = (items) => window.AudioLayer.speakSequence(items, state.lang);
   const stopSpeaking = () => window.AudioLayer.stopSpeaking();
 
-  // Verdict/message -> phrase-key items (verdict_* clips exist; msg_* use TTS/text).
+  // Verdict -> canonical clip. The recorded verdict clip conveys the full
+  // meaning; text fallback (headline + message) drives the TTS bridge.
   function verdictItems(status, headline, message) {
-    const s = String(status || "").toLowerCase();
-    const items = [{ key: `verdict_${s}`, text: headline }];
-    if (message) items.push({ key: `msg_${s}`, text: message });
-    return items;
+    const key = VERDICT_AUDIO[status] || "verdict_unconfirmed";
+    const text = [headline, message].filter(Boolean).join(". ");
+    return [{ key, text }];
   }
 
   // Parse a stored dose string into a value + unit clip key (best-effort).
@@ -205,7 +220,7 @@
   // ---- Scan flow ---------------------------------------------------------
   async function runScan(imageBase64) {
     show("loading");
-    speak({ key: "reading", text: t("ui.reading") });
+    speak({ key: "scanning", text: t("ui.reading") });
     if (!navigator.onLine) return renderOffline();
     try {
       const result = await postScan(imageBase64);
@@ -227,7 +242,7 @@
     again.onclick = () => show("home");
     card.querySelector(".verdict-actions").appendChild(again);
     $("#verdictCard").replaceChildren(card);
-    speak({ key: "no_connection", text: t("ui.no_connection") });
+    speak({ key: "verdict_offline", text: t("ui.no_connection") });
   }
 
   // ---- Result rendering (status-driven) ----------------------------------
@@ -334,13 +349,13 @@
     if (safety.ppe_required || safety.hazard_class) {
       const sc = el("div", "card");
       sc.appendChild(el("h3", null, "🛡️ " + esc(t("ui.wear_this"))));
-      safetyItems.push({ key: "wear_this", text: t("ui.wear_this") });
+      safetyItems.push({ key: "wear_protection", text: t("ui.wear_this") });
       const row = el("div", "ppe-row");
       (safety.ppe_required || []).forEach((p) => {
         const item = el("div", "ppe-item");
         item.innerHTML = `<span class="ppe-emoji">${PPE_EMOJI[p] || "🧰"}</span><span class="ppe-name">${esc(t("ppe." + p))}</span>`;
         row.appendChild(item);
-        safetyItems.push({ key: "ppe_" + p, text: t("ppe." + p) });
+        safetyItems.push({ key: PPE_AUDIO[p] || "ppe_gloves", text: t("ppe." + p) });
       });
       sc.appendChild(row);
       if (safety.hazard_class) {
@@ -348,7 +363,7 @@
         const band = el("div", `hazard-band hazard-${esc(hz)}`);
         band.innerHTML = `<span>${esc(t("ui.danger_level"))}: ${esc(t("hazard." + hz))}</span><span class="hazard-class-chip">${esc(hz)}</span>`;
         sc.appendChild(band);
-        safetyItems.push({ key: "hazard_" + hz, text: `${t("ui.danger_level")}: ${t("hazard." + hz)}` });
+        safetyItems.push({ key: HAZARD_AUDIO[hz] || "hazard_moderate", text: `${t("ui.danger_level")}: ${t("hazard." + hz)}` });
       }
       body.appendChild(sc);
     }
@@ -376,6 +391,7 @@
 
     // Speak verdict already done in renderResult; queue the safety clips next.
     if (safetyItems.length) {
+      safetyItems.push({ key: "disclaimer", text: record.disclaimer || t("disclaimer.official") });
       setTimeout(() => speakSeq(safetyItems), 30);
     }
   }
@@ -565,18 +581,20 @@
   }
 
   function renderFirstAid(route) {
-    // Resolve steps: product-specific (DB first_aid) if a product is chosen,
-    // else the universal fallback. Pure retrieval — never generated.
+    // Resolve steps as {text, key}. Product-specific = DB first_aid text split
+    // into sentences (no atomic clip -> TTS/text). Universal = ordered atomic
+    // aid_* clips with localized text. Pure retrieval — never generated.
     const bundle = state.bundle;
     const ing = state.emergencyProduct;
     const rec = ing && bundle && bundle.first_aid && bundle.first_aid[ing];
     const productText = rec ? rec[ROUTE_TO_KEY[route]] : null;
     let steps, forName, isProduct;
     if (productText) {
-      steps = toSteps(productText); forName = rec.product_name || ing; isProduct = true;
+      steps = toSteps(productText).map((text) => ({ text, key: null }));
+      forName = rec.product_name || ing; isProduct = true;
     } else {
-      const uni = (bundle && bundle.universal) || EMBEDDED_UNIVERSAL;
-      steps = toSteps(uni[route] || EMBEDDED_UNIVERSAL[route]); forName = null; isProduct = false;
+      steps = (ROUTE_UNIVERSAL_STEPS[route] || []).map((key) => ({ key, text: t("aid." + key) }));
+      forName = null; isProduct = false;
     }
 
     const root = $("#emergencyRoot");
@@ -594,14 +612,14 @@
     function paintStep() {
       card.innerHTML =
         `<div><span class="step-num">${i + 1}</span><span class="step-count">${esc(t("emergency.step"))} ${i + 1}/${steps.length}</span></div>` +
-        `<div class="step-text">${esc(steps[i])}</div>`;
+        `<div class="step-text">${esc(steps[i].text)}</div>`;
       const next = el("button", "btn btn-danger btn-block step-next",
         i < steps.length - 1 ? "▶ " + esc(t("emergency.next")) : "✓ " + esc(t("emergency.done")));
       next.onclick = () => { if (i < steps.length - 1) { i++; paintStep(); } else { renderRouteChooser(); } };
       card.appendChild(next);
-      // Auto-play the step clip (intro clip first). No clip -> TTS/text.
-      const items = i === 0 ? [{ key: "firstaid_intro" }] : [];
-      items.push({ key: `firstaid_${route}_${i}`, text: steps[i] });
+      // Auto-play: "stay calm" intro on the first step, then the step clip.
+      const items = i === 0 ? [{ key: "emergency_stay_calm" }] : [];
+      items.push({ key: steps[i].key, text: steps[i].text });
       speakSeq(items);
     }
     paintStep();
@@ -616,7 +634,7 @@
     loadEmergencyBundle(); // async, non-blocking (offline uses cache/embedded)
     speakSeq([
       { key: "emergency_title", text: t("ui.emergency_title") },
-      { key: "emergency_choose_route", text: t("emergency.choose_route") },
+      { key: "emergency_ask_route", text: t("emergency.choose_route") },
     ]);
   }
 
