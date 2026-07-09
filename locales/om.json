@@ -97,5 +97,25 @@
     "II": "Balaa giddu-galeessaa",
     "III": "Balaa xiqqaa",
     "U": "Balaa gadi aanaa"
+  },
+  "route": {
+    "skin": "Gogaa irratti",
+    "eyes": "Ija keessa",
+    "swallowed": "Liqimfame",
+    "breathed": "Hafuuraan galfame"
+  },
+  "emergency": {
+    "choose_route": "Summiin akkamitti seene? Tokko tuqi.",
+    "which_product": "Oomisha kam?",
+    "no_product": "Hin beeku / oomishni hin jiru",
+    "recent": "Iskaanota dhiheenyaa",
+    "universal_note": "Qorichoota faama hundaaf gargaarsa duraa waliigalaa.",
+    "for_product": "Kanaaf",
+    "step": "Tarkaanfii",
+    "next": "Itti aanu",
+    "done": "Xumurame",
+    "call_help": "Amma gargaarsa waami",
+    "call_agent": "Ogeessa qonnaa bilbili",
+    "poison_centre": "Wiirtuu to'annoo summii"
   }
 }

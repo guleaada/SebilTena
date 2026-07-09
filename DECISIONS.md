@@ -256,6 +256,51 @@ Sidaamu Afoo / Wolaytta which no TTS vendor supports.
   language's full set) are runtime-cached as they play — lean on low-RAM phones.
   Only `status===200` responses are cached (never a 206 audio range partial).
 
+## Milestone 4 Part B (poison-control emergency flow)
+
+### Retrieval only, no LLM (see SAFETY.md)
+- `GET /api/first-aid?activeIngredient=&route=&lang=` and
+  `GET /api/emergency-bundle` (`src/firstaid.js`) return only the DB `first_aid`
+  column. `source: "db_first_aid"`. Route → column key:
+  `skin→skin, eyes→eyes, swallowed→ingestion, breathed→inhalation`.
+- Unknown ingredient/route → `found:false`; the UI shows the fixed
+  human-reviewed `UNIVERSAL` fallback. Provenance asserted by
+  `scripts/test-firstaid.js` (26 checks) — every returned string equals the DB
+  value; unknown inputs never fabricate.
+
+### Flow / UX
+- One tap from any screen (pinned SOS). `openEmergency()` shows the view and
+  renders synchronously — **no network call, no spinner**; the bundle load is
+  async and non-blocking (offline uses cache/embedded).
+- Route-of-exposure grid: four buttons, **132px** tall (≥72px required — panic
+  degrades motor control), big emoji, spoken on focus/hover via `route_*` clips.
+- First-aid shown **one step at a time** (DB text split into sentences), large,
+  numbered, with a big NEXT; each step auto-plays via `speakSequence` (intro
+  clip + step; English via clip/TTS bridge, other languages await recordings).
+- Product is optional and never blocking: auto-uses the session scan's active
+  ingredient, offers recent scans + a "no product / general first-aid" choice.
+- Always-present "Call for help" pulls the regional extension agent + the
+  config poison-centre placeholder (`config.poisonCentre`,
+  `POISON_CENTRE_NUMBER`).
+
+### Offline
+- `GET /api/emergency-bundle` = all seeded ingredients' first_aid + `UNIVERSAL` +
+  agents + poison centre. Prefetched at init and stored in **localStorage**
+  (primary offline source) and cached by the **service worker** (network-first,
+  cache fallback). Verified with the network fully disabled: product first-aid
+  loads from the localStorage bundle, and with no cache at all the embedded
+  universal fallback still renders. Critical audio clips (emergency/verdict/
+  route/PPE/hazard) are SW-precached for every available language.
+- Note (first-load race): the init bundle fetch can beat SW activation, so the
+  SW may not cache the bundle on the very first load — localStorage covers it,
+  and subsequent controlled fetches populate the SW cache too.
+
+### Localization gap
+- `UNIVERSAL` first-aid and seeded `first_aid` values are English sample data;
+  route labels + emergency chrome are localized (en/am/om drafted). Real
+  first-aid text + translations + native audio recordings are pre-deployment
+  work (like the rest of the non-English content).
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

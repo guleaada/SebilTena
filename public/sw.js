@@ -84,7 +84,30 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // API: network-only. On failure return a JSON error so the app degrades.
+  // Emergency bundle: network-first, but cache it and fall back to cache when
+  // offline so the poison-control path has its data with zero signal.
+  if (url.pathname === "/api/emergency-bundle") {
+    event.respondWith(
+      (async () => {
+        try {
+          const fresh = await fetch(req);
+          if (fresh.status === 200) {
+            const cache = await caches.open(CACHE);
+            cache.put(req, fresh.clone());
+          }
+          return fresh;
+        } catch {
+          const cached = await caches.match(req);
+          return cached || new Response(JSON.stringify({ ok: false, offline: true }), {
+            status: 503, headers: { "Content-Type": "application/json" },
+          });
+        }
+      })()
+    );
+    return;
+  }
+
+  // Other API: network-only. On failure return a JSON error so the app degrades.
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(req).catch(() =>

@@ -96,6 +96,29 @@ never a source of a dosage, first-aid, PPE or PHI value. `readLabel()` strips
 every key except those four identity fields before returning, even if a model
 volunteers more. `verify.js` remains the ONLY source of safety facts.
 
+## The no-LLM-in-emergency rule (Milestone 4B — never break this)
+
+The poison-control emergency flow is the highest-stakes screen in the product.
+**No language model is ever in this path.** Every first-aid string comes only
+from the `pesticides.first_aid` DB column, retrieved by active ingredient +
+exposure route via `GET /api/first-aid` (`src/firstaid.js`). A hallucinated
+first-aid instruction could kill someone, so generation is categorically
+forbidden here.
+
+- `getFirstAid()` returns the DB `first_aid` value verbatim (only split into
+  sentences for one-at-a-time display); its `source` is always `db_first_aid`.
+  Provenance is asserted in `scripts/test-firstaid.js`.
+- If an ingredient/route has **no** record, we show the fixed, human-reviewed
+  **UNIVERSAL** fallback (`src/firstaid.js` `UNIVERSAL`, mirrored client-side as
+  `EMBEDDED_UNIVERSAL`). We NEVER improvise a product-specific instruction.
+- The emergency path must work **fully offline** — it reads from the cached
+  `/api/emergency-bundle` (localStorage + service-worker cache) or the embedded
+  universal fallback. It must never depend on a network call or a model.
+- `UNIVERSAL` and the seeded `first_aid` values are sample/reviewed content;
+  before deployment they must be replaced with authoritative label + poison-
+  centre guidance and translated + recorded per language. They are data, never
+  model output.
+
 ## Auditability
 
 Every scan verdict is logged to the `scans` table (status, confidence, matched

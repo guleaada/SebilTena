@@ -97,5 +97,25 @@
     "II": "መጠነኛ አደገኛ",
     "III": "ትንሽ አደገኛ",
     "U": "ዝቅተኛ አደጋ"
+  },
+  "route": {
+    "skin": "በቆዳ ላይ",
+    "eyes": "በዓይን ውስጥ",
+    "swallowed": "ተውጦ",
+    "breathed": "ተንፍሶ"
+  },
+  "emergency": {
+    "choose_route": "መርዙ እንዴት ገባ? አንዱን ይንኩ።",
+    "which_product": "የትኛው ምርት?",
+    "no_product": "እርግጠኛ አይደለሁም / ምርት የለም",
+    "recent": "የቅርብ ጊዜ ቅኝቶች",
+    "universal_note": "ለማንኛውም ፀረ-ተባይ አጠቃላይ የመጀመሪያ እርዳታ።",
+    "for_product": "ለ",
+    "step": "ደረጃ",
+    "next": "ቀጣይ",
+    "done": "ተጠናቋል",
+    "call_help": "አሁን እርዳታ ይጠይቁ",
+    "call_agent": "የግብርና ባለሙያ ይደውሉ",
+    "poison_centre": "የመርዝ መቆጣጠሪያ ማዕከል"
   }
 }

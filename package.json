@@ -10,7 +10,10 @@
     "dev": "node --watch src/server.js",
     "seed": "node scripts/seed.js",
     "reset-db": "node scripts/seed.js --reset",
-    "test:scan": "node scripts/test-scan.js"
+    "test:scan": "node scripts/test-scan.js",
+    "test:firstaid": "node scripts/test-firstaid.js",
+    "test": "node scripts/test-scan.js && node scripts/test-firstaid.js",
+    "gen:audio": "node scripts/gen-audio-placeholders.js"
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",

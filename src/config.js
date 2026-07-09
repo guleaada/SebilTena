@@ -22,6 +22,10 @@ export const config = {
   // through to the next provider (then to the conservative default).
   visionAcceptConfidence: ["high", "medium"],
 
+  // Poison-centre number surfaced in the emergency flow. PLACEHOLDER — set the
+  // real national poison-information line before deployment.
+  poisonCentre: process.env.POISON_CENTRE_NUMBER || "+251-11-XXXXXXX",
+
   // Vision models per provider (all vision-capable). Overridable so exact model
   // IDs are never load-bearing — see DECISIONS.md.
   models: {

@@ -96,5 +96,25 @@
     "II": "Moderately dangerous",
     "III": "Slightly dangerous",
     "U": "Low danger"
+  },
+  "route": {
+    "skin": "On the skin",
+    "eyes": "In the eyes",
+    "swallowed": "Swallowed",
+    "breathed": "Breathed in"
+  },
+  "emergency": {
+    "choose_route": "How did the poison get in? Tap one.",
+    "which_product": "Which product?",
+    "no_product": "Not sure / no product",
+    "recent": "Recent scans",
+    "universal_note": "General first-aid for any pesticide.",
+    "for_product": "For",
+    "step": "Step",
+    "next": "Next",
+    "done": "Done",
+    "call_help": "Call for help now",
+    "call_agent": "Call extension agent",
+    "poison_centre": "Poison centre"
   }
 }

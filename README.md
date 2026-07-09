@@ -22,9 +22,16 @@ Milestones 1–3 complete:
 - **M3** — offline-first PWA frontend (`public/`): camera scan, colour+icon+voice
   verdict cards, crop-icon dosage picker, safety card, 6-language switch (native
   script) with auto-speak, pinned EMERGENCY, installable shell + service worker.
-  Adds `GET /api/dosage`. See [DECISIONS.md](DECISIONS.md).
+  Adds `GET /api/dosage`.
+- **M4** — (A) pre-recorded **audio-clip** layer (`public/js/audio.js`) replacing
+  the Web Speech dependency: clip → TTS bridge → silent, with a number composer;
+  (B) one-tap **offline poison-control** flow (route-of-exposure → DB first-aid,
+  step-by-step) with `GET /api/first-aid` + `GET /api/emergency-bundle`. First-aid
+  is pure DB retrieval — no LLM ever (see [SAFETY.md](SAFETY.md)).
 
-Run the pipeline tests (no network / API keys needed): `npm run test:scan`.
+Run the tests (no network / API keys needed): `npm test`
+(`test:scan` = 41 checks, `test:firstaid` = 26 checks). Regenerate English audio
+placeholders with `npm run gen:audio` (macOS `say`).
 
 ## Quick start (local dev)
 

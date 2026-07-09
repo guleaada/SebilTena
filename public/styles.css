@@ -207,11 +207,43 @@ body {
 @keyframes sospulse { 0%,100% { box-shadow: 0 8px 22px rgba(140,10,10,0.4); } 50% { box-shadow: 0 8px 30px rgba(198,40,40,0.75); } }
 .sos:active { transform: scale(0.94); }
 
-.emergency-stub { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; padding-top: 24px; }
-.emergency-icon { font-size: 5rem; }
-.emergency-stub h1 { color: var(--red-2); font-size: 1.8rem; margin: 0; }
-.emergency-stub p { font-size: 1.2rem; color: var(--ink); max-width: 32ch; line-height: 1.45; }
-.emergency-stub .btn-block { max-width: 420px; }
+/* Emergency flow — highest-stakes screen: red, huge targets, minimal text. */
+#view-emergency { padding-top: 16px; }
+.emg-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.emg-header .emg-mark { font-size: 2.4rem; }
+.emg-title { color: var(--red-2); font-size: 1.7rem; font-weight: 900; margin: 0; line-height: 1.1; }
+.emg-prompt { font-size: 1.3rem; font-weight: 700; color: var(--ink); margin: 0 0 16px; }
+
+/* Route-of-exposure grid — targets ≥72px (panic degrades motor control). */
+.route-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.route-btn {
+  min-height: 132px;
+  border: 3px solid var(--red);
+  border-radius: 22px;
+  background: #fff5f4;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px;
+}
+.route-btn:active, .route-btn:focus { outline: none; background: #ffe3e0; box-shadow: 0 0 0 4px rgba(198,40,40,0.3); }
+.route-emoji { font-size: 3.4rem; line-height: 1; }
+.route-name { font-size: 1.25rem; font-weight: 800; text-align: center; }
+
+/* First-aid step — one at a time, very large, numbered. */
+.firstaid-for { font-size: 1.05rem; color: var(--muted); margin: 4px 0 12px; font-weight: 700; }
+.step-card { background: var(--surface); border: 3px solid var(--red); border-radius: var(--radius); padding: 22px 20px; box-shadow: var(--shadow); }
+.step-num { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: var(--red); color: #fff; font-size: 1.7rem; font-weight: 900; margin-bottom: 14px; }
+.step-count { color: var(--muted); font-size: 1rem; font-weight: 700; margin-left: 12px; }
+.step-text { font-size: 1.7rem; line-height: 1.4; font-weight: 700; color: var(--ink); }
+.step-next { margin-top: 20px; }
+
+.emg-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.emg-chip { flex: none; min-height: 48px; font-size: 1rem; padding: 8px 16px; }
+.emg-actions { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
+.emg-call { background: var(--red); color: #fff; }
+.emg-call small { display: block; font-weight: 600; opacity: 0.9; font-size: 0.85rem; }
+.emg-back { margin-top: 6px; }
 
 /* ---- Sheets (language / geo) ---- */
 .sheet { position: fixed; inset: 0; z-index: 60; background: rgba(20, 12, 4, 0.55); display: flex; align-items: flex-end; justify-content: center; }

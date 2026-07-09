@@ -6,6 +6,7 @@ import { db, dbMode, initSchema } from "./db.js";
 import { verifyNumber } from "./verify.js";
 import { runScan } from "./scan.js";
 import { getDosage } from "./dosage.js";
+import { getFirstAid, getEmergencyBundle } from "./firstaid.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -66,6 +67,29 @@ app.get("/api/dosage", async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("dosage error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// GET /api/first-aid?activeIngredient=&route=&lang= -> first-aid from the DB
+// first_aid column ONLY (no LLM — see SAFETY.md).
+app.get("/api/first-aid", async (req, res) => {
+  try {
+    const { activeIngredient, route, lang } = req.query;
+    res.json(await getFirstAid(activeIngredient, route, lang || "en"));
+  } catch (err) {
+    console.error("first-aid error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// GET /api/emergency-bundle?lang= -> compact offline bundle (all first_aid
+// records + universal fallback + agents + poison centre). Cached client-side.
+app.get("/api/emergency-bundle", async (req, res) => {
+  try {
+    res.json(await getEmergencyBundle(req.query.lang || "en"));
+  } catch (err) {
+    console.error("emergency-bundle error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });

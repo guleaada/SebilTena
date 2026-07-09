@@ -28,6 +28,17 @@
   const PPE_EMOJI = {
     gloves: "🧤", face_mask: "😷", goggles: "🥽", long_sleeves: "👕", boots: "🥾",
   };
+  const ROUTE_EMOJI = { skin: "🤚", eyes: "👁️", swallowed: "👄", breathed: "🫁" };
+  const ROUTE_TO_KEY = { skin: "skin", eyes: "eyes", swallowed: "ingestion", breathed: "inhalation" };
+  // Last-resort universal first-aid, embedded so the emergency path works even
+  // with an empty cache. Mirrors the server UNIVERSAL constant (retrieval, not
+  // generated). See SAFETY.md.
+  const EMBEDDED_UNIVERSAL = {
+    skin: "Take off contaminated clothes. Wash the skin with plenty of soap and clean water for at least 15 minutes. Get medical help.",
+    eyes: "Rinse the eye with clean running water for at least 15 minutes, keeping the eye open. Get medical help.",
+    swallowed: "Do not make the person vomit. Rinse the mouth. Do not give anything to drink unless a health worker tells you to. Get medical help immediately and bring the product container.",
+    breathed: "Move the person to fresh air at once. Loosen tight clothing. If breathing is difficult, get medical help immediately.",
+  };
   const VERDICT = {
     VERIFIED:     { tone: "safe",    symbol: "✓" },
     CONFIRM:      { tone: "caution", symbol: "?" },
@@ -45,6 +56,10 @@
     geoConsent: localStorage.getItem("mg_geo") || null, // 'yes' | 'no' | null
     lastResult: null,
     stream: null,
+    session: null,        // active ingredient of the last identified product
+    recent: [],           // recent identified products (for emergency picker)
+    bundle: null,         // cached emergency bundle
+    emergencyProduct: null, // active ingredient chosen for the current emergency
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -122,10 +137,6 @@
     $("#geoText").textContent = t("ui.share_location");
     $("#geoAllow").textContent = t("ui.allow");
     $("#geoSkip").textContent = t("ui.skip");
-    $("#emgTitle").textContent = t("ui.emergency_title");
-    $("#emgText").textContent = t("ui.emergency_soon");
-    $("#emgCall").textContent = t("ui.emergency_call_help");
-    $("#emgBack").textContent = t("ui.back");
   }
 
   // ---- Language sheet ----------------------------------------------------
@@ -245,6 +256,17 @@
     const replay = el("button", "btn btn-replay", "🔊 " + esc(t("ui.play_again")));
     replay.onclick = () => speakSeq(verdictItems(status, headline, message));
     card.querySelector(".replay-wrap").appendChild(replay);
+
+    // Remember any identified product's ingredient for a later emergency
+    // (so the farmer never has to re-scan while panicking).
+    if (record && record.product && record.product.active_ingredient) {
+      state.session = {
+        activeIngredient: record.product.active_ingredient,
+        product_name: record.product.product_name,
+        registration_no: record.product.registration_no,
+      };
+      state.recent = [state.session, ...state.recent.filter((r) => r.activeIngredient !== state.session.activeIngredient)].slice(0, 5);
+    }
 
     if (status === "CONFIRM") {
       renderConfirm(res, card, actions);
@@ -451,10 +473,151 @@
     reader.readAsDataURL(file);
   }
 
-  // ---- Emergency (minimal in Part A; full poison-control flow in Part B) --
+  // ---- Emergency: one-tap, offline poison-control flow -------------------
+  const toSteps = (text) =>
+    String(text || "").split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+
+  // Load the emergency bundle: memory -> localStorage -> opportunistic network.
+  // Never blocks the UI (emergency must open instantly with no network call).
+  async function loadEmergencyBundle() {
+    if (!state.bundle) {
+      const cached = localStorage.getItem("mg_emergency_bundle");
+      if (cached) { try { state.bundle = JSON.parse(cached); } catch {} }
+    }
+    if (navigator.onLine) {
+      fetch(`/api/emergency-bundle?lang=${state.lang}`)
+        .then((r) => r.json())
+        .then((b) => { if (b && b.first_aid) { state.bundle = b; localStorage.setItem("mg_emergency_bundle", JSON.stringify(b)); } })
+        .catch(() => {});
+    }
+    return state.bundle;
+  }
+
+  function emgHeader() {
+    const h = el("div", "emg-header");
+    h.innerHTML = `<span class="emg-mark" aria-hidden="true">🆘</span><h1 class="emg-title">${esc(t("ui.emergency_title"))}</h1>`;
+    return h;
+  }
+
+  function emgCallActions() {
+    const wrap = el("div", "emg-actions");
+    const agent = state.bundle && state.bundle.agents && state.bundle.agents[0];
+    const poison = state.bundle && state.bundle.poison_centre;
+    const phone = (agent && agent.phone) || poison || "";
+    const call = el("a", "btn emg-call btn-block");
+    call.href = phone ? `tel:${String(phone).replace(/\s/g, "")}` : "#";
+    call.innerHTML = `☎ ${esc(t("emergency.call_help"))}` +
+      (agent ? `<small>${esc(t("emergency.call_agent"))}: ${esc(agent.name || "")} ${esc(agent.phone || "")}</small>` : "") +
+      (poison ? `<small>${esc(t("emergency.poison_centre"))}: ${esc(poison)}</small>` : "");
+    call.onclick = () => speak({ key: "emergency_call_help", text: t("emergency.call_help") });
+    wrap.appendChild(call);
+    const back = el("button", "ghost-btn wide emg-back", "✕ " + esc(t("ui.back")));
+    back.onclick = () => show("home");
+    wrap.appendChild(back);
+    return wrap;
+  }
+
+  // Optional, never-blocking product context: auto-uses the session product,
+  // offers recent scans, and a "general first-aid" (no product) choice.
+  function emgProductContext() {
+    const wrap = el("div");
+    const line = el("div", "firstaid-for");
+    if (state.emergencyProduct) {
+      const rec = state.bundle && state.bundle.first_aid && state.bundle.first_aid[state.emergencyProduct];
+      line.textContent = `${t("emergency.for_product")}: ${(rec && rec.product_name) || state.emergencyProduct}`;
+    } else {
+      line.textContent = t("emergency.universal_note");
+    }
+    wrap.appendChild(line);
+
+    const chips = el("div", "emg-chips");
+    const gen = el("button", "btn btn-replay emg-chip", esc(t("emergency.no_product")));
+    gen.onclick = () => { state.emergencyProduct = null; renderRouteChooser(); };
+    chips.appendChild(gen);
+    state.recent.slice(0, 3).forEach((r) => {
+      const c = el("button", "btn btn-replay emg-chip", esc(r.product_name || r.activeIngredient));
+      c.onclick = () => { state.emergencyProduct = r.activeIngredient; renderRouteChooser(); };
+      chips.appendChild(c);
+    });
+    wrap.appendChild(chips);
+    return wrap;
+  }
+
+  function renderRouteChooser() {
+    const root = $("#emergencyRoot");
+    root.innerHTML = "";
+    root.appendChild(emgHeader());
+    root.appendChild(el("p", "emg-prompt", esc(t("emergency.choose_route"))));
+    root.appendChild(emgProductContext());
+
+    const grid = el("div", "route-grid");
+    ["skin", "eyes", "swallowed", "breathed"].forEach((route) => {
+      const b = el("button", "route-btn");
+      b.innerHTML = `<span class="route-emoji" aria-hidden="true">${ROUTE_EMOJI[route]}</span><span class="route-name">${esc(t("route." + route))}</span>`;
+      b.onclick = () => renderFirstAid(route);
+      const speakRoute = () => speak({ key: "route_" + route, text: t("route." + route) });
+      b.addEventListener("focus", speakRoute);        // spoken on focus
+      b.addEventListener("pointerenter", speakRoute);
+      grid.appendChild(b);
+    });
+    root.appendChild(grid);
+    root.appendChild(emgCallActions());
+  }
+
+  function renderFirstAid(route) {
+    // Resolve steps: product-specific (DB first_aid) if a product is chosen,
+    // else the universal fallback. Pure retrieval — never generated.
+    const bundle = state.bundle;
+    const ing = state.emergencyProduct;
+    const rec = ing && bundle && bundle.first_aid && bundle.first_aid[ing];
+    const productText = rec ? rec[ROUTE_TO_KEY[route]] : null;
+    let steps, forName, isProduct;
+    if (productText) {
+      steps = toSteps(productText); forName = rec.product_name || ing; isProduct = true;
+    } else {
+      const uni = (bundle && bundle.universal) || EMBEDDED_UNIVERSAL;
+      steps = toSteps(uni[route] || EMBEDDED_UNIVERSAL[route]); forName = null; isProduct = false;
+    }
+
+    const root = $("#emergencyRoot");
+    root.innerHTML = "";
+    root.appendChild(emgHeader());
+    const forLine = el("div", "firstaid-for");
+    forLine.textContent = (isProduct && forName
+      ? `${t("emergency.for_product")}: ${forName}`
+      : t("emergency.universal_note")) + ` · ${t("route." + route)}`;
+    root.appendChild(forLine);
+
+    const card = el("div", "step-card");
+    root.appendChild(card);
+    let i = 0;
+    function paintStep() {
+      card.innerHTML =
+        `<div><span class="step-num">${i + 1}</span><span class="step-count">${esc(t("emergency.step"))} ${i + 1}/${steps.length}</span></div>` +
+        `<div class="step-text">${esc(steps[i])}</div>`;
+      const next = el("button", "btn btn-danger btn-block step-next",
+        i < steps.length - 1 ? "▶ " + esc(t("emergency.next")) : "✓ " + esc(t("emergency.done")));
+      next.onclick = () => { if (i < steps.length - 1) { i++; paintStep(); } else { renderRouteChooser(); } };
+      card.appendChild(next);
+      // Auto-play the step clip (intro clip first). No clip -> TTS/text.
+      const items = i === 0 ? [{ key: "firstaid_intro" }] : [];
+      items.push({ key: `firstaid_${route}_${i}`, text: steps[i] });
+      speakSeq(items);
+    }
+    paintStep();
+    root.appendChild(emgCallActions());
+  }
+
+  // One tap from anywhere: open instantly, no network, no spinner.
   function openEmergency() {
+    state.emergencyProduct = state.session ? state.session.activeIngredient : null;
     show("emergency");
-    speak({ key: "emergency_title", text: t("ui.emergency_title") });
+    renderRouteChooser();
+    loadEmergencyBundle(); // async, non-blocking (offline uses cache/embedded)
+    speakSeq([
+      { key: "emergency_title", text: t("ui.emergency_title") },
+      { key: "emergency_choose_route", text: t("emergency.choose_route") },
+    ]);
   }
 
   // ---- Wire up -----------------------------------------------------------
@@ -476,7 +639,7 @@
   // Expose a tiny surface for automated verification (not used by the UI).
   window.MG = {
     renderResult, selectLang, getState: () => state, t,
-    scanBase64: runScan, openEmergency,
+    scanBase64: runScan, openEmergency, renderFirstAid, renderRouteChooser,
     audio: () => window.AudioLayer, lastSpoken: () => window.__mgAudio,
   };
 
@@ -485,6 +648,7 @@
     await loadLang(state.lang);
     paintChrome();
     window.AudioLayer.loadManifest();
+    loadEmergencyBundle(); // prefetch + cache the offline emergency data
     if ("serviceWorker" in navigator) {
       // Register right away — gating on window 'load' can miss it when the
       // shell is tiny/cached and 'load' has already fired.
