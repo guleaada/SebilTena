@@ -41,6 +41,7 @@ const PHRASES = {
   ppe_boots: "Boots",
   ppe_goggles: "Eye goggles",
   ppe_overall: "Long clothing that covers your body",
+  hazard_unlikely: "Unlikely to be dangerous in normal use.",
   hazard_low: "Low danger",
   hazard_moderate: "Moderate danger",
   hazard_high: "High danger",

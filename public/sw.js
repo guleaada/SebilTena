@@ -5,7 +5,7 @@
    other clips are cached opportunistically as they play (lean on low-RAM
    phones). The pesticide registry and scan-queue sync are still NOT cached —
    that is M6. API calls are network-first with graceful offline fallback. */
-const CACHE = "medaguard-shell-v3";
+const CACHE = "medaguard-shell-v4";
 
 const SHELL = [
   "/",
@@ -46,7 +46,7 @@ const CRITICAL_AUDIO = [
   "wear_protection", "dose_is", "point", "days", "wait_before_harvest",
   "ask_agent", "disclaimer", "crop_not_covered",
   "ppe_gloves", "ppe_mask", "ppe_goggles", "ppe_overall", "ppe_boots",
-  "hazard_low", "hazard_moderate", "hazard_high", "hazard_extreme",
+  "hazard_unlikely", "hazard_low", "hazard_moderate", "hazard_high", "hazard_extreme",
 ];
 
 async function precacheAudio(cache) {

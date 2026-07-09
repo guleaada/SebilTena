@@ -51,7 +51,8 @@
 | `ppe_boots` | Boots |
 | `ppe_goggles` | Eye goggles |
 | `ppe_overall` | Long clothing that covers your body |
-| `hazard_low` | Low danger |
+| `hazard_unlikely` | Unlikely to be dangerous when used normally |
+| `hazard_low` | Low danger (slightly hazardous) |
 | `hazard_moderate` | Moderate danger |
 | `hazard_high` | High danger |
 | `hazard_extreme` | Extreme danger |

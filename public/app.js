@@ -30,9 +30,9 @@
     gloves: "ppe_gloves", face_mask: "ppe_mask", goggles: "ppe_goggles",
     long_sleeves: "ppe_overall", boots: "ppe_boots",
   };
-  const HAZARD_AUDIO = { // WHO class -> canonical 4-level danger clip
+  const HAZARD_AUDIO = { // WHO class -> danger clip (5 levels, 1:1 — see M4.5 Part B)
     Ia: "hazard_extreme", Ib: "hazard_high", II: "hazard_moderate",
-    III: "hazard_low", U: "hazard_low",
+    III: "hazard_low", U: "hazard_unlikely",
   };
   // Universal first-aid: ordered atomic aid_* clips per route (used when no
   // product is identified). Each has a recorded clip + localized display text.
