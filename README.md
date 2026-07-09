@@ -13,12 +13,16 @@ See [SAFETY.md](SAFETY.md). Do not break this boundary.
 
 ## Status
 
-Milestones 1–2 complete:
+Milestones 1–3 complete:
 - **M1** — Express + libSQL (Turso / local-SQLite fallback), schema, seed script,
   `/api/verify-number`.
 - **M2** — scan pipeline: `lib/aiClient.js` vision fallback chain
   (Groq → OpenRouter → Gemini) and `/api/scan` with Tesseract-first OCR and a
-  format-agnostic, multi-field anchor match. See [DECISIONS.md](DECISIONS.md).
+  format-agnostic, multi-field anchor match.
+- **M3** — offline-first PWA frontend (`public/`): camera scan, colour+icon+voice
+  verdict cards, crop-icon dosage picker, safety card, 6-language switch (native
+  script) with auto-speak, pinned EMERGENCY, installable shell + service worker.
+  Adds `GET /api/dosage`. See [DECISIONS.md](DECISIONS.md).
 
 Run the pipeline tests (no network / API keys needed): `npm run test:scan`.
 
@@ -34,6 +38,19 @@ npm start                 # http://localhost:3000  (db: local-sqlite)
 No Turso credentials are needed for dev — with `TURSO_DATABASE_URL` empty the
 app uses a local SQLite file at `./medaguard.db`. Set the Turso env vars to point
 at a hosted database.
+
+### The app (PWA)
+
+Once the server is running, open **http://localhost:3000** — the frontend is
+served by the same Express app from `public/`. On Android (Chrome) use
+"Add to home screen" to install it; it runs standalone and the app shell opens
+offline (service worker). The camera scan uses `getUserMedia` with a
+file-input fallback; results are spoken automatically in the selected language.
+
+No API keys are required to try it: with no vision keys set, an unknown label
+returns the conservative "could not confirm" state. Seeded products verify via
+the offline OCR path. Switch languages from the 🌐 button (top-right); the choice
+persists. The pinned red button is the (M4) emergency placeholder.
 
 ## API (Milestone 1)
 

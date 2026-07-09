@@ -1,5 +1,6 @@
 {
   "_lang": "አማርኛ (Amharic)",
+  "_native": "አማርኛ",
   "_status": "DRAFT — requires native-speaker + agronomist review before deployment (see DECISIONS.md)",
   "status": {
     "VERIFIED": "የተረጋገጠ — የተመዘገበ ምርት",
@@ -17,9 +18,84 @@
     "expired": "የዚህ ምርት ምዝገባ ጊዜው አልፎበታል። አይጠቀሙ። የግብርና ባለሙያዎን ያነጋግሩ።",
     "suspended": "ይህ ምርት በተቆጣጣሪዎች ታግዷል። አይጠቀሙ። የግብርና ባለሙያዎን ያነጋግሩ።",
     "banned": "ይህ ምርት የተከለከለ ነው። አይጠቀሙ፣ አይግዙ። እርስዎን፣ ሌሎችንና አካባቢን በእጅጉ ሊጎዳ ይችላል።",
-    "conservative": "ይህን ምርት ማረጋገጥ አልተቻለም። እስኪረጋገጥ ድረስ አይጠቀሙ። የግብርና ባለሙያዎን ያነጋግሩ ወይም ቁጥሩን በኤስኤምኤስ ይላኩ።"
+    "conservative": "ይህን ምርት ማረጋገጥ አልተቻለም። እስኪረጋገጥ ድረስ አይጠቀሙ። የግብርና ባለሙያዎን ያነጋግሩ ወይም ቁጥሩን በኤስኤምኤስ ይላኩ።",
+    "crop_not_covered": "ይህ ሰብል ለዚህ ምርት አልተካተተም። መጠኑን አይገምቱ — የግብርና ባለሙያዎን ይጠይቁ።"
   },
   "disclaimer": {
     "official": "ይፋዊ መረጃ። እርግጠኛ ካልሆኑ የግብርና ባለሙያዎን ያነጋግሩ።"
+  },
+  "ui": {
+    "app_name": "መዳጋርድ",
+    "tagline": "ፀረ-ተባይን በደህንነት ይጠቀሙ",
+    "scan_button": "ጠርሙስ ይቃኙ",
+    "emergency": "አደጋ",
+    "reading": "መለያውን በማንበብ ላይ…",
+    "language": "ቋንቋ",
+    "yes": "አዎ",
+    "no": "አይ",
+    "is_this_your_product": "ይህ የእርስዎ ምርት ነው?",
+    "scan_again": "እንደገና ይቃኙ",
+    "try_again": "እንደገና ይሞክሩ",
+    "back": "ተመለስ",
+    "contact_agent": "የግብርና ባለሙያ ያነጋግሩ",
+    "call": "ይደውሉ",
+    "sms": "ኤስኤምኤስ",
+    "choose_crop": "ሰብልዎን ይምረጡ",
+    "field_size": "የማሳ መጠን (አማራጭ)",
+    "show_dose": "መጠኑን አሳይ",
+    "dose": "መጠን",
+    "how_to_use": "አጠቃቀም",
+    "wait_before_harvest": "ከመሰብሰብ በፊት ይጠብቁ",
+    "days": "ቀናት",
+    "wear_this": "ይህን ይልበሱ",
+    "danger_level": "የአደጋ ደረጃ",
+    "active_ingredient": "ንቁ ንጥረ ነገር",
+    "registration_no": "የምዝገባ ቁጥር",
+    "play_again": "እንደገና ያሰሙ",
+    "no_connection": "ኢንተርኔት የለም። ሲገናኙ እንደገና ይሞክሩ።",
+    "capture": "ፎቶ ያንሱ",
+    "use_camera": "ካሜራ ይክፈቱ",
+    "upload_photo": "ፎቶ ይምረጡ",
+    "share_location": "በአካባቢዎ ሀሰተኛ ምርቶችን ለመከታተል አካባቢዎን ያጋሩ?",
+    "allow": "ፍቀድ",
+    "skip": "ዝለል",
+    "install": "ወደ መነሻ ማያ ገጽ ያክሉ",
+    "emergency_title": "የመመረዝ አደጋ",
+    "emergency_soon": "የአደጋ ጊዜ የመጀመሪያ እርዳታ መመሪያ በቅርቡ ይመጣል። ሰው ከተመረዘ አሁን እርዳታ ያግኙ።",
+    "emergency_call_help": "እርዳታ ይጠይቁ"
+  },
+  "crop": {
+    "potato": "ድንች",
+    "tomato": "ቲማቲም",
+    "onion": "ሽንኩርት",
+    "wheat": "ስንዴ",
+    "coffee": "ቡና",
+    "maize": "በቆሎ",
+    "sorghum": "ማሽላ",
+    "teff": "ጤፍ",
+    "barley": "ገብስ",
+    "vegetables": "አትክልት",
+    "cereals": "እህሎች",
+    "stored_grain": "የተከማቸ እህል",
+    "grape": "ወይን",
+    "citrus": "ብርቱካናማ ፍራፍሬ",
+    "cotton": "ጥጥ",
+    "sugarcane": "ሸንኮራ አገዳ",
+    "non_crop": "ሰብል የሌለበት መሬት",
+    "pre_plant": "ከመዝራት በፊት"
+  },
+  "ppe": {
+    "gloves": "ጓንት",
+    "face_mask": "የአፍ መሸፈኛ",
+    "goggles": "የዓይን መነጽር",
+    "long_sleeves": "ሰውነትዎን ይሸፍኑ",
+    "boots": "ቦት ጫማ"
+  },
+  "hazard": {
+    "Ia": "እጅግ አደገኛ",
+    "Ib": "በጣም አደገኛ",
+    "II": "መጠነኛ አደገኛ",
+    "III": "ትንሽ አደገኛ",
+    "U": "ዝቅተኛ አደጋ"
   }
 }

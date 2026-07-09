@@ -1,5 +1,6 @@
 {
   "_lang": "Afaan Oromoo (Afaan Oromo)",
+  "_native": "Afaan Oromoo",
   "_status": "DRAFT — requires native-speaker + agronomist review before deployment (see DECISIONS.md)",
   "status": {
     "VERIFIED": "Mirkanaa'e — oomisha galmaa'e",
@@ -17,9 +18,84 @@
     "expired": "Galmeen oomisha kanaa yeroon darbeera. Hin fayyadamiin. Ogeessa qonnaa kee quunnami.",
     "suspended": "Oomishni kun to'attootaan dhorkameera. Hin fayyadamiin. Ogeessa qonnaa kee quunnami.",
     "banned": "Oomishni kun guutummaatti dhorkameera. Hin fayyadamiin, hin bitiin. Si, namoota biroo fi naannoo miidhuu danda'a.",
-    "conservative": "Oomisha kana mirkaneessuu hin dandeenye. Hanga mirkanaa'utti hin fayyadamiin. Ogeessa qonnaa kee quunnami ykn lakkoofsa SMS'n ergi."
+    "conservative": "Oomisha kana mirkaneessuu hin dandeenye. Hanga mirkanaa'utti hin fayyadamiin. Ogeessa qonnaa kee quunnami ykn lakkoofsa SMS'n ergi.",
+    "crop_not_covered": "Midhaan kun oomisha kanaaf hin hammatamne. Hamma isaa hin tilmaamin — ogeessa qonnaa kee gaafadhu."
   },
   "disclaimer": {
     "official": "Odeeffannoo qajeelaa. Yoo shakkite, ogeessa qonnaa kee quunnami."
+  },
+  "ui": {
+    "app_name": "MedaGuard",
+    "tagline": "Qorichoota faama nageenyaan fayyadami",
+    "scan_button": "Qaruuraa iskaani godhi",
+    "emergency": "BALAA",
+    "reading": "Asxaa dubbisaa jira…",
+    "language": "Afaan",
+    "yes": "Eeyyee",
+    "no": "Lakki",
+    "is_this_your_product": "Kun oomisha keeti?",
+    "scan_again": "Ammas iskaani godhi",
+    "try_again": "Ammas yaali",
+    "back": "Duubatti",
+    "contact_agent": "Ogeessa qonnaa quunnami",
+    "call": "Bilbili",
+    "sms": "SMS",
+    "choose_crop": "Midhaan kee filadhu",
+    "field_size": "Bal'ina lafaa (filannoo)",
+    "show_dose": "Hamma agarsiisi",
+    "dose": "Hamma",
+    "how_to_use": "Akkaataa itti fayyadama",
+    "wait_before_harvest": "Sassaabuu dura eegi",
+    "days": "guyyoota",
+    "wear_this": "Kana uffadhu",
+    "danger_level": "Sadarkaa balaa",
+    "active_ingredient": "Qabiyyee sochoosaa",
+    "registration_no": "Lakkoofsa galmee",
+    "play_again": "Ammas dhageessisi",
+    "no_connection": "Intarneetiin hin jiru. Yeroo intarneetii qabdu ammas yaali.",
+    "capture": "Suuraa kaasi",
+    "use_camera": "Kaameeraa bani",
+    "upload_photo": "Suuraa filadhu",
+    "share_location": "Oomishaalee sobaa naannoo kee keessatti hordofuuf iddoo kee qooddu?",
+    "allow": "Hayyami",
+    "skip": "Dabarsi",
+    "install": "Gara fuula jalqabaatti dabali",
+    "emergency_title": "Balaa summii",
+    "emergency_soon": "Qajeelfamni gargaarsa duraa balaa dhiyootti dhufa. Yoo namni summaa'e, amma gargaarsa argadhu.",
+    "emergency_call_help": "Gargaarsa waami"
+  },
+  "crop": {
+    "potato": "Dinnicha",
+    "tomato": "Timaatima",
+    "onion": "Qullubbii",
+    "wheat": "Qamadii",
+    "coffee": "Buna",
+    "maize": "Boqqolloo",
+    "sorghum": "Bishingaa",
+    "teff": "Xaafii",
+    "barley": "Garbuu",
+    "vegetables": "Kuduraa",
+    "cereals": "Midhaan",
+    "stored_grain": "Midhaan kuufame",
+    "grape": "Wayinii",
+    "citrus": "Burtukaana",
+    "cotton": "Jirbii",
+    "sugarcane": "Shonkoraa",
+    "non_crop": "Lafa midhaan hin qabne",
+    "pre_plant": "Facaasuu dura"
+  },
+  "ppe": {
+    "gloves": "Wojjii harkaa",
+    "face_mask": "Haguuggii afaanii",
+    "goggles": "Meeshaa ijaa",
+    "long_sleeves": "Qaama kee haguugi",
+    "boots": "Kophee dheeraa"
+  },
+  "hazard": {
+    "Ia": "Baay'ee balaafamaa",
+    "Ib": "Balaafamaa cimaa",
+    "II": "Balaa giddu-galeessaa",
+    "III": "Balaa xiqqaa",
+    "U": "Balaa gadi aanaa"
   }
 }

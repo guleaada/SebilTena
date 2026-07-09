@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2e7d32" />
+  <title>MedaGuard</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- Top bar: brand + language -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">🌿</span>
+      <span id="appName">MedaGuard</span>
+    </div>
+    <button id="langBtn" class="lang-btn" aria-haspopup="dialog">
+      <span aria-hidden="true">🌐</span><span id="langLabel">አማርኛ</span>
+    </button>
+  </header>
+
+  <main id="app">
+    <!-- HOME / SCAN -->
+    <section id="view-home" class="view is-active">
+      <p class="tagline" id="tagline"></p>
+      <button id="scanBtn" class="scan-orb">
+        <span class="orb-ring"></span>
+        <span class="orb-icon" aria-hidden="true">📷</span>
+        <span class="orb-label" id="scanLabel"></span>
+      </button>
+    </section>
+
+    <!-- CAMERA -->
+    <section id="view-camera" class="view">
+      <div class="camera-wrap">
+        <video id="cam" autoplay playsinline muted></video>
+        <div class="reticle" aria-hidden="true"></div>
+      </div>
+      <div class="camera-bar">
+        <button id="camBack" class="ghost-btn" data-nav="home">✕</button>
+        <button id="captureBtn" class="capture-btn" aria-label="capture"></button>
+        <label class="file-fallback" id="fileFallback">
+          <input id="fileInput" type="file" accept="image/*" capture="environment" hidden />
+          <span aria-hidden="true">🖼️</span>
+        </label>
+      </div>
+      <p class="hint" id="uploadLabel"></p>
+    </section>
+
+    <!-- LOADING -->
+    <section id="view-loading" class="view">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="loading-text" id="loadingText"></p>
+    </section>
+
+    <!-- RESULT (verdict + optional safety/dosage) -->
+    <section id="view-result" class="view">
+      <div id="verdictCard"></div>
+      <div id="resultBody"></div>
+    </section>
+
+    <!-- EMERGENCY (stub for M4) -->
+    <section id="view-emergency" class="view">
+      <div class="emergency-stub">
+        <div class="emergency-icon" aria-hidden="true">🆘</div>
+        <h1 id="emgTitle"></h1>
+        <p id="emgText"></p>
+        <a id="emgCall" class="btn btn-danger btn-block" href="tel:907"></a>
+        <button class="ghost-btn wide" data-nav="home" id="emgBack"></button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pinned EMERGENCY button (present on every screen) -->
+  <button id="sosBtn" class="sos" aria-label="Emergency">
+    <span class="sos-cross" aria-hidden="true">✚</span>
+    <span class="sos-label" id="sosLabel"></span>
+  </button>
+
+  <!-- Language chooser sheet -->
+  <div id="langSheet" class="sheet" hidden>
+    <div class="sheet-card">
+      <h2 id="langTitle"></h2>
+      <div id="langList" class="lang-list"></div>
+    </div>
+  </div>
+
+  <!-- Location consent sheet -->
+  <div id="geoSheet" class="sheet" hidden>
+    <div class="sheet-card">
+      <div class="geo-icon" aria-hidden="true">📍</div>
+      <p id="geoText"></p>
+      <div class="sheet-actions">
+        <button id="geoAllow" class="btn btn-primary"></button>
+        <button id="geoSkip" class="ghost-btn"></button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="snap" hidden></canvas>
+  <script src="/app.js"></script>
+</body>
+</html>

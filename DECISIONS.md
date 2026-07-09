@@ -129,6 +129,79 @@ build brief ("make reasonable choices and record them"). Each is revisable.
 - Malathion label with reg-no worn off → CONFIRM (Tier-2), dosage withheld.
 - Unknown "Super Grow Booster" label, no vision keys → conservative UNCONFIRMED.
 
+## Milestone 3 (offline-first PWA frontend)
+
+### Framework: none (vanilla HTML/CSS/JS)
+- No framework, no build step, no bundler. Justification: the target is a
+  cracked low-RAM Android on 2G/no signal. Vanilla gives a tiny shell that the
+  service worker caches whole and opens instantly offline; there is no runtime,
+  hydration or bundle to ship. The app is small enough (~1 HTML + 1 CSS + 1 JS)
+  that a framework would add weight and cache churn for no benefit.
+- Served by the existing Express app from `public/`; `/locales` is served
+  statically so the frontend and the SW reuse the same locale JSON the backend
+  uses (no string duplication — reuse per the brief).
+
+### New backend endpoint added for M3
+- `GET /api/dosage?pesticideId=&crop=&lang=` (`src/dosage.js`) — pure retrieval
+  from the `dosages` table. Returns `{covered:true, dose_per_unit,
+  application_notes, pre_harvest_interval_days}` or `{covered:false, message}`
+  for an uncovered crop. It NEVER computes/interpolates a dose — uncovered crops
+  route to the extension agent. This is retrieval only; it does not touch the
+  safety boundary (SAFETY.md). No other backend logic changed.
+
+### UX / design
+- Warm, earthy palette (deep field-green, soil-brown, cream) with high-contrast
+  amber/red warnings; big rounded shapes; large display weights. Icon-first:
+  crops and PPE are large emoji (universal, zero-asset, offline-safe), verdicts
+  are a colored badge + symbol + auto-spoken message.
+- Color+icon+voice are always paired (never color alone) for glare + literacy.
+- Pinned red EMERGENCY (SOS) button, 84px, fixed bottom-left, present on every
+  view, one-hand reachable. Emergency *flow* is stubbed (routes to a placeholder
+  screen) pending M4.
+- All primary/field actions ≥56px (scan orb, capture, crops, verdict buttons,
+  SOS); the header language chip is also 56px.
+
+### Voice (Web Speech API) — language gaps
+- `speechSynthesis`; a voice is matched by BCP-47 prefix per app language.
+  Auto-speak fires the instant a verdict/safety/dose renders; a visible replay
+  button is also provided.
+- **Graceful fallback:** if no voice matches the selected language we STAY
+  SILENT (never garble non-Latin script with a wrong-language voice) while
+  keeping text + icon + color. A pluggable server-TTS hook is left for the
+  future (the `speak()` seam).
+- **Observed voice availability:** in the (headless Chromium) test environment,
+  only **English** had a TTS voice; **Amharic, Afaan Oromo, Tigrinya, Somali,
+  Sidaamu Afoo, Wolaytta had none**. On real Android, Amharic (am-ET) is
+  sometimes present via Google TTS; the others generally are not. So in practice
+  most Ethiopian-language users currently get text+icon+color and rely on the
+  future server-TTS provider for audio. This is the single biggest gap to close
+  for the voice-first goal — flagged for a server-side TTS integration.
+
+### Language
+- Prominent switcher lists all 6 languages in **native script** (from each
+  locale's `_native`), persisted in `localStorage` (`mg_lang`); the whole UI
+  re-renders and re-speaks on switch. Stub languages (ti/so/sid/wal) still
+  select and fall back to English strings (M1/M2 behaviour), pending translation.
+
+### PWA (shell only — deep offline is M6)
+- `manifest.json` (standalone, icons 192/512 + maskable, theme colours),
+  installable. `sw.js` caches ONLY the app shell (HTML/CSS/JS, all 7 locale
+  JSONs, icons) — verified populated in `caches['medaguard-shell-v1']`.
+- Registration is done **immediately** in init (not gated on window `load`):
+  with a tiny cached shell, `load` can fire before the handler is attached and
+  the SW would silently never register. (Caught and fixed during M3 preview.)
+- `/api/*` is network-only in the SW; offline it returns a 503 and the app shows
+  a spoken "no connection" state. The registry is deliberately NOT cached and
+  scans are NOT queued yet — that is M6.
+
+### Verified in preview (mobile viewport, real backend)
+- Home, VERIFIED (green ✓ + safety card + crop picker + dose incl. PHI),
+  CONFIRM (amber, dosage withheld → YES calls /api/verify-number → reveals),
+  UNREGISTERED (red !), BANNED (red ⛔), offline (📡, spoken) — all render with
+  correct colour/icon and auto-speak, all farmer-facing text in Amharic.
+- Uncovered crop (coffee on Mancozeb) → "not covered, ask agent", no invented
+  dose. Language switch persists. SW + shell cache confirmed. Targets ≥56px.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

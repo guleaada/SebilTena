@@ -1,0 +1,19 @@
+{
+  "name": "MedaGuard — Safe Pesticides",
+  "short_name": "MedaGuard",
+  "description": "Check if a pesticide is genuine and registered, get the correct dose, safety gear and first-aid — in your language, with voice.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6efe1",
+  "theme_color": "#2e7d32",
+  "lang": "am",
+  "dir": "auto",
+  "categories": ["agriculture", "health", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

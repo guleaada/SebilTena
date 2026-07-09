@@ -1,11 +1,21 @@
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import "dotenv/config";
 import { db, dbMode, initSchema } from "./db.js";
 import { verifyNumber } from "./verify.js";
 import { runScan } from "./scan.js";
+import { getDosage } from "./dosage.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.join(__dirname, "..");
 
 const app = express();
 app.use(express.json({ limit: "12mb" })); // headroom for base64 images (M2)
+
+// --- Static: PWA shell + locale JSON (reused by the frontend and SW) --------
+app.use("/locales", express.static(path.join(ROOT, "locales")));
+app.use(express.static(path.join(ROOT, "public")));
 
 // Health / diagnostics.
 app.get("/api/health", async (_req, res) => {
@@ -15,7 +25,7 @@ app.get("/api/health", async (_req, res) => {
       ok: true,
       db: dbMode,
       pesticides: Number(r.rows[0].n),
-      milestone: "M1",
+      milestone: "M3",
     });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
@@ -44,6 +54,18 @@ app.post("/api/scan", async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("scan error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// GET /api/dosage?pesticideId=&crop=&lang= -> stored dose record (retrieval only).
+app.get("/api/dosage", async (req, res) => {
+  try {
+    const { pesticideId, crop, lang } = req.query;
+    const result = await getDosage(pesticideId, crop, lang || "en");
+    res.json(result);
+  } catch (err) {
+    console.error("dosage error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });

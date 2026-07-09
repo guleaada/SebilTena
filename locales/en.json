@@ -1,5 +1,6 @@
 {
   "_lang": "English",
+  "_native": "English",
   "status": {
     "VERIFIED": "Verified — registered product",
     "UNREGISTERED": "Not registered — possible counterfeit",
@@ -16,9 +17,84 @@
     "expired": "This product's registration has expired. Do not use it. Contact your extension agent.",
     "suspended": "This product has been suspended by regulators. Do not use it. Contact your extension agent.",
     "banned": "This product is BANNED. Do not use it, do not buy it. It can seriously harm you, others and the environment.",
-    "conservative": "Could not confirm this product. Do not use until checked. Contact your extension agent or SMS the number."
+    "conservative": "Could not confirm this product. Do not use until checked. Contact your extension agent or SMS the number.",
+    "crop_not_covered": "This crop is not covered for this product. Do not guess the dose — ask your extension agent."
   },
   "disclaimer": {
     "official": "Official information. If unsure, contact your extension agent."
+  },
+  "ui": {
+    "app_name": "MedaGuard",
+    "tagline": "Use pesticides safely",
+    "scan_button": "Scan a bottle",
+    "emergency": "EMERGENCY",
+    "reading": "Reading the label…",
+    "language": "Language",
+    "yes": "Yes",
+    "no": "No",
+    "is_this_your_product": "Is this your product?",
+    "scan_again": "Scan again",
+    "try_again": "Try again",
+    "back": "Back",
+    "contact_agent": "Contact extension agent",
+    "call": "Call",
+    "sms": "SMS",
+    "choose_crop": "Choose your crop",
+    "field_size": "Field size (optional)",
+    "show_dose": "Show the dose",
+    "dose": "Dose",
+    "how_to_use": "How to use",
+    "wait_before_harvest": "Wait before harvest",
+    "days": "days",
+    "wear_this": "Wear this",
+    "danger_level": "Danger level",
+    "active_ingredient": "Active ingredient",
+    "registration_no": "Registration number",
+    "play_again": "Play again",
+    "no_connection": "No connection. Try again when you are online.",
+    "capture": "Take the photo",
+    "use_camera": "Open camera",
+    "upload_photo": "Choose a photo",
+    "share_location": "Share your location to help track fake products in your area?",
+    "allow": "Allow",
+    "skip": "Skip",
+    "install": "Add to home screen",
+    "emergency_title": "Poisoning emergency",
+    "emergency_soon": "Emergency first-aid guidance is coming soon. If someone is poisoned, get help now.",
+    "emergency_call_help": "Call for help"
+  },
+  "crop": {
+    "potato": "Potato",
+    "tomato": "Tomato",
+    "onion": "Onion",
+    "wheat": "Wheat",
+    "coffee": "Coffee",
+    "maize": "Maize",
+    "sorghum": "Sorghum",
+    "teff": "Teff",
+    "barley": "Barley",
+    "vegetables": "Vegetables",
+    "cereals": "Cereals",
+    "stored_grain": "Stored grain",
+    "grape": "Grape",
+    "citrus": "Citrus",
+    "cotton": "Cotton",
+    "sugarcane": "Sugarcane",
+    "non_crop": "Non-crop land",
+    "pre_plant": "Before planting"
+  },
+  "ppe": {
+    "gloves": "Gloves",
+    "face_mask": "Face mask",
+    "goggles": "Goggles",
+    "long_sleeves": "Cover your body",
+    "boots": "Boots"
+  },
+  "hazard": {
+    "Ia": "Extremely dangerous",
+    "Ib": "Highly dangerous",
+    "II": "Moderately dangerous",
+    "III": "Slightly dangerous",
+    "U": "Low danger"
   }
 }
