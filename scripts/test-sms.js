@@ -228,14 +228,32 @@ async function main() {
       sent[0].message.includes(seek) && sent[0].message.includes(rinse), sent[0].message);
   }
   {
-    // Afaan Oromo (Latin) reply -> GSM-7; Amharic (Ethiopic) -> UCS-2.
+    // Latin-script languages -> GSM-7; Ge'ez-script -> UCS-2.
     const omFrom = await withLang("om");
     const { sent: omSent } = await sms("ETH-INS-0009/05", { from: omFrom });
     check("Afaan Oromo reply detected as GSM-7", detectEncoding(omSent.at(-1).message) === "GSM7", omSent.at(-1).message);
+    const aaFrom = await withLang("aa"); // Afar is Latin
+    const { sent: aaSent } = await sms("ETH-INS-0009/05", { from: aaFrom });
+    check("Afar reply detected as GSM-7", detectEncoding(aaSent.at(-1).message) === "GSM7", aaSent.at(-1).message);
     const amFrom = await withLang("am");
     const { sent: amSent } = await sms("ETH-INS-0009/05", { from: amFrom });
     check("Amharic reply detected as UCS-2 and <=2 segments",
       detectEncoding(amSent.at(-1).message) === "UCS2" && segmentCount(amSent.at(-1).message) <= 2);
+    // encoding.js classifies Ge'ez (am, ti) as UCS-2 regardless of locale content.
+    // ti replies are currently English (stub -> en fallback), so we assert the
+    // classifier on Ge'ez text directly rather than on a ti reply.
+    check("encoding classifies Ge'ez (ti/am script) as UCS-2", detectEncoding("ትግርኛ ጽሑፍ") === "UCS2");
+  }
+  {
+    // LANG aa works; Afar route word recognized (stub -> English first-aid text).
+    const from = newPhone();
+    await sms("LANG aa", { from });
+    const langRow = (await db.execute({ sql: "SELECT lang FROM sms_users WHERE phone=?", args: [from] })).rows[0];
+    check("LANG aa persists Afar preference", langRow?.lang === "aa", JSON.stringify(langRow));
+    const { sent } = await sms("liqime", { from }); // Afar swallowed (best-effort)
+    check("Afar route word triggers first aid", /health centre/i.test(sent[0].message), sent[0].message);
+    const bad = await sms("LANG zz", { from: newPhone() });
+    check("LANG with unsupported code -> rejected", /Unknown language|Use:/.test(bad.sent.at(-1).message), bad.sent.at(-1).message);
   }
 
   console.log(`\n${passed} passed, ${failed} failed`);

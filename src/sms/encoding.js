@@ -2,10 +2,10 @@
 // SMS ENCODING (M5 Section 0)
 //
 // GSM-7 gives 160 chars/segment (153 when concatenated) but ONLY for its Latin
-// alphabet. Ethiopic script (Amharic, Tigrinya, Sidaamu Afoo) is not in GSM-7,
-// so those replies are UCS-2: 70 chars/segment (67 concatenated). Somali and
-// Afaan Oromo are Latin -> GSM-7. Budgets differ PER LANGUAGE; the reply builder
-// must front-load the verdict and fit to a small number of segments.
+// alphabet. Ethiopic script (Amharic, Tigrinya) is not in GSM-7, so those replies
+// are UCS-2: 70 chars/segment (67 concatenated). The Latin-script languages —
+// Afaan Oromo, Somali, Afar, English — are GSM-7. Budgets differ PER LANGUAGE; the
+// reply builder must front-load the verdict and fit to a small number of segments.
 // ---------------------------------------------------------------------------
 
 // GSM 03.38 basic alphabet (each char = 1 septet). Includes \n, \r, ESC (\x1b).

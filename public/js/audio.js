@@ -7,7 +7,8 @@
    reliable Web Speech voice. Every safety-critical phrase is from a small fixed
    set, recorded once per language by native speakers and shipped as static
    files. Perfect pronunciation, full offline, zero API cost, and it covers
-   Sidaamu Afoo / Wolaytta which no TTS vendor supports.
+   Afar / Tigrinya, which have poor or no commercial TTS coverage. English is the
+   exception: it resolves via the Web Speech TTS bridge and needs no recordings.
 
    speak(item, lang)          -> plays one clip (item = "key" or {key, text})
    speakSequence(items, lang) -> plays clips back-to-back (e.g. first-aid steps)
@@ -20,7 +21,7 @@ window.AudioLayer = (() => {
 
   const DEBUG = false; // flip on to log which resolution path fired
   const VOICE_HINTS = {
-    am: ["am"], om: ["om"], ti: ["ti"], so: ["so"], sid: ["sid"], wal: ["wal"],
+    am: ["am"], om: ["om"], ti: ["ti"], so: ["so"], aa: ["aa"],
     en: ["en-us", "en-gb", "en"],
   };
 

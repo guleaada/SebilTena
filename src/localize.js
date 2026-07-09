@@ -6,7 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOCALES_DIR = path.join(__dirname, "..", "locales");
 const FALLBACK = "en";
 
-export const SUPPORTED_LANGS = ["am", "om", "sid", "ti", "so", "wal", "en"];
+export const SUPPORTED_LANGS = ["am", "om", "ti", "so", "aa", "en"];
 
 const cache = new Map();
 

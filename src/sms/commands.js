@@ -5,15 +5,16 @@ import { SUPPORTED_LANGS } from "../localize.js";
 //
 // Route recognition is a small FIXED vocabulary (not safety data). English
 // words and 1-4 numeric shortcuts always work; localized words are best-effort.
-// ti/so/sid/wal words need native review (see DECISIONS.md). Panic types short,
-// so we are case-insensitive, whitespace-tolerant, and accept bare route words.
+// ti/so/aa words need native review (see DECISIONS.md). Panic types short, so we
+// are case-insensitive, whitespace-tolerant, and accept bare route words.
 // ---------------------------------------------------------------------------
 
 const ROUTE_SYNONYMS = {
-  skin: ["skin", "1", "gogaa", "ቆዳ", "maqaarka", "maqaar", "ቆርበት", "galba", "goga"],
-  eyes: ["eyes", "eye", "2", "ija", "ዓይን", "indhaha", "indho", "ዓይኒ", "ilʼe"],
-  swallowed: ["swallowed", "swallow", "3", "liqimse", "ተውጦ", "ዋጠ", "liqday", "cabbay", "ወሓጠ", "agulte"],
-  breathed: ["breathed", "breath", "inhaled", "inhale", "4", "hargane", "ተነፈሰ", "ትንፋሽ", "neefsaday", "neef", "ኣተንፈሰ", "shittuu"],
+  // en · om · am · ti · so · aa (Afar best-effort — see DECISIONS.md)
+  skin: ["skin", "1", "gogaa", "ቆዳ", "ቆርበት", "maqaarka", "maqaar", "arac", "carra"],
+  eyes: ["eyes", "eye", "2", "ija", "ዓይን", "ዓይኒ", "indhaha", "indho", "inti", "intii"],
+  swallowed: ["swallowed", "swallow", "3", "liqimse", "ተውጦ", "ዋጠ", "ወሓጠ", "liqday", "liqime"],
+  breathed: ["breathed", "breath", "inhaled", "inhale", "4", "hargane", "ተነፈሰ", "ትንፋሽ", "neefsaday", "neef", "ኣተንፈሰ", "samaate"],
 };
 
 const ROUTE_LOOKUP = new Map();

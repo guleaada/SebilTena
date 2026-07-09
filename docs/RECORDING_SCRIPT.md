@@ -1,13 +1,17 @@
 # MedaGuard — Native Speaker Recording Script
 
-**Version 1.1** (addendum folded in): added the `hazard_unlikely` clip (§2), and
-the nine `aid_*` first-aid clips (§3) are now used for **every** product, known
-or unknown — they are the highest-priority recordings. See the priority order at
-the end.
+**Version 1.2** (language realignment): recording languages are now **Amharic,
+Afaan Oromo, Tigrinya, Somali, Afar** (`am, om, ti, so, aa`); the earlier set's
+two lowest-resource languages were dropped and Afar added. **English is NOT
+recorded**: it resolves via the Web Speech TTS bridge. No phrase key changed —
+anything already recorded stays valid. (v1.1 added the
+`hazard_unlikely` clip (§2) and made the nine `aid_*` first-aid clips (§3) the
+highest-priority recordings, used for every product.)
 
-**Purpose:** These are all the phrases MedaGuard speaks aloud to farmers. Recording them once per language gives us perfect pronunciation, full offline operation, and coverage for languages no text-to-speech provider supports.
+**Purpose:** These are all the phrases MedaGuard speaks aloud to farmers. Recording them once per language gives us perfect pronunciation, full offline operation, and coverage for Afar and Tigrinya, which have poor or no commercial text-to-speech support.
 
-**Languages needed:** Amharic · Afaan Oromo · Sidaamu Afoo · Tigrinya · Somali · Wolaytta
+**Languages needed (record all five):** Amharic · Afaan Oromo · Tigrinya · Somali · Afar
+_(English is covered by the on-device TTS bridge and needs no recordings.)_
 
 > This file is the **canonical phrase-key inventory**. The app requests audio by
 > exactly these `key`s (`public/js/audio.js`, resolving `/audio/{lang}/{key}.{fmt}`),
@@ -19,7 +23,7 @@ the end.
 ## Instructions for the recorder
 
 - **One audio file per phrase.** Filename = the `key` column exactly, e.g. `verdict_verified.mp3`.
-- **Folder per language**, using these codes: `am` (Amharic), `om` (Afaan Oromo), `sid` (Sidaamu Afoo), `ti` (Tigrinya), `so` (Somali), `wal` (Wolaytta).
+- **Folder per language**, using these codes: `am` (Amharic), `om` (Afaan Oromo), `ti` (Tigrinya), `so` (Somali), `aa` (Afar).
 - **Phone recording is fine.** Quiet room, phone ~20cm from mouth, no music, no background voices.
 - **Speak clearly and calmly**, slightly slower than normal conversation. A frightened farmer is listening.
 - **Leave ~0.5s of silence** at the start and end of each clip.

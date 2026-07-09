@@ -59,7 +59,7 @@ build brief ("make reasonable choices and record them"). Each is revisable.
 - All farmer-facing strings live in `/locales/*.json` (nested `status` / `msg` /
   `disclaimer` keys). `t(lang, key)` falls back to English per-key.
 - **English + Amharic + Afaan Oromo** are drafted (the two non-English languages
-  the acceptance criteria demo). **Tigrinya, Somali, Sidaamu Afoo, Wolaytta** are
+  the acceptance criteria demo). **Tigrinya, Somali, Afar** are
   present as stubs that fall back to English — full translation happens in M3.
 - **All non-English strings are marked DRAFT/STUB and require native-speaker +
   agronomist review before deployment.** Machine translation of the *dangerous
@@ -171,7 +171,7 @@ build brief ("make reasonable choices and record them"). Each is revisable.
   future (the `speak()` seam).
 - **Observed voice availability:** in the (headless Chromium) test environment,
   only **English** had a TTS voice; **Amharic, Afaan Oromo, Tigrinya, Somali,
-  Sidaamu Afoo, Wolaytta had none**. On real Android, Amharic (am-ET) is
+  Afar had none**. On real Android, Amharic (am-ET) is
   sometimes present via Google TTS; the others generally are not. So in practice
   most Ethiopian-language users currently get text+icon+color and rely on the
   future server-TTS provider for audio. This is the single biggest gap to close
@@ -180,7 +180,7 @@ build brief ("make reasonable choices and record them"). Each is revisable.
 ### Language
 - Prominent switcher lists all 6 languages in **native script** (from each
   locale's `_native`), persisted in `localStorage` (`mg_lang`); the whole UI
-  re-renders and re-speaks on switch. Stub languages (ti/so/sid/wal) still
+  re-renders and re-speaks on switch. Stub languages (ti/so/aa) still
   select and fall back to English strings (M1/M2 behaviour), pending translation.
 
 ### PWA (shell only — deep offline is M6)
@@ -210,7 +210,7 @@ M3 confirmed none of the six Ethiopian languages resolve a Web Speech voice, so
 safety-critical phrase is from a small fixed set, so we ship **pre-recorded
 clips** (recorded once per language by native speakers) instead of synthesising.
 Result: perfect pronunciation, full offline, zero API cost, and coverage for
-Sidaamu Afoo / Wolaytta which no TTS vendor supports.
+Afar / Tigrinya, which have poor or no commercial TTS coverage.
 
 ### Architecture
 - **`public/js/audio.js` is the ONLY place that touches `speechSynthesis`.**
@@ -341,7 +341,7 @@ returned recordings drop in by exact key. Changes:
 ## Milestone 5 (SMS channel — `/api/sms/webhook`)
 
 ### Encoding budgets drive the whole reply design (`src/sms/encoding.js`)
-- Ethiopic script (Amharic, Tigrinya, Sidaamu Afoo) forces **UCS-2: 70 chars/
+- Ethiopic script (Amharic, Tigrinya) forces **UCS-2: 70 chars/
   segment, 67 concatenated**. Latin (Somali, Afaan Oromo, English) gets **GSM-7:
   160/153**. Detection is by content against the real GSM-7 charset + extension
   table, not by language guess.
@@ -367,7 +367,7 @@ returned recordings drop in by exact key. Changes:
 ### Emergency by SMS
 - `HELP` → route menu; `HELP <route>` or a **bare route word** → first aid
   immediately. Route words recognized in all six languages + English + 1-4
-  numeric shortcuts (`src/sms/commands.js`); ti/so/sid/wal words are best-effort
+  numeric shortcuts (`src/sms/commands.js`); ti/so/aa words are best-effort
   and need native review (English + numerics always work).
 - Steps are `aid_*` **codes** from `firstaid.js` → reviewed `aid.*` strings; no
   prose in the SMS layer. `packEmergency` guarantees `aid_seek_help` + a phone
@@ -386,8 +386,30 @@ returned recordings drop in by exact key. Changes:
   at the proxy later.)
 - Africa's Talking client is behind `src/sms/client.js` (log-only without creds,
   mockable for tests). 44 offline SMS assertions in `scripts/test-sms.js`.
-- SMS templates (`sms.*`) drafted for en/am/om; ti/so/sid/wal fall back to
+- SMS templates (`sms.*`) drafted for en/am/om; ti/so/aa fall back to
   English — same DRAFT/native-review caveat as the rest of the locales.
+
+## Language realignment (before M6) — align to SebilAI's actual six
+
+The language set was corrected to match SebilAI (where translations, users and
+trust already exist):
+
+- The two lowest-resource languages from the prior set were dropped and **Afar
+  (`aa`) added**, to match SebilAI's actual six.
+- **English (`en`) promoted to a first-class farmer-facing language**, not a
+  dev-only fallback. It is a normal choice in the switcher.
+- **Final six:** `am` (Ge'ez/UCS-2), `om` (Latin/GSM-7), `ti` (Ge'ez/UCS-2),
+  `so` (Latin/GSM-7), `aa` (Latin/GSM-7), `en` (Latin/GSM-7).
+- **SMS encoding:** only `am` and `ti` are UCS-2 (70/67); `om`/`so`/`aa`/`en` are
+  GSM-7 (160/153). `encoding.js` detects by content, so this "just works"; tests
+  updated (Afar GSM-7 assertion added, the dropped languages' cases removed).
+- **Audio / recordings:** five recording languages — `am, om, ti, so, aa`.
+  **English needs NO recordings** — it legitimately resolves via the Web Speech
+  TTS bridge (clip → TTS → silent order unchanged). `aa` ships as a stub locale +
+  empty `public/audio/aa/` folder; missing clips degrade to icon + colour + text.
+- `aa` is DRAFT (falls back to English) like `ti`/`so`; Afar route words for SMS
+  are best-effort pending native review (English + numeric `1–4` always work).
+- No phrase key, filename, or folder-per-language convention changed.
 
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the

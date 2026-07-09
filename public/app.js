@@ -7,7 +7,7 @@
 (() => {
   "use strict";
 
-  const LANGS = ["am", "om", "sid", "ti", "so", "wal", "en"];
+  const LANGS = ["am", "om", "ti", "so", "aa", "en"];
   const FALLBACK = "en";
 
   // Dose unit phrases -> canonical unit clip keys (docs/RECORDING_SCRIPT.md).
