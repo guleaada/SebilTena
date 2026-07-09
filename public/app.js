@@ -10,15 +10,13 @@
   const LANGS = ["am", "om", "sid", "ti", "so", "wal", "en"];
   const FALLBACK = "en";
 
-  // BCP-47 candidates per app language for speechSynthesis voice matching.
-  const VOICE_HINTS = {
-    am: ["am-et", "am"],
-    om: ["om-et", "om-ke", "om"],
-    ti: ["ti-et", "ti-er", "ti"],
-    so: ["so-so", "so"],
-    sid: ["sid"],
-    wal: ["wal"],
-    en: ["en-us", "en-gb", "en"],
+  // Dose unit phrases -> atomic clip keys (for the audio number composer).
+  const UNIT_KEYS = {
+    "kg per hectare": "unit_kg_per_hectare",
+    "l per hectare": "unit_l_per_hectare",
+    "ml per litre of water": "unit_ml_per_litre",
+    "g per litre of water": "unit_g_per_litre",
+    kg: "unit_kg", l: "unit_l", ml: "unit_ml", g: "unit_g",
   };
 
   const CROP_EMOJI = {
@@ -47,7 +45,6 @@
     geoConsent: localStorage.getItem("mg_geo") || null, // 'yes' | 'no' | null
     lastResult: null,
     stream: null,
-    voicesReady: false,
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -79,33 +76,27 @@
     state.en = en || sel || {};
   }
 
-  // ---- Voice (Web Speech API) -------------------------------------------
-  function voiceFor(lang) {
-    if (!("speechSynthesis" in window)) return null;
-    const hints = VOICE_HINTS[lang] || [];
-    const voices = speechSynthesis.getVoices() || [];
-    for (const h of hints) {
-      const v = voices.find((vc) => (vc.lang || "").toLowerCase().replace("_", "-").startsWith(h));
-      if (v) return v;
-    }
-    return null;
+  // ---- Voice: delegate ENTIRELY to AudioLayer (clip -> TTS -> silent). -----
+  // This file must not touch speechSynthesis directly (see audio.js).
+  // An item is a phrase-key string or { key, text } (text = TTS bridge fallback).
+  const speak = (item) => window.AudioLayer.speak(item, state.lang);
+  const speakSeq = (items) => window.AudioLayer.speakSequence(items, state.lang);
+  const stopSpeaking = () => window.AudioLayer.stopSpeaking();
+
+  // Verdict/message -> phrase-key items (verdict_* clips exist; msg_* use TTS/text).
+  function verdictItems(status, headline, message) {
+    const s = String(status || "").toLowerCase();
+    const items = [{ key: `verdict_${s}`, text: headline }];
+    if (message) items.push({ key: `msg_${s}`, text: message });
+    return items;
   }
-  // Speak a sequence of phrases. Cancels anything in flight first.
-  function speak(phrases) {
-    const list = (Array.isArray(phrases) ? phrases : [phrases]).filter(Boolean);
-    const voice = voiceFor(state.lang);
-    // Debug hook for verification (records intent even if no audio device).
-    window.__mgSpoke = { lang: state.lang, voice: voice ? voice.name : null, spoken: !!voice, phrases: list };
-    if (!("speechSynthesis" in window)) return;
-    try { speechSynthesis.cancel(); } catch {}
-    if (!voice) return; // No voice for this language -> stay silent (text+icon remain).
-    for (const text of list) {
-      const u = new SpeechSynthesisUtterance(text);
-      u.voice = voice;
-      u.lang = voice.lang;
-      u.rate = 0.95;
-      speechSynthesis.speak(u);
-    }
+
+  // Parse a stored dose string into a value + unit clip key (best-effort).
+  function parseDose(str) {
+    const m = /^\s*(\d+(?:\.\d)?)\s*(.*\S)?\s*$/.exec(str || "");
+    if (!m) return null;
+    const unitText = (m[2] || "").trim();
+    return { value: parseFloat(m[1]), unitKey: UNIT_KEYS[unitText.toLowerCase()] || null, unitText };
   }
 
   // ---- Navigation --------------------------------------------------------
@@ -203,7 +194,7 @@
   // ---- Scan flow ---------------------------------------------------------
   async function runScan(imageBase64) {
     show("loading");
-    speak(t("ui.reading"));
+    speak({ key: "reading", text: t("ui.reading") });
     if (!navigator.onLine) return renderOffline();
     try {
       const result = await postScan(imageBase64);
@@ -225,7 +216,7 @@
     again.onclick = () => show("home");
     card.querySelector(".verdict-actions").appendChild(again);
     $("#verdictCard").replaceChildren(card);
-    speak(t("ui.no_connection"));
+    speak({ key: "no_connection", text: t("ui.no_connection") });
   }
 
   // ---- Result rendering (status-driven) ----------------------------------
@@ -252,7 +243,7 @@
 
     // Replay button (auto-speak is default; this is for noisy fields).
     const replay = el("button", "btn btn-replay", "🔊 " + esc(t("ui.play_again")));
-    replay.onclick = () => speak([headline, message]);
+    replay.onclick = () => speakSeq(verdictItems(status, headline, message));
     card.querySelector(".replay-wrap").appendChild(replay);
 
     if (status === "CONFIRM") {
@@ -269,7 +260,7 @@
     }
 
     // Auto-speak the verdict the instant it appears.
-    speak([headline, message]);
+    speakSeq(verdictItems(status, headline, message));
   }
 
   function renderConfirm(res, card, actions) {
@@ -315,18 +306,19 @@
     body.appendChild(head);
 
     const safety = record.safety || {};
-    const spokenSafety = [];
+    const safetyItems = [];
 
     // Safety card: PPE icons + hazard band
     if (safety.ppe_required || safety.hazard_class) {
       const sc = el("div", "card");
       sc.appendChild(el("h3", null, "🛡️ " + esc(t("ui.wear_this"))));
+      safetyItems.push({ key: "wear_this", text: t("ui.wear_this") });
       const row = el("div", "ppe-row");
       (safety.ppe_required || []).forEach((p) => {
         const item = el("div", "ppe-item");
         item.innerHTML = `<span class="ppe-emoji">${PPE_EMOJI[p] || "🧰"}</span><span class="ppe-name">${esc(t("ppe." + p))}</span>`;
         row.appendChild(item);
-        spokenSafety.push(t("ppe." + p));
+        safetyItems.push({ key: "ppe_" + p, text: t("ppe." + p) });
       });
       sc.appendChild(row);
       if (safety.hazard_class) {
@@ -334,7 +326,7 @@
         const band = el("div", `hazard-band hazard-${esc(hz)}`);
         band.innerHTML = `<span>${esc(t("ui.danger_level"))}: ${esc(t("hazard." + hz))}</span><span class="hazard-class-chip">${esc(hz)}</span>`;
         sc.appendChild(band);
-        spokenSafety.push(`${t("ui.danger_level")}: ${t("hazard." + hz)}`);
+        safetyItems.push({ key: "hazard_" + hz, text: `${t("ui.danger_level")}: ${t("hazard." + hz)}` });
       }
       body.appendChild(sc);
     }
@@ -360,9 +352,9 @@
     const disc = el("div", "disclaimer", esc(record.disclaimer || t("disclaimer.official")));
     body.appendChild(disc);
 
-    // Speak verdict already done in renderResult; queue the safety summary next.
-    if (spokenSafety.length) {
-      setTimeout(() => speak([t("ui.wear_this") + ": " + spokenSafety.join(", ")]), 30);
+    // Speak verdict already done in renderResult; queue the safety clips next.
+    if (safetyItems.length) {
+      setTimeout(() => speakSeq(safetyItems), 30);
     }
   }
 
@@ -383,10 +375,25 @@
         ${dose.pre_harvest_interval_days != null
           ? `<div class="phi">⏳ ${esc(t("ui.wait_before_harvest"))}: ${esc(dose.pre_harvest_interval_days)} ${esc(t("ui.days"))}</div>` : ""}`;
       container.appendChild(box);
-      const phrases = [`${t("ui.dose")}: ${dose.dose_per_unit}`];
-      if (dose.pre_harvest_interval_days != null)
-        phrases.push(`${t("ui.wait_before_harvest")}: ${dose.pre_harvest_interval_days} ${t("ui.days")}`);
-      speak(phrases);
+      // Compose the spoken dose from atomic clips (number + unit), then PHI.
+      const parsed = parseDose(dose.dose_per_unit);
+      let items;
+      if (parsed) {
+        items = window.AudioLayer.numberItems(parsed.value, {
+          prefixKey: "dose_is", prefixText: t("ui.dose"),
+          unitKey: parsed.unitKey, unitText: parsed.unitText,
+        });
+      } else {
+        items = [{ key: "dose_text", text: dose.dose_per_unit }];
+      }
+      if (dose.pre_harvest_interval_days != null) {
+        items.push(
+          { key: "wait_before_harvest", text: t("ui.wait_before_harvest") },
+          { key: `num_${dose.pre_harvest_interval_days}`, text: String(dose.pre_harvest_interval_days) },
+          { key: "days", text: t("ui.days") }
+        );
+      }
+      speakSeq(items);
     } else {
       box.innerHTML = `<div class="dose-big">⚠️ ${esc(t("crop." + crop))}</div>
         <div class="dose-notes">${esc(dose.message)}</div>`;
@@ -395,7 +402,7 @@
       agent.style.marginTop = "12px";
       agent.onclick = () => show("emergency"); // placeholder route to agent/help
       container.appendChild(agent);
-      speak([dose.message]);
+      speak({ key: "crop_not_covered", text: dose.message });
     }
     box.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
@@ -444,6 +451,12 @@
     reader.readAsDataURL(file);
   }
 
+  // ---- Emergency (minimal in Part A; full poison-control flow in Part B) --
+  function openEmergency() {
+    show("emergency");
+    speak({ key: "emergency_title", text: t("ui.emergency_title") });
+  }
+
   // ---- Wire up -----------------------------------------------------------
   function bind() {
     $("#scanBtn").onclick = () => {
@@ -454,7 +467,7 @@
     $("#fileInput").onchange = onFile;
     $("#langBtn").onclick = async () => { await buildLangList(); $("#langSheet").hidden = false; };
     $("#langSheet").onclick = (e) => { if (e.target.id === "langSheet") e.target.hidden = true; };
-    $("#sosBtn").onclick = () => { show("emergency"); speak([t("ui.emergency_title"), t("ui.emergency_soon")]); };
+    $("#sosBtn").onclick = openEmergency;
     $("#geoAllow").onclick = () => { state.geoConsent = "yes"; localStorage.setItem("mg_geo", "yes"); $("#geoSheet").hidden = true; openCamera(); };
     $("#geoSkip").onclick = () => { state.geoConsent = "no"; localStorage.setItem("mg_geo", "no"); $("#geoSheet").hidden = true; openCamera(); };
     document.querySelectorAll("[data-nav]").forEach((b) => (b.onclick = () => show(b.dataset.nav)));
@@ -463,17 +476,15 @@
   // Expose a tiny surface for automated verification (not used by the UI).
   window.MG = {
     renderResult, selectLang, getState: () => state, t,
-    scanBase64: runScan, lastSpoken: () => window.__mgSpoke,
+    scanBase64: runScan, openEmergency,
+    audio: () => window.AudioLayer, lastSpoken: () => window.__mgAudio,
   };
 
   async function init() {
     bind();
     await loadLang(state.lang);
     paintChrome();
-    if ("speechSynthesis" in window) {
-      speechSynthesis.onvoiceschanged = () => { state.voicesReady = true; };
-      speechSynthesis.getVoices();
-    }
+    window.AudioLayer.loadManifest();
     if ("serviceWorker" in navigator) {
       // Register right away — gating on window 'load' can miss it when the
       // shell is tiny/cached and 'load' has already fired.
