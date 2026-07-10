@@ -185,40 +185,57 @@
     });
   }
 
-  // Persistent banner while an incomplete language is active: never let the
-  // farmer think they are getting their language when they are seeing English.
-  function updateLangBanner() {
+  function hideLangBanner() {
+    const b = $("#langBanner");
+    if (b) { b.hidden = true; b.innerHTML = ""; }
+  }
+
+  // Incomplete language chosen: NEVER pick a fallback for the farmer. Show an
+  // interactive banner offering both Amharic and English; apply only on their tap.
+  function showLangOffer(requested) {
     const banner = $("#langBanner");
     if (!banner) return;
-    if (isLangComplete(state.lang)) { banner.hidden = true; return; }
-    const native = state.langMeta[state.lang]?.native || state.lang;
-    banner.textContent = `⚠ ${native} — ${t("ui.lang_coming_soon")}`;
+    const native = state.langMeta[requested]?.native || requested;
+    banner.innerHTML = "";
+    banner.appendChild(el("span", "lang-banner-msg", `⚠ ${esc(native)} — ${esc(t("ui.lang_coming_soon"))}`));
+    const row = el("span", "lang-banner-actions");
+    for (const code of ["am", "en"]) {
+      const btn = el("button", "lang-banner-btn", esc(state.langMeta[code]?.native || code));
+      btn.onclick = () => { logLangFallback(requested, code); applyLang(code); };
+      row.appendChild(btn);
+    }
+    banner.appendChild(row);
     banner.hidden = false;
   }
 
-  function logLangFallback(lang) {
+  function logLangFallback(requested, chosen) {
     try {
-      const body = JSON.stringify({ requested: lang, channel: "app" });
+      const body = JSON.stringify({ requested, chosen, channel: "app" });
       if (navigator.sendBeacon) navigator.sendBeacon("/api/lang-fallback", new Blob([body], { type: "application/json" }));
       else fetch("/api/lang-fallback", { method: "POST", headers: { "Content-Type": "application/json" }, body }).catch(() => {});
     } catch { /* logging must never break the UI */ }
   }
 
-  async function selectLang(lang) {
+  // Apply a language for real. Only ever called with a COMPLETE language.
+  async function applyLang(lang) {
     state.lang = lang;
     localStorage.setItem("mg_lang", lang);
-    $("#langSheet").hidden = true;
     await ensureLangMeta();
     await loadLang(lang);
     paintChrome();
-    updateLangBanner();
-    if (!isLangComplete(lang)) {
-      // Never silently substitute. Announce in English + log the demand.
-      window.AudioLayer.speak({ key: "lang_coming_soon", text: t("ui.lang_coming_soon_spoken") }, "en");
-      logLangFallback(lang);
-    }
-    // Re-render + re-speak whatever is on screen.
+    hideLangBanner();
     if ($("#view-result").classList.contains("is-active") && state.lastResult) renderResult(state.lastResult);
+  }
+
+  // Switcher entry point.
+  async function selectLang(lang) {
+    $("#langSheet").hidden = true;
+    await ensureLangMeta();
+    if (isLangComplete(lang)) return applyLang(lang);
+    // Offer both; announce in English; log the demand (chosen unknown yet).
+    showLangOffer(lang);
+    window.AudioLayer.speak({ key: "lang_offer", text: t("ui.lang_offer_spoken") }, "en");
+    logLangFallback(lang, null);
   }
 
   // ---- API ---------------------------------------------------------------
@@ -700,7 +717,7 @@
     audio: () => window.AudioLayer, lastSpoken: () => window.__mgAudio,
   };
 
-  // Insert the persistent "coming soon — showing English" banner under the top bar.
+  // Insert the language-offer banner container under the top bar.
   function mountLangBanner() {
     if ($("#langBanner")) return;
     const banner = el("div", "lang-banner");
@@ -713,9 +730,18 @@
     bind();
     mountLangBanner();
     await ensureLangMeta();
-    await loadLang(state.lang);
-    paintChrome();
-    updateLangBanner(); // reflect an incomplete stored language on load
+    // A stored language that isn't complete must not silently show as if it works.
+    // Display English and offer the choice (do not pick for the farmer).
+    if (!isLangComplete(state.lang)) {
+      const requested = state.lang;
+      state.lang = "en";
+      await loadLang("en");
+      paintChrome();
+      showLangOffer(requested); // banner only on load — no re-announce, no re-log
+    } else {
+      await loadLang(state.lang);
+      paintChrome();
+    }
     window.AudioLayer.loadManifest();
     loadEmergencyBundle(); // prefetch + cache the offline emergency data
     if ("serviceWorker" in navigator) {

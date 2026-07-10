@@ -63,8 +63,8 @@
     "emergency_title": "Poisoning emergency",
     "emergency_soon": "Emergency first-aid guidance is coming soon. If someone is poisoned, get help now.",
     "emergency_call_help": "Call for help",
-    "lang_coming_soon": "coming soon — showing English",
-    "lang_coming_soon_spoken": "This language is coming soon. You will see English for now."
+    "lang_coming_soon": "coming soon",
+    "lang_offer_spoken": "This language is coming soon. Please choose Amharic or English."
   },
   "crop": {
     "potato": "Potato",
@@ -149,6 +149,7 @@
     "call_line": "Call {agent}. Poison line {poison}.",
     "rate_limited": "Too many messages. Please wait a while and try again.",
     "crop_unknown": "Crop not recognized. Text CROP then the crop name.",
-    "lang_unavailable": "{lang} is not available yet. You will receive {fallback}."
+    "lang_unavailable": "{lang} not available yet. Reply LANG AM for Amharic or LANG EN for English.",
+    "lang_invite": "Reply LANG then your language (am/om/ti/so/aa/en)."
   }
 }

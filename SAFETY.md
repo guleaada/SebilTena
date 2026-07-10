@@ -112,15 +112,21 @@ no icons or colour — an English (or fallback) message sent to a farmer who ask
 for their own language is unreadable exactly when it matters.
 
 - Each locale declares `complete: true|false`. Complete: `am`, `om`, `en`.
-  Incomplete (stub → fallback): `ti`, `so`, `aa`.
-- **PWA:** an incomplete language stays selectable but shows a persistent
-  "coming soon — showing English" badge and speaks that notice **in English** on
-  selection. Never a silent substitution.
-- **SMS:** `LANG ti|so|aa` replies honestly ("Tigrinya is not available yet. You
-  will receive Amharic."), then sets the fallback. The farmer is never silently
-  replied to in a language they did not choose.
-- Every fallback is logged (`scans.result_status = 'LANG_FALLBACK'`,
-  `language = requested`) so we can see which languages farmers actually want.
+  Incomplete (stub): `ti`, `so`, `aa`.
+- **We never choose a language for the farmer.** Language choice is politically
+  sensitive in Ethiopia, and an auto-fallback (e.g. to Amharic) fails Somali/Afar
+  speakers in low-Amharic-literacy regions. Selecting an incomplete language
+  **offers both** Amharic and English and applies nothing until the farmer picks.
+- **PWA:** incomplete selection shows an interactive banner with Amharic/English
+  buttons, spoken in English; nothing changes until they tap a choice.
+- **SMS:** `LANG ti|so|aa` replies "<Language> not available yet. Reply LANG AM
+  for Amharic or LANG EN for English." and sets nothing. Until a choice is made,
+  replies use the previously-set language or English for a new number — never a
+  silently chosen language.
+- **Telemetry never touches `scans`.** Language fallbacks (and other interaction
+  logs) go to the `events` table; `scans` holds only real scan verdicts (see the
+  Auditability section). Overloading `scans` corrupts the counterfeit surveillance
+  data.
 - When a stub locale gains real strings (`complete: true`), the pending encoding
   tests (Tigrinya/Afar reply UCS-2/GSM-7 + ≤2-segment fit) must be enabled and
   re-verified before release.
@@ -203,6 +209,13 @@ first-aid/dose prose and fails if any leaks in.
 Every scan verdict is logged to the `scans` table (status, confidence, matched
 product, geotag with consent). Do not remove this logging — it is how counterfeit
 surveillance and post-incident review work.
+
+**`scans` is verdicts only.** Its `result_status` may only be a real scan
+outcome: `VERIFIED / UNREGISTERED / EXPIRED / BANNED / SUSPENDED / UNCONFIRMED /
+EMERGENCY` (plus the scan-pipeline `CONFIRM` state). Interaction **telemetry**
+(language fallbacks, help requests, dose lookups, rate-limits) goes in the
+separate `events` table, so it can never inflate scan counts or per-region
+counterfeit rates. A test enforces this. Do not overload `scans`.
 
 ## If you are tempted to break this
 

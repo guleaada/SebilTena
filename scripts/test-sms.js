@@ -39,6 +39,8 @@ async function withLang(lang) {
 async function main() {
   await initSchema();
   await db.execute("DELETE FROM sms_users"); // deterministic
+  await db.execute("DELETE FROM scans");     // clean slate for scans-purity assertion
+  await db.execute("DELETE FROM events");    // clean slate for telemetry assertions
 
   // ---- Section 0: encoding --------------------------------------------------
   console.log("\nEncoding");
@@ -80,11 +82,12 @@ async function main() {
     check("EXPIRED caution-first", sent.at(-1).message.startsWith("EXPIRED"), sent.at(-1).message);
   }
   {
-    // Unknown language -> bilingual verdict + LANG invite.
+    // New number (no language) -> English verdict + LANG invite. We do NOT
+    // choose a language for the farmer, so NO Amharic is included.
     const { sent } = await sms("ETH-INS-0009/05", { from: newPhone() });
     const m = sent.at(-1).message;
-    check("unknown-lang verdict is bilingual (en+am)", /BANNED/.test(m) && /የተከለከለ/.test(m), m);
-    check("unknown-lang verdict invites LANG", /LANG am/.test(m));
+    check("new-number verdict is English only (no chosen fallback)", /BANNED/.test(m) && !/የተከለከለ/.test(m) && detectEncoding(m) === "GSM7", m);
+    check("new-number verdict invites LANG", /LANG/i.test(m));
   }
 
   // ---- No fuzzy over SMS ----------------------------------------------------
@@ -260,39 +263,54 @@ async function main() {
     check("LANG with unsupported code -> rejected", /Unknown language|Use:/.test(bad.sent.at(-1).message), bad.sent.at(-1).message);
   }
 
-  // ---- Part 0.5: honest language fallback (no silent substitution) ---------
-  console.log("\nHonest language fallback");
+  // ---- Part 0.6: never choose a fallback for the farmer (offer both) -------
+  console.log("\nLanguage: offer both, choose nothing");
   {
     const from = newPhone();
     const { sent } = await sms("LANG ti", { from });
     const m = sent.at(-1).message;
-    check("LANG ti -> honest 'not available yet' notice naming Tigrinya", /not available yet/i.test(m) && /Tigrinya/.test(m), m);
-    check("LANG ti -> announces the fallback (Amharic)", /Amharic/.test(m), m);
+    check("LANG ti -> 'not available yet' notice naming Tigrinya", /not available yet/i.test(m) && /Tigrinya/.test(m), m);
+    check("LANG ti -> OFFERS BOTH (LANG AM and LANG EN)", /LANG AM/i.test(m) && /LANG EN/i.test(m), m);
+    check("LANG ti -> does NOT announce a chosen fallback", !/You will receive/i.test(m));
     const row = (await db.execute({ sql: "SELECT lang FROM sms_users WHERE phone=?", args: [from] })).rows[0];
-    check("LANG ti -> stored lang set to the fallback (am)", row?.lang === "am", JSON.stringify(row));
-    // Subsequent reply arrives in the ANNOUNCED fallback (Amharic) — not silent English/Tigrinya.
+    check("LANG ti -> sets NOTHING (no language chosen for the farmer)", row?.lang == null, JSON.stringify(row));
+    // Subsequent reply for this (still language-less) number is English, not a chosen fallback.
     const { sent: v } = await sms("ETH-INS-0009/05", { from });
-    check("subsequent reply is the announced Amharic", detectEncoding(v.at(-1).message) === "UCS2" && v.at(-1).message.startsWith("የተከለከለ"), v.at(-1).message);
+    check("subsequent reply stays English (no silent Amharic)", detectEncoding(v.at(-1).message) === "GSM7" && v.at(-1).message.startsWith("BANNED"), v.at(-1).message);
   }
   {
-    // Fallback event logged with the REQUESTED language (measure real demand).
-    const before = Number((await db.execute("SELECT COUNT(*) n FROM scans WHERE result_status='LANG_FALLBACK' AND language='so'")).rows[0].n);
-    const { sent } = await sms("LANG so", { from: newPhone() });
-    check("LANG so -> honest fallback notice naming Somali", /not available yet/i.test(sent.at(-1).message) && /Somali/.test(sent.at(-1).message));
-    const after = Number((await db.execute("SELECT COUNT(*) n FROM scans WHERE result_status='LANG_FALLBACK' AND language='so'")).rows[0].n);
-    check("LANG so -> logs LANG_FALLBACK(language=requested)", after > before);
+    // Demand logged to EVENTS (not scans), with the requested language.
+    const from = newPhone();
+    await sms("LANG so", { from });
+    const ev = (await db.execute("SELECT payload FROM events WHERE type='lang_fallback' AND channel='sms' ORDER BY id DESC LIMIT 1")).rows[0];
+    check("LANG so -> lang_fallback logged to events(payload.requested=so)", ev && JSON.parse(ev.payload).requested === "so", JSON.stringify(ev));
   }
   {
     const { sent } = await sms("LANG aa", { from: newPhone() });
-    check("LANG aa -> honest fallback notice naming Afar", /not available yet/i.test(sent.at(-1).message) && /Afar/.test(sent.at(-1).message), sent.at(-1).message);
+    check("LANG aa -> offer notice naming Afar", /not available yet/i.test(sent.at(-1).message) && /Afar/.test(sent.at(-1).message) && /LANG EN/i.test(sent.at(-1).message), sent.at(-1).message);
   }
   {
-    // A COMPLETE language still sets normally — no fallback notice.
+    // A COMPLETE language still sets normally — no offer.
     const from = newPhone();
     const { sent } = await sms("LANG am", { from });
-    check("LANG am (complete) -> set normally, no fallback notice", !/not available yet/i.test(sent.at(-1).message));
+    check("LANG am (complete) -> set normally, no offer", !/not available yet/i.test(sent.at(-1).message));
     const row = (await db.execute({ sql: "SELECT lang FROM sms_users WHERE phone=?", args: [from] })).rows[0];
     check("LANG am -> stored as am", row?.lang === "am");
+  }
+
+  // ---- Part 0.6 A: telemetry lives in `events`, never `scans` --------------
+  console.log("\nTelemetry separation (events vs scans)");
+  {
+    const SCAN_VERDICTS = new Set(["VERIFIED", "UNREGISTERED", "EXPIRED", "BANNED", "SUSPENDED", "UNCONFIRMED", "EMERGENCY", "CONFIRM"]);
+    const rows = (await db.execute("SELECT DISTINCT result_status FROM scans")).rows.map((r) => r.result_status);
+    const bad = rows.filter((s) => !SCAN_VERDICTS.has(s));
+    check("scans contains ONLY real scan verdicts", bad.length === 0, `stray statuses: ${bad.join(", ")}`);
+    check("no LANG_FALLBACK in scans", !rows.includes("LANG_FALLBACK"));
+    check("no SMS_LANG/SMS_DOSE/SMS_HELP/RATE_LIMITED in scans",
+      !rows.some((s) => ["SMS_LANG", "SMS_DOSE", "SMS_DOSE_UNCOVERED", "SMS_HELP", "RATE_LIMITED", "LANG_OFFER"].includes(s)));
+    const evTypes = (await db.execute("SELECT DISTINCT type FROM events")).rows.map((r) => r.type);
+    check("telemetry present in events (lang_fallback, help, dose_lookup, ...)",
+      evTypes.includes("lang_fallback") && evTypes.includes("dose_lookup") && evTypes.includes("help"), evTypes.join(","));
   }
 
   console.log(`\n${passed} passed, ${failed} failed, ${pendingCount} pending`);

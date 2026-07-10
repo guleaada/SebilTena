@@ -9,6 +9,7 @@ import { parseCommand } from "./commands.js";
 import { resolveCrop } from "./crops.js";
 import { rateLimiter as defaultLimiter } from "./rateLimit.js";
 import { createSmsClient } from "./client.js";
+import { logEvent } from "../events.js";
 import * as T from "./templates.js";
 
 // ---------------------------------------------------------------------------
@@ -20,11 +21,6 @@ import * as T from "./templates.js";
 // ---------------------------------------------------------------------------
 
 const defaultClient = createSmsClient();
-
-// SMS fallback for an incomplete language: Amharic (Ethiopia's most widely-read
-// language), not English — a text-only channel has no icons/voice to soften an
-// English message. Announced honestly; revisable per-region. See DECISIONS.md.
-const SMS_FALLBACK = "am";
 
 function sanitize(text) {
   let s = String(text || "").replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
@@ -107,8 +103,8 @@ export async function handleInbound(inbound, deps = {}) {
   if (!isEmergency) {
     if (limiter.isLimited(from, nowMs)) {
       const lang = knownLang || "en";
-      await logSms(db, { status: "RATE_LIMITED", region, lang });
-      return send(client, db, from, [T.rateLimitedText(lang)], { status: "RATE_LIMITED", region, lang, log: false });
+      await logEvent({ type: "rate_limited", channel: "sms", region }, db);
+      return send(client, db, from, [T.rateLimitedText(lang)], { status: "RATE_LIMITED", region, lang });
     }
     limiter.record(from, nowMs);
   }
@@ -116,28 +112,28 @@ export async function handleInbound(inbound, deps = {}) {
 
   switch (cmd.type) {
     case "LANG": {
+      const lang = knownLang || "en"; // reply in the previously-set lang, else English
       if (!cmd.lang) {
-        const lang = knownLang || "en";
-        await logSms(db, { status: "SMS_LANG", region, lang });
+        await logEvent({ type: "lang_invalid", channel: "sms", region }, db);
         return send(client, db, from, [T.langBadText(lang)], { status: "SMS_LANG", region, lang });
       }
       if (isComplete(cmd.lang)) {
         await setLang(db, from, cmd.lang, nowIso);
+        await logEvent({ type: "lang_set", channel: "sms", payload: { lang: cmd.lang }, region }, db);
         return send(client, db, from, [T.langSetText(cmd.lang, LANG_NAMES[cmd.lang] || cmd.lang)], { status: "SMS_LANG", region, lang: cmd.lang });
       }
-      // Incomplete language: NEVER silently reply in another language. Tell the
-      // farmer honestly, set the fallback, and log which language they wanted.
-      await setLang(db, from, SMS_FALLBACK, nowIso);
-      await logSms(db, { status: "LANG_FALLBACK", region, lang: cmd.lang }); // language = requested
-      return send(client, db, from, [T.langUnavailableText(cmd.lang, SMS_FALLBACK)], { status: "LANG_FALLBACK", region, lang: SMS_FALLBACK });
+      // Incomplete language: DO NOT choose a fallback for the farmer. Offer both
+      // and set nothing until they pick. Log the request as real demand data.
+      await logEvent({ type: "lang_fallback", channel: "sms", payload: { requested: cmd.lang }, region }, db);
+      return send(client, db, from, [T.langUnavailableText(cmd.lang)], { status: "LANG_OFFER", region, lang });
     }
 
     case "HELP":
     case "ROUTE": {
       const lang = knownLang || "en";
       if (cmd.type === "HELP" && !cmd.route) {
-        await logSms(db, { status: "EMERGENCY", region, lang });
-        return send(client, db, from, [T.emergencyMenuText(lang)], { status: "EMERGENCY", region, lang });
+        await logEvent({ type: "help", channel: "sms", payload: { kind: "emergency_menu" }, region }, db);
+        return send(client, db, from, [T.emergencyMenuText(lang)], { status: "HELP", region, lang });
       }
       return emergencyReply({ db, client, getFirstAid, from, route: cmd.route, user, lang, region, nowMs });
     }
@@ -146,17 +142,17 @@ export async function handleInbound(inbound, deps = {}) {
       const lang = knownLang || "en";
       const cropKey = resolveCrop(cmd.crop);
       if (!cropKey) {
-        await logSms(db, { status: "SMS_DOSE", region, lang });
+        await logEvent({ type: "dose_lookup", channel: "sms", payload: { resolved: false }, region }, db);
         return send(client, db, from, [t(lang, "sms.crop_unknown")], { status: "SMS_DOSE", region, lang });
       }
       const fresh = user?.last_verified_at && nowMs - Date.parse(user.last_verified_at) <= config.smsSessionTtlMin * 60_000;
       if (!user?.last_pesticide_id || !fresh) {
-        await logSms(db, { status: "SMS_DOSE", region, lang });
+        await logEvent({ type: "dose_lookup", channel: "sms", payload: { crop: cropKey, noContext: true }, region }, db);
         return send(client, db, from, [T.noProductText(lang)], { status: "SMS_DOSE", region, lang });
       }
       const dose = await getDosage(user.last_pesticide_id, cropKey, lang);
       const cropLabel = t(lang, `crop.${cropKey}`);
-      await logSms(db, { regNo: user.last_reg_no, pesticideId: user.last_pesticide_id, status: dose.covered ? "SMS_DOSE" : "SMS_DOSE_UNCOVERED", region, lang });
+      await logEvent({ type: "dose_lookup", channel: "sms", payload: { crop: cropKey, covered: dose.covered }, region }, db);
       return send(client, db, from, [T.doseText(dose, cropLabel, lang)], { status: "SMS_DOSE", region, lang });
     }
 
@@ -165,11 +161,15 @@ export async function handleInbound(inbound, deps = {}) {
       if (result.status === "VERIFIED" && result.product) {
         await setLastVerified(db, from, result.product, nowIso);
       }
+      // Scan verdict -> `scans` (safety audit + surveillance).
       await logSms(db, {
         regNo: cmd.regNo, pesticideId: result.product?.id, status: result.status, confidence: "high", region, lang: result.lang,
       });
-      // Unknown language -> bilingual (en + am) verdict + LANG invite.
-      const message = knownLang ? T.verdictText(result, knownLang) : T.bilingualVerdict(result);
+      // New number (no language set) -> English verdict + a neutral LANG invite.
+      // We do NOT choose a language for the farmer (no silent Amharic).
+      const message = knownLang
+        ? T.verdictText(result, knownLang)
+        : `${T.verdictText(result, "en")} ${t("en", "sms.lang_invite")}`;
       return send(client, db, from, [message], { status: result.status, region, lang: knownLang || "en" });
     }
 
@@ -177,7 +177,7 @@ export async function handleInbound(inbound, deps = {}) {
       // Not parseable -> short help. Unknown language -> en help + am hint.
       const lang = knownLang || "en";
       const msg = knownLang ? T.helpText(lang) : `${T.helpText("en")} / ${T.helpText("am")}`;
-      await logSms(db, { status: "SMS_HELP", region, lang });
+      await logEvent({ type: "help", channel: "sms", payload: { kind: "commands" }, region }, db);
       return send(client, db, from, [msg], { status: "SMS_HELP", region, lang });
     }
   }

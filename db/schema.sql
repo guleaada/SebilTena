@@ -57,6 +57,18 @@ CREATE TABLE IF NOT EXISTS sms_users (
   last_seen TEXT
 );
 
+-- Interaction telemetry (M5.6). Kept OUT of `scans` so it never corrupts the
+-- safety-audit + surveillance counts (e.g. language fallbacks, help requests,
+-- dose lookups, rate-limits). `scans` is verdicts only; telemetry lives here.
+CREATE TABLE IF NOT EXISTS events (
+  id INTEGER PRIMARY KEY,
+  type TEXT NOT NULL,        -- lang_fallback / lang_set / lang_invalid / help / dose_lookup / rate_limited
+  channel TEXT,              -- app / sms
+  payload TEXT,              -- JSON (e.g. {"requested":"ti","chosen":"en"})
+  region TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS extension_agents (
   id INTEGER PRIMARY KEY,
   name TEXT, phone TEXT, region TEXT

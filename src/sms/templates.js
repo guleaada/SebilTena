@@ -33,13 +33,6 @@ export function verdictText(verifyResult, lang) {
   return s;
 }
 
-// Bilingual (en + am) reply for a number with no language preference yet.
-export function bilingualVerdict(verifyResult) {
-  const en = verdictText(verifyResult, "en");
-  const am = verdictText(verifyResult, "am");
-  return `${en} / ${am} (LANG am)`;
-}
-
 export function doseText(dose, cropLabel, lang) {
   if (!dose || !dose.covered) {
     return fill(t(lang, "sms.crop_uncovered"), { crop: cropLabel });
@@ -59,14 +52,12 @@ export const emergencyMenuText = (lang) => t(lang, "sms.emergency_menu");
 export const langSetText = (lang, langName) => fill(t(lang, "sms.lang_set"), { lang: langName });
 export const langBadText = (lang) => t(lang, "sms.lang_bad");
 
-// Honest "not available yet" notice for an incomplete language. Written in
-// English (a one-off system notice); names the language they asked for and the
-// one they'll actually receive. Never silently substitute.
-export const langUnavailableText = (requestedCode, fallbackCode) =>
-  fill(t("en", "sms.lang_unavailable"), {
-    lang: LANG_NAMES[requestedCode] || requestedCode,
-    fallback: LANG_NAMES[fallbackCode] || fallbackCode,
-  });
+// Honest "not available yet" notice for an incomplete language. We do NOT pick a
+// language for the farmer — we OFFER both and let them choose (Reply LANG AM /
+// LANG EN). Written in English (a one-off system notice with language-neutral
+// LANG commands). Never silently substitute.
+export const langUnavailableText = (requestedCode) =>
+  fill(t("en", "sms.lang_unavailable"), { lang: LANG_NAMES[requestedCode] || requestedCode });
 
 export function callLine(agentPhone, poison, lang) {
   return fill(t(lang, "sms.call_line"), { agent: agentPhone || "-", poison: poison || "-" });

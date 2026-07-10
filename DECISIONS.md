@@ -411,29 +411,41 @@ trust already exist):
   are best-effort pending native review (English + numeric `1–4` always work).
 - No phrase key, filename, or folder-per-language convention changed.
 
-## Honest language fallback (Part 0.5) — stop implying languages we don't have
+## Honest language handling (Parts 0.5 + 0.6) — never imply or choose a language
 
 Three locales (`ti`, `so`, `aa`) are English-fallback stubs. Presenting them as
 working languages silently sends English — fatal on text-only SMS.
 
 - Each locale carries `complete: true|false` (`am`/`om`/`en` complete). `isComplete()`
   in `localize.js` reads it (`en` always true).
-- **PWA fallback = English** (it has icons + colour + voice): incomplete
-  languages stay selectable but show a persistent amber "coming soon — showing
-  English" banner + a sub-label in the switcher, and speak the notice **in
-  English** on selection (`AudioLayer.speak(..., 'en')`). Selection POSTs
-  `/api/lang-fallback`.
-- **SMS fallback = Amharic**, not English — a text-only channel has no icons/
-  voice to soften a foreign message, and Amharic is Ethiopia's most widely-read
-  language (and Ge'ez, closer to Tigrinya). `LANG ti|so|aa` sends one honest
-  message ("X is not available yet. You will receive Amharic."), sets the
-  fallback, and logs the demand. Revisable per-region later (`SMS_FALLBACK` in
-  `handler.js`).
-- Fallbacks logged to `scans` (`result_status='LANG_FALLBACK'`, `language`=the
-  requested code) so we can measure which languages farmers want.
-- The restored **Tigrinya UCS-2** (and **Afar GSM-7**) reply assertions are
-  `pending` in `test-sms.js` — enable when those locales gain strings; replies
-  flip encoding and the ≤2-segment fit must be re-verified.
+- **We do NOT select a language on the farmer's behalf** (Part 0.6). Language
+  choice is politically sensitive in Ethiopia, and Somali/Afar speakers are in
+  regions with low Amharic literacy — an auto-fallback fails exactly the users it
+  serves. So there is **no default fallback language** (`SMS_FALLBACK` removed).
+- **PWA:** an incomplete language stays selectable but, on selection, shows an
+  interactive banner **offering both** Amharic and English (buttons), speaks the
+  notice **in English**, and applies nothing until the farmer taps a choice. A
+  legacy incomplete stored language shows the same offer on load (display stays
+  English until they choose).
+- **SMS:** `LANG ti|so|aa` replies "<Language> not available yet. Reply LANG AM
+  for Amharic or LANG EN for English." and **sets nothing**. Until a choice is
+  made, replies use the previously-set language, or **English for a new number**
+  (the new-number verdict is English + a neutral `LANG` invite — no silent
+  Amharic).
+- **Telemetry lives in `events`, never `scans`** (Part 0.6 A). `scans` is the
+  safety-audit + surveillance source (M7); putting `LANG_FALLBACK`/help/dose/
+  rate-limit rows there corrupted scan counts and per-region counterfeit rates.
+  `events(type, channel, payload, region)` now holds all interaction telemetry;
+  `scans` holds ONLY real scan verdicts (VERIFIED / UNREGISTERED / EXPIRED /
+  BANNED / SUSPENDED / UNCONFIRMED / EMERGENCY, plus the scan-only Tier-2 CONFIRM
+  state). A test asserts `scans` contains no other `result_status`. Do not
+  overload `scans`.
+- Chosen fallbacks are logged to `events` (`type='lang_fallback'`,
+  `payload.requested` = the language they asked for, `payload.chosen` = what they
+  picked) — real demand data for which language to translate first.
+- The **Tigrinya UCS-2** / **Afar GSM-7** reply assertions are `pending` in
+  `test-sms.js` — enable when those locales gain strings; replies flip encoding
+  and the ≤2-segment fit must be re-verified.
 
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the

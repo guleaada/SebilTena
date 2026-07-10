@@ -9,6 +9,7 @@ import { getDosage } from "./dosage.js";
 import { getFirstAid, getEmergencyBundle } from "./firstaid.js";
 import { config } from "./config.js";
 import { handleInbound } from "./sms/handler.js";
+import { logEvent } from "./events.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -97,16 +98,18 @@ app.get("/api/emergency-bundle", async (req, res) => {
   }
 });
 
-// POST /api/lang-fallback — log when a farmer picks an incomplete language and
-// receives a fallback, so we can see which languages are actually wanted.
+// POST /api/lang-fallback — a farmer picked an incomplete language. Logged to
+// `events` (NOT `scans`), so we can see which languages are actually wanted
+// without polluting the safety-audit / surveillance data.
 app.post("/api/lang-fallback", async (req, res) => {
   try {
-    const { requested, channel } = req.body || {};
+    const { requested, chosen, channel } = req.body || {};
     const lang = String(requested || "").slice(0, 8);
     if (!lang) return res.status(400).json({ ok: false });
-    await db.execute({
-      sql: `INSERT INTO scans (result_status, language, channel) VALUES (?,?,?)`,
-      args: ["LANG_FALLBACK", lang, channel === "sms" ? "sms" : "app"],
+    await logEvent({
+      type: "lang_fallback",
+      channel: channel === "sms" ? "sms" : "app",
+      payload: { requested: lang, chosen: chosen ? String(chosen).slice(0, 8) : null },
     });
     res.json({ ok: true });
   } catch (err) {
