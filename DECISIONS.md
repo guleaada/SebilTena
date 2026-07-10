@@ -493,6 +493,30 @@ verdict, in both directions.
   (`onLine === false`) a scan reaches the server and renders its verdict, not the
   offline card.
 
+### Part B — asymmetric registry cache (cache pessimistically)
+"Safety expires, danger does not." Offline you cannot tell a fake from a stale
+cache, so **counterfeit is an online-only verdict**.
+
+- `GET /api/registry-bundle` (`src/registry.js`) → compact per-product snapshot
+  with `checked_at`. Stored in **IndexedDB** (`public/js/registry.js`), not
+  localStorage — size + it doesn't block the main thread. On-device size logged
+  in dev (~KB for the 20 samples). Fetched in the background on first online load
+  (`prepareOffline`), refreshed when older than `refreshAfterDays` (7).
+- **The verdict is pure + Node-tested** (`public/js/verdict.js`, run against the
+  same file the browser uses via `scripts/test-offline.js`):
+  BANNED/SUSPENDED = permanent; registered+expired = EXPIRED (re-evaluated vs the
+  device clock); registered+fresh = VERIFIED, spoken "as of <checked_at>", dose
+  shown; registered+stale (> `staleAfterDays`, 90) = **STALE** (caution, no dose);
+  **no cached record = UNCONFIRMED, NEVER UNREGISTERED**.
+- **Merge, don't replace; danger is STICKY** (`mergeBundle`, pure/tested): a
+  locally-known BANNED/SUSPENDED reg-no is never un-banned by a sync that omits
+  or downgrades it — the anomaly is logged to `events` (`/api/client-event`).
+- **Device-clock caveat:** if the clock is before a record's `checked_at`, treat
+  it as STALE, not fresh (fail toward caution).
+- Cache-age indicator shown when a verdict is served from the cache.
+- Verified in preview **with fetch disabled**: BANNED (no dose), unknown →
+  UNCONFIRMED, VERIFIED "as of <date>" + dose from cache, STALE → caution/no dose.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

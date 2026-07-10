@@ -10,7 +10,8 @@
     "SUSPENDED": "Dhorkameera — hin fayyadamiinaa",
     "BANNED": "Guutummaatti dhorkameera — HIN FAYYADAMIINAA",
     "UNCONFIRMED": "Oomisha kana mirkaneessuu hin dandeenye",
-    "CONFIRM": "Oomisha mirkaneessi"
+    "CONFIRM": "Oomisha mirkaneessi",
+    "STALE": "Galmaa’ee ture — irra deebi’ii mirkaneessi"
   },
   "msg": {
     "confirm": "Oomisha kana adda baafne jennee yaadna garuu mirkanaa'aa miti. Maqaa fi qabiyyee sochoosaa mul'atu ilaali; yoo qaruuraa kee waliin wal simu qofa mirkaneessi. Hanga mirkaneessitutti hin fayyadamiin.",
@@ -20,7 +21,10 @@
     "suspended": "Oomishni kun to'attootaan dhorkameera. Hin fayyadamiin. Ogeessa qonnaa kee quunnami.",
     "banned": "Oomishni kun guutummaatti dhorkameera. Hin fayyadamiin, hin bitiin. Si, namoota biroo fi naannoo miidhuu danda'a.",
     "conservative": "Oomisha kana mirkaneessuu hin dandeenye. Hanga mirkanaa'utti hin fayyadamiin. Ogeessa qonnaa kee quunnami ykn lakkoofsa SMS'n ergi.",
-    "crop_not_covered": "Midhaan kun oomisha kanaaf hin hammatamne. Hamma isaa hin tilmaamin — ogeessa qonnaa kee gaafadhu."
+    "crop_not_covered": "Midhaan kun oomisha kanaaf hin hammatamne. Hamma isaa hin tilmaamin — ogeessa qonnaa kee gaafadhu.",
+    "verified_as_of": "Hanga {date}tti galmaa’eera. Yeroo dhumaa mirkanaa’etti sirrii ture.",
+    "stale": "Yeroo dhumaa {date}tti kan mirkanaa’e galmaa’ee ture. Fayyadamuu dura irra deebi’ii mirkaneessi.",
+    "offline_note": "Daataa olkaa’e fayyadamaa jira — intarneetii hin jiru."
   },
   "disclaimer": {
     "official": "Odeeffannoo qajeelaa. Yoo shakkite, ogeessa qonnaa kee quunnami."
@@ -63,7 +67,10 @@
     "install": "Gara fuula jalqabaatti dabali",
     "emergency_title": "Balaa summii",
     "emergency_soon": "Qajeelfamni gargaarsa duraa balaa dhiyootti dhufa. Yoo namni summaa'e, amma gargaarsa argadhu.",
-    "emergency_call_help": "Gargaarsa waami"
+    "emergency_call_help": "Gargaarsa waami",
+    "preparing_offline": "Haala offline qopheessaa jira…",
+    "offline_saved": "Daataa olkaa’e",
+    "days_today": "har’a"
   },
   "crop": {
     "potato": "Dinnicha",

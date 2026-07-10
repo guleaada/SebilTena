@@ -10,6 +10,7 @@ import { getFirstAid, getEmergencyBundle } from "./firstaid.js";
 import { config } from "./config.js";
 import { handleInbound } from "./sms/handler.js";
 import { logEvent } from "./events.js";
+import { getRegistryBundle } from "./registry.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -109,6 +110,30 @@ app.get("/api/emergency-bundle", async (req, res) => {
   } catch (err) {
     console.error("emergency-bundle error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// GET /api/registry-bundle — compact registry snapshot for offline caching (M6).
+app.get("/api/registry-bundle", async (_req, res) => {
+  try {
+    res.json(await getRegistryBundle());
+  } catch (err) {
+    console.error("registry-bundle error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// POST /api/client-event — client-side telemetry/anomalies (e.g. a sticky-ban
+// override during an offline merge). Logged to `events`, never `scans`.
+app.post("/api/client-event", async (req, res) => {
+  try {
+    const { type, payload } = req.body || {};
+    if (!type) return res.status(400).json({ ok: false });
+    await logEvent({ type: String(type).slice(0, 40), channel: "app", payload });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("client-event error:", err);
+    res.status(500).json({ ok: false });
   }
 });
 

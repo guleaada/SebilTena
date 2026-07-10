@@ -9,7 +9,8 @@
     "SUSPENDED": "Suspended — do not use",
     "BANNED": "Banned — DO NOT USE",
     "UNCONFIRMED": "Could not confirm this product",
-    "CONFIRM": "Confirm the product"
+    "CONFIRM": "Confirm the product",
+    "STALE": "Was registered — check again"
   },
   "msg": {
     "confirm": "We think we recognised this product but we are not sure. Check the name and active ingredient shown, and confirm only if they match your bottle. Do not use it until you confirm.",
@@ -19,7 +20,10 @@
     "suspended": "This product has been suspended by regulators. Do not use it. Contact your extension agent.",
     "banned": "This product is BANNED. Do not use it, do not buy it. It can seriously harm you, others and the environment.",
     "conservative": "Could not confirm this product. Do not use until checked. Contact your extension agent or SMS the number.",
-    "crop_not_covered": "This crop is not covered for this product. Do not guess the dose — ask your extension agent."
+    "crop_not_covered": "This crop is not covered for this product. Do not guess the dose — ask your extension agent.",
+    "verified_as_of": "Registered as of {date}. This was correct when last checked.",
+    "stale": "This was registered when last checked on {date}. Check again before use.",
+    "offline_note": "Using saved data — no connection."
   },
   "disclaimer": {
     "official": "Official information. If unsure, contact your extension agent."
@@ -64,7 +68,10 @@
     "emergency_soon": "Emergency first-aid guidance is coming soon. If someone is poisoned, get help now.",
     "emergency_call_help": "Call for help",
     "lang_coming_soon": "coming soon",
-    "lang_offer_spoken": "This language is coming soon. Please choose Amharic or English."
+    "lang_offer_spoken": "This language is coming soon. Please choose Amharic or English.",
+    "preparing_offline": "Preparing offline mode…",
+    "offline_saved": "Saved data",
+    "days_today": "today"
   },
   "crop": {
     "potato": "Potato",

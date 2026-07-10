@@ -57,11 +57,15 @@
     VERIFIED:     { tone: "safe",    symbol: "✓" },
     CONFIRM:      { tone: "caution", symbol: "?" },
     EXPIRED:      { tone: "caution", symbol: "⌛" },
+    STALE:        { tone: "caution", symbol: "⏳" }, // cached VERIFIED gone stale (M6)
     UNCONFIRMED:  { tone: "caution", symbol: "?" },
     UNREGISTERED: { tone: "danger",  symbol: "!" },
     BANNED:       { tone: "danger",  symbol: "⛔" },
     SUSPENDED:    { tone: "danger",  symbol: "⛔" },
   };
+
+  // Offline caching windows (mirror server config; see DECISIONS.md).
+  const OFFLINE = { staleAfterDays: 90, refreshAfterDays: 7 };
 
   const state = {
     lang: localStorage.getItem("mg_lang") || "am",
@@ -75,6 +79,7 @@
     recent: [],           // recent identified products (for emergency picker)
     bundle: null,         // cached emergency bundle
     emergencyProduct: null, // active ingredient chosen for the current emergency
+    offline: { registryReady: false, meta: null, preparing: false }, // M6 offline cache state
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -289,10 +294,132 @@
     // Unreachable (timeout / network error) -> local OCR + cached registry.
     return scanOffline(imageBase64);
   }
-  // Offline scan path. Parts A + B replace this stub with client OCR + the
-  // cached registry; until then, the conservative "no connection" state.
-  function scanOffline(_imageBase64) {
-    return renderOffline();
+  // Offline scan path: client OCR (Part A) -> cached registry (Part B). If OCR
+  // is not ready yet, fall back to the conservative "no connection" state.
+  async function scanOffline(imageBase64) {
+    const text = await runClientOcr(imageBase64).catch(() => null);
+    if (!text) return renderOffline();
+    const candidates = buildOcrCandidates(text);
+    const vres = await window.Registry.verifyOffline(candidates, { now: new Date(), staleAfterDays: OFFLINE.staleAfterDays });
+    return renderOfflineVerify(vres);
+  }
+  // Client OCR — implemented in Part A (tesseract.js). Stub until then.
+  async function runClientOcr(_imageBase64) { return null; }
+  // Offline CONFIRM resolutions queue for sync — implemented in Part C. Stub.
+  function queueConfirmResolution(_registrationNo, _confirm) { /* Part C */ }
+  const buildOcrCandidates = (text) => {
+    const raw = String(text || "");
+    const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length >= 2);
+    const tokens = raw.toUpperCase().split(/[^A-Z0-9]+/).filter((tk) => tk.length >= 2);
+    return [...lines, ...tokens];
+  };
+
+  // Turn a Registry.verifyOffline result into a renderResult-compatible payload
+  // (built from the CACHED record + verdict.js — never a network call).
+  function offlineVerifyToResult(vres) {
+    if (vres.matchTier === 2) {
+      return {
+        status: "CONFIRM", matchTier: 2, needsConfirmation: true, offline: true,
+        candidate: vres.candidate, confirmRegistrationNo: vres.record.registration_no,
+        offlineRecord: vres.record,
+        headline: t("status.CONFIRM"), message: t("msg.confirm"),
+      };
+    }
+    const v = vres.verdict;
+    if (v.status === "UNCONFIRMED") {
+      return { status: "UNCONFIRMED", offline: true, headline: t("status.UNCONFIRMED"), message: t("msg.conservative") };
+    }
+    const rec = vres.record;
+    const dateStr = v.checked_at ? new Date(v.checked_at).toISOString().slice(0, 10) : "?";
+    const headline = v.status === "STALE" ? t("status.STALE") : t(`status.${v.status}`);
+    let message;
+    if (v.status === "VERIFIED") message = fillDate(t("msg.verified_as_of"), dateStr);
+    else if (v.status === "STALE") message = fillDate(t("msg.stale"), dateStr);
+    else message = t(`msg.${v.status.toLowerCase()}`);
+    const verify = {
+      status: v.status,
+      product: { id: rec.key, registration_no: rec.registration_no, product_name: rec.product_name, active_ingredient: rec.active_ingredient, hazard_class: rec.hazard_class, expiry_date: rec.expiry_date },
+      safety: v.showSafety ? { hazard_class: rec.hazard_class, ppe_required: rec.ppe_required || [], first_aid: rec.first_aid || {}, approved_crops: rec.approved_crops || [] } : null,
+      dosages: v.showDose ? (rec.dosages || []) : [],
+      offlineDosages: rec.dosages || [],   // used by the offline dose picker
+      headline, message, disclaimer: t("disclaimer.official"),
+    };
+    return { status: v.status, matchTier: vres.matchTier, offline: true, verify };
+  }
+  const fillDate = (s, d) => String(s).replace("{date}", d);
+
+  function renderOfflineVerify(vres) {
+    if (vres.matchTier === 2) {
+      // Offline CONFIRM: YES reveals the verdict from the cached record; both
+      // answers queue for sync (Part C). Dosage still withheld until YES.
+      const res = offlineVerifyToResult(vres);
+      renderResult(res);
+      return;
+    }
+    renderResult(offlineVerifyToResult(vres));
+    showCacheAge();
+  }
+  // Expose for verification (offline path, no network).
+  function verifyOfflineAndRender(candidateStrings) {
+    return window.Registry.verifyOffline(candidateStrings, { now: new Date(), staleAfterDays: OFFLINE.staleAfterDays })
+      .then((vres) => renderOfflineVerify(vres));
+  }
+
+  // ---- Offline preparation + cache-age indicator (M6 Part B) --------------
+  // Download the registry once online, in the BACKGROUND. Never blocks the UI.
+  async function prepareOffline() {
+    if (state.offline.preparing) return;
+    try {
+      state.offline.meta = await window.Registry.meta();
+      state.offline.registryReady = !(await window.Registry.isEmpty());
+    } catch { /* IndexedDB unavailable -> online-only */ }
+    updateOfflineChip();
+    const savedAt = state.offline.meta?.saved_at ? Date.parse(state.offline.meta.saved_at) : 0;
+    const ageDays = savedAt ? (Date.now() - savedAt) / 86400000 : Infinity;
+    if (state.offline.registryReady && ageDays <= OFFLINE.refreshAfterDays) return; // fresh enough
+    state.offline.preparing = true;
+    updateOfflineChip();
+    const r = await window.Net.requestJSON("/api/registry-bundle");
+    if (r.online && r.ok && r.data) {
+      try {
+        await window.Registry.saveBundle(r.data);
+        state.offline.meta = await window.Registry.meta();
+        state.offline.registryReady = true;
+        console.info(`[offline] registry cached: ${r.data.count} products, ~${(JSON.stringify(r.data).length / 1024).toFixed(0)} KB`);
+      } catch (e) { console.warn("registry cache failed:", e); }
+    }
+    state.offline.preparing = false;
+    updateOfflineChip();
+  }
+
+  function mountOfflineChip() {
+    if ($("#offlineChip")) return;
+    const chip = el("div", "offline-chip");
+    chip.id = "offlineChip";
+    chip.hidden = true;
+    document.body.appendChild(chip);
+  }
+  function relativeDays(iso) {
+    if (!iso) return "?";
+    const d = Math.floor((Date.now() - Date.parse(iso)) / 86400000);
+    if (d <= 0) return t("ui.days_today") || "today";
+    return `${d} ${t("ui.days")}`;
+  }
+  function updateOfflineChip() {
+    const chip = $("#offlineChip"); if (!chip) return;
+    if (state.offline.preparing) {
+      chip.className = "offline-chip is-prep";
+      chip.textContent = "⏳ " + (t("ui.preparing_offline") || "Preparing offline mode…");
+      chip.hidden = false;
+    } else {
+      chip.hidden = true; // ready state is quiet; cache-age shows on an offline verdict
+    }
+  }
+  // Persistent cache-age line shown when a verdict was served from the cache.
+  function showCacheAge() {
+    const meta = state.offline.meta;
+    const note = el("div", "cache-age", `📴 ${esc(t("ui.offline_saved") || "Saved data")} · ${esc(relativeDays(meta?.checked_at || meta?.saved_at))}`);
+    $("#resultBody").prepend(note);
   }
   function renderOffline() {
     show("result");
@@ -376,6 +503,13 @@
     const yes = el("button", "btn btn-yes", "✓ " + esc(t("ui.yes")));
     const no = el("button", "btn btn-no", "✕ " + esc(t("ui.no")));
     yes.onclick = async () => {
+      if (res.offline) {
+        // Offline: reveal the verdict from the CACHED record (no network). The
+        // resolution is queued for sync in Part C.
+        const v = window.OfflineVerdict.computeVerdict(res.offlineRecord, { now: new Date(), staleAfterDays: OFFLINE.staleAfterDays });
+        queueConfirmResolution(res.confirmRegistrationNo, true);
+        return renderOfflineVerify({ matchTier: 1, record: res.offlineRecord, verdict: v });
+      }
       show("loading");
       try {
         // Resolve the scan row (resolved_status = verify verdict) and reveal it.
@@ -384,8 +518,9 @@
       } catch { renderOffline(); }
     };
     no.onclick = () => {
-      // NO = counterfeit-suspicion signal. Record it (best-effort), then reset.
-      confirmScan(res.scanId, false, res.confirmRegistrationNo).catch(() => {});
+      // NO = counterfeit-suspicion signal.
+      if (res.offline) queueConfirmResolution(res.confirmRegistrationNo, false);
+      else confirmScan(res.scanId, false, res.confirmRegistrationNo).catch(() => {});
       show("home");
     };
     yn.append(yes, no);
@@ -470,8 +605,16 @@
     btn.classList.add("is-selected");
     container.querySelectorAll(".dose-result").forEach((n) => n.remove());
     let dose;
-    try { dose = await getDosage(pesticideId, crop); }
-    catch { return renderOffline(); }
+    if (state.lastResult?.offline) {
+      // Offline: dose comes from the CACHED record, never a network call.
+      const ds = (state.lastResult.verify?.offlineDosages || []).find((d) => String(d.crop).toLowerCase() === String(crop).toLowerCase());
+      dose = ds
+        ? { covered: true, crop, dose_per_unit: ds.dose_per_unit, application_notes: ds.application_notes, pre_harvest_interval_days: ds.pre_harvest_interval_days }
+        : { covered: false, crop, message: t("msg.crop_not_covered") };
+    } else {
+      try { dose = await getDosage(pesticideId, crop); }
+      catch { return renderOffline(); }
+    }
 
     const box = el("div", "dose-result" + (dose.covered ? "" : " dose-uncovered"));
     if (dose.covered) {
@@ -724,6 +867,7 @@
     renderResult, selectLang, getState: () => state, t,
     scanBase64: runScan, openEmergency, renderFirstAid, renderRouteChooser,
     audio: () => window.AudioLayer, lastSpoken: () => window.__mgAudio,
+    verifyOfflineAndRender, prepareOffline,   // M6 offline verification hooks
   };
 
   // Insert the language-offer banner container under the top bar.
@@ -738,6 +882,7 @@
   async function init() {
     bind();
     mountLangBanner();
+    mountOfflineChip();
     await ensureLangMeta();
     // A stored language that isn't complete must not silently show as if it works.
     // Display English and offer the choice (do not pick for the farmer).
@@ -753,6 +898,7 @@
     }
     window.AudioLayer.loadManifest();
     loadEmergencyBundle(); // prefetch + cache the offline emergency data
+    prepareOffline();      // background registry download (M6) — never blocks UI
     if ("serviceWorker" in navigator) {
       // Register right away — gating on window 'load' can miss it when the
       // shell is tiny/cached and 'load' has already fired.

@@ -266,6 +266,19 @@ body {
   padding: 10px 16px; box-shadow: var(--shadow);
 }
 .lang-banner[hidden] { display: none; }
+
+/* Offline preparation chip + cache-age line (M6). */
+.offline-chip {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0)); z-index: 30;
+  background: var(--brown); color: #fff; font-weight: 700; font-size: 0.95rem;
+  padding: 8px 16px; border-radius: 999px; box-shadow: var(--shadow); max-width: 90vw; text-align: center;
+}
+.offline-chip[hidden] { display: none; }
+.cache-age {
+  background: #efe7d4; color: var(--brown); font-weight: 700; font-size: 0.98rem;
+  border-radius: 14px; padding: 10px 14px; margin-top: 16px; text-align: center;
+}
 .lang-banner-msg { flex: 1 1 auto; text-align: center; min-width: 100%; }
 .lang-banner-actions { display: flex; gap: 10px; }
 .lang-banner-btn {
