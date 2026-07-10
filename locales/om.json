@@ -1,6 +1,7 @@
 {
   "_lang": "Afaan Oromoo (Afaan Oromo)",
   "_native": "Afaan Oromoo",
+  "complete": true,
   "_status": "DRAFT — requires native-speaker + agronomist review before deployment (see DECISIONS.md)",
   "status": {
     "VERIFIED": "Mirkanaa'e — oomisha galmaa'e",

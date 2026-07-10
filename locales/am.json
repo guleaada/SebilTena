@@ -1,6 +1,7 @@
 {
   "_lang": "አማርኛ (Amharic)",
   "_native": "አማርኛ",
+  "complete": true,
   "_status": "DRAFT — requires native-speaker + agronomist review before deployment (see DECISIONS.md)",
   "status": {
     "VERIFIED": "የተረጋገጠ — የተመዘገበ ምርት",

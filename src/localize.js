@@ -43,3 +43,19 @@ export function normalizeLang(lang) {
   const l = (lang || "").toLowerCase().trim();
   return SUPPORTED_LANGS.includes(l) ? l : FALLBACK;
 }
+
+// A language is "complete" if its locale has real translations (complete: true).
+// Incomplete languages (stubs that fall back to English) must NOT be presented as
+// if they work — see SAFETY.md. `en` is always complete.
+export function isComplete(lang) {
+  const l = normalizeLang(lang);
+  if (l === "en") return true;
+  const d = load(l);
+  return Boolean(d && d.complete === true);
+}
+
+// English name of a language, for honest "not available yet" notices.
+export const LANG_NAMES = {
+  am: "Amharic", om: "Afaan Oromo", ti: "Tigrinya",
+  so: "Somali", aa: "Afar", en: "English",
+};

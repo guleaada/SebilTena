@@ -69,6 +69,7 @@
     en: {},          // english fallback
     geoConsent: localStorage.getItem("mg_geo") || null, // 'yes' | 'no' | null
     lastResult: null,
+    langMeta: {},         // { code: { native, complete } } — drives the fallback badge
     stream: null,
     session: null,        // active ingredient of the last identified product
     recent: [],           // recent identified products (for emergency picker)
@@ -154,28 +155,70 @@
   }
 
   // ---- Language sheet ----------------------------------------------------
+  // Fetch each locale's native name + completeness once. Incomplete languages
+  // are stubs that fall back to English — we must NOT present them as working.
+  async function ensureLangMeta() {
+    if (Object.keys(state.langMeta).length) return state.langMeta;
+    const metas = await Promise.all(
+      LANGS.map((l) =>
+        fetch(`/locales/${l}.json`).then((r) => r.json())
+          .then((d) => ({ code: l, native: d._native || l, complete: l === "en" ? true : d.complete === true }))
+          .catch(() => ({ code: l, native: l, complete: l === "en" }))
+      )
+    );
+    for (const m of metas) state.langMeta[m.code] = m;
+    return state.langMeta;
+  }
+  const isLangComplete = (lang) => lang === "en" || state.langMeta[lang]?.complete === true;
+
   async function buildLangList() {
+    await ensureLangMeta();
     const list = $("#langList");
     list.innerHTML = "";
-    const natives = await Promise.all(
-      LANGS.map((l) => fetch(`/locales/${l}.json`).then((r) => r.json()).then((d) => d._native || l).catch(() => l))
-    );
-    LANGS.forEach((l, i) => {
-      const b = el("button", "lang-option" + (l === state.lang ? " is-current" : ""), esc(natives[i]));
+    LANGS.forEach((l) => {
+      const m = state.langMeta[l];
+      const b = el("button", "lang-option" + (l === state.lang ? " is-current" : "") + (m.complete ? "" : " is-incomplete"));
+      b.innerHTML = `<span class="lang-native">${esc(m.native)}</span>` +
+        (m.complete ? "" : `<span class="lang-soon">${esc(t("ui.lang_coming_soon"))}</span>`);
       b.onclick = () => selectLang(l);
       list.appendChild(b);
     });
   }
+
+  // Persistent banner while an incomplete language is active: never let the
+  // farmer think they are getting their language when they are seeing English.
+  function updateLangBanner() {
+    const banner = $("#langBanner");
+    if (!banner) return;
+    if (isLangComplete(state.lang)) { banner.hidden = true; return; }
+    const native = state.langMeta[state.lang]?.native || state.lang;
+    banner.textContent = `⚠ ${native} — ${t("ui.lang_coming_soon")}`;
+    banner.hidden = false;
+  }
+
+  function logLangFallback(lang) {
+    try {
+      const body = JSON.stringify({ requested: lang, channel: "app" });
+      if (navigator.sendBeacon) navigator.sendBeacon("/api/lang-fallback", new Blob([body], { type: "application/json" }));
+      else fetch("/api/lang-fallback", { method: "POST", headers: { "Content-Type": "application/json" }, body }).catch(() => {});
+    } catch { /* logging must never break the UI */ }
+  }
+
   async function selectLang(lang) {
     state.lang = lang;
     localStorage.setItem("mg_lang", lang);
     $("#langSheet").hidden = true;
+    await ensureLangMeta();
     await loadLang(lang);
     paintChrome();
-    // Re-render + re-speak whatever is on screen.
-    if ($("#view-result").classList.contains("is-active") && state.lang) {
-      if (state.lastResult) renderResult(state.lastResult);
+    updateLangBanner();
+    if (!isLangComplete(lang)) {
+      // Never silently substitute. Announce in English + log the demand.
+      window.AudioLayer.speak({ key: "lang_coming_soon", text: t("ui.lang_coming_soon_spoken") }, "en");
+      logLangFallback(lang);
     }
+    // Re-render + re-speak whatever is on screen.
+    if ($("#view-result").classList.contains("is-active") && state.lastResult) renderResult(state.lastResult);
   }
 
   // ---- API ---------------------------------------------------------------
@@ -657,10 +700,22 @@
     audio: () => window.AudioLayer, lastSpoken: () => window.__mgAudio,
   };
 
+  // Insert the persistent "coming soon — showing English" banner under the top bar.
+  function mountLangBanner() {
+    if ($("#langBanner")) return;
+    const banner = el("div", "lang-banner");
+    banner.id = "langBanner";
+    banner.hidden = true;
+    document.querySelector(".topbar").insertAdjacentElement("afterend", banner);
+  }
+
   async function init() {
     bind();
+    mountLangBanner();
+    await ensureLangMeta();
     await loadLang(state.lang);
     paintChrome();
+    updateLangBanner(); // reflect an incomplete stored language on load
     window.AudioLayer.loadManifest();
     loadEmergencyBundle(); // prefetch + cache the offline emergency data
     if ("serviceWorker" in navigator) {

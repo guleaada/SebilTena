@@ -251,8 +251,21 @@ body {
 .sheet-card { background: var(--surface); width: 100%; max-width: 560px; border-radius: 28px 28px 0 0; padding: 22px 20px calc(28px + env(safe-area-inset-bottom, 0)); box-shadow: var(--shadow); max-height: 84dvh; overflow: auto; }
 .sheet-card h2 { margin: 4px 0 18px; font-size: 1.4rem; color: var(--green-ink); text-align: center; }
 .lang-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.lang-option { min-height: 64px; border: 2px solid var(--line); border-radius: 18px; background: var(--cream); font-size: 1.35rem; font-weight: 800; color: var(--ink); cursor: pointer; padding: 10px; }
+.lang-option { min-height: 64px; border: 2px solid var(--line); border-radius: 18px; background: var(--cream); font-size: 1.35rem; font-weight: 800; color: var(--ink); cursor: pointer; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .lang-option.is-current { border-color: var(--green-2); background: #eef6ea; }
+.lang-option.is-incomplete { border-style: dashed; }
+.lang-native { line-height: 1.1; }
+.lang-soon { font-size: 0.72rem; font-weight: 700; color: var(--amber-ink); text-transform: none; letter-spacing: 0; }
+
+/* Persistent "coming soon — showing English" banner (incomplete language). */
+.lang-banner {
+  position: sticky; top: 0; z-index: 15;
+  background: var(--amber); color: #3d2600;
+  font-weight: 800; font-size: 1rem; line-height: 1.3;
+  text-align: center; padding: 10px 16px;
+  box-shadow: var(--shadow);
+}
+.lang-banner[hidden] { display: none; }
 .geo-icon { font-size: 3rem; text-align: center; }
 #geoText { font-size: 1.15rem; text-align: center; line-height: 1.4; }
 .sheet-actions { display: flex; gap: 12px; margin-top: 18px; }

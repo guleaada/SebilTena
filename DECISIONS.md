@@ -411,6 +411,30 @@ trust already exist):
   are best-effort pending native review (English + numeric `1–4` always work).
 - No phrase key, filename, or folder-per-language convention changed.
 
+## Honest language fallback (Part 0.5) — stop implying languages we don't have
+
+Three locales (`ti`, `so`, `aa`) are English-fallback stubs. Presenting them as
+working languages silently sends English — fatal on text-only SMS.
+
+- Each locale carries `complete: true|false` (`am`/`om`/`en` complete). `isComplete()`
+  in `localize.js` reads it (`en` always true).
+- **PWA fallback = English** (it has icons + colour + voice): incomplete
+  languages stay selectable but show a persistent amber "coming soon — showing
+  English" banner + a sub-label in the switcher, and speak the notice **in
+  English** on selection (`AudioLayer.speak(..., 'en')`). Selection POSTs
+  `/api/lang-fallback`.
+- **SMS fallback = Amharic**, not English — a text-only channel has no icons/
+  voice to soften a foreign message, and Amharic is Ethiopia's most widely-read
+  language (and Ge'ez, closer to Tigrinya). `LANG ti|so|aa` sends one honest
+  message ("X is not available yet. You will receive Amharic."), sets the
+  fallback, and logs the demand. Revisable per-region later (`SMS_FALLBACK` in
+  `handler.js`).
+- Fallbacks logged to `scans` (`result_status='LANG_FALLBACK'`, `language`=the
+  requested code) so we can measure which languages farmers want.
+- The restored **Tigrinya UCS-2** (and **Afar GSM-7**) reply assertions are
+  `pending` in `test-sms.js` — enable when those locales gain strings; replies
+  flip encoding and the ≤2-segment fit must be re-verified.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

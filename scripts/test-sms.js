@@ -8,11 +8,13 @@ import { handleInbound } from "../src/sms/handler.js";
 import { createMockSmsClient } from "../src/sms/client.js";
 import { createRateLimiter } from "../src/sms/rateLimit.js";
 
-let passed = 0, failed = 0;
+let passed = 0, failed = 0, pendingCount = 0;
 function check(name, cond, detail = "") {
   if (cond) { passed++; console.log(`  ok   ${name}`); }
   else { failed++; console.error(`  FAIL ${name}${detail ? "  -> " + detail : ""}`); }
 }
+// Skipped/pending assertion — not counted pass/fail. Enable when the note clears.
+function pending(name, note) { pendingCount++; console.log(`  skip ${name}  (PENDING: ${note})`); }
 
 let phoneSeq = 1000;
 const newPhone = () => `+2519110${phoneSeq++}`;
@@ -228,35 +230,72 @@ async function main() {
       sent[0].message.includes(seek) && sent[0].message.includes(rinse), sent[0].message);
   }
   {
-    // Latin-script languages -> GSM-7; Ge'ez-script -> UCS-2.
+    // Complete Latin-script language (Afaan Oromo) -> GSM-7 reply.
     const omFrom = await withLang("om");
     const { sent: omSent } = await sms("ETH-INS-0009/05", { from: omFrom });
     check("Afaan Oromo reply detected as GSM-7", detectEncoding(omSent.at(-1).message) === "GSM7", omSent.at(-1).message);
-    const aaFrom = await withLang("aa"); // Afar is Latin
-    const { sent: aaSent } = await sms("ETH-INS-0009/05", { from: aaFrom });
-    check("Afar reply detected as GSM-7", detectEncoding(aaSent.at(-1).message) === "GSM7", aaSent.at(-1).message);
+    // Afar is Latin -> GSM-7 by the classifier. (aa replies currently arrive in the
+    // Amharic fallback until aa translations land — see pending below.)
+    check("encoding classifies Latin (Afar) text as GSM-7", detectEncoding("Qafar af: dhorkameera") === "GSM7");
+    pending("Afar reply detected as GSM-7",
+      "enable when locales/aa.json translations land (complete:true); aa replies flip from the Amharic fallback to Afar (GSM-7)");
     const amFrom = await withLang("am");
     const { sent: amSent } = await sms("ETH-INS-0009/05", { from: amFrom });
     check("Amharic reply detected as UCS-2 and <=2 segments",
       detectEncoding(amSent.at(-1).message) === "UCS2" && segmentCount(amSent.at(-1).message) <= 2);
     // encoding.js classifies Ge'ez (am, ti) as UCS-2 regardless of locale content.
-    // ti replies are currently English (stub -> en fallback), so we assert the
-    // classifier on Ge'ez text directly rather than on a ti reply.
     check("encoding classifies Ge'ez (ti/am script) as UCS-2", detectEncoding("ትግርኛ ጽሑፍ") === "UCS2");
+    // PENDING: enable when ti locale strings land — ti replies flip from English
+    // (GSM-7) to Tigrinya (UCS-2, 70/67) and the <=2-segment fit must be re-verified.
+    pending("Tigrinya reply detected as UCS-2 and <=2 segments",
+      "enable when locales/ti.json translations land (complete:true); replies flip to UCS-2 — re-verify <=2-segment fit before release");
   }
   {
-    // LANG aa works; Afar route word recognized (stub -> English first-aid text).
-    const from = newPhone();
-    await sms("LANG aa", { from });
-    const langRow = (await db.execute({ sql: "SELECT lang FROM sms_users WHERE phone=?", args: [from] })).rows[0];
-    check("LANG aa persists Afar preference", langRow?.lang === "aa", JSON.stringify(langRow));
-    const { sent } = await sms("liqime", { from }); // Afar swallowed (best-effort)
+    // Route-word recognition is language-independent (uses an English user so the
+    // reply text is English regardless of the Afar preference fallback).
+    const from = await withLang("en");
+    const { sent } = await sms("liqime", { from }); // Afar 'swallowed', best-effort
     check("Afar route word triggers first aid", /health centre/i.test(sent[0].message), sent[0].message);
     const bad = await sms("LANG zz", { from: newPhone() });
     check("LANG with unsupported code -> rejected", /Unknown language|Use:/.test(bad.sent.at(-1).message), bad.sent.at(-1).message);
   }
 
-  console.log(`\n${passed} passed, ${failed} failed`);
+  // ---- Part 0.5: honest language fallback (no silent substitution) ---------
+  console.log("\nHonest language fallback");
+  {
+    const from = newPhone();
+    const { sent } = await sms("LANG ti", { from });
+    const m = sent.at(-1).message;
+    check("LANG ti -> honest 'not available yet' notice naming Tigrinya", /not available yet/i.test(m) && /Tigrinya/.test(m), m);
+    check("LANG ti -> announces the fallback (Amharic)", /Amharic/.test(m), m);
+    const row = (await db.execute({ sql: "SELECT lang FROM sms_users WHERE phone=?", args: [from] })).rows[0];
+    check("LANG ti -> stored lang set to the fallback (am)", row?.lang === "am", JSON.stringify(row));
+    // Subsequent reply arrives in the ANNOUNCED fallback (Amharic) — not silent English/Tigrinya.
+    const { sent: v } = await sms("ETH-INS-0009/05", { from });
+    check("subsequent reply is the announced Amharic", detectEncoding(v.at(-1).message) === "UCS2" && v.at(-1).message.startsWith("የተከለከለ"), v.at(-1).message);
+  }
+  {
+    // Fallback event logged with the REQUESTED language (measure real demand).
+    const before = Number((await db.execute("SELECT COUNT(*) n FROM scans WHERE result_status='LANG_FALLBACK' AND language='so'")).rows[0].n);
+    const { sent } = await sms("LANG so", { from: newPhone() });
+    check("LANG so -> honest fallback notice naming Somali", /not available yet/i.test(sent.at(-1).message) && /Somali/.test(sent.at(-1).message));
+    const after = Number((await db.execute("SELECT COUNT(*) n FROM scans WHERE result_status='LANG_FALLBACK' AND language='so'")).rows[0].n);
+    check("LANG so -> logs LANG_FALLBACK(language=requested)", after > before);
+  }
+  {
+    const { sent } = await sms("LANG aa", { from: newPhone() });
+    check("LANG aa -> honest fallback notice naming Afar", /not available yet/i.test(sent.at(-1).message) && /Afar/.test(sent.at(-1).message), sent.at(-1).message);
+  }
+  {
+    // A COMPLETE language still sets normally — no fallback notice.
+    const from = newPhone();
+    const { sent } = await sms("LANG am", { from });
+    check("LANG am (complete) -> set normally, no fallback notice", !/not available yet/i.test(sent.at(-1).message));
+    const row = (await db.execute({ sql: "SELECT lang FROM sms_users WHERE phone=?", args: [from] })).rows[0];
+    check("LANG am -> stored as am", row?.lang === "am");
+  }
+
+  console.log(`\n${passed} passed, ${failed} failed, ${pendingCount} pending`);
   process.exit(failed === 0 ? 0 : 1);
 }
 

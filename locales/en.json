@@ -1,6 +1,7 @@
 {
   "_lang": "English",
   "_native": "English",
+  "complete": true,
   "status": {
     "VERIFIED": "Verified — registered product",
     "UNREGISTERED": "Not registered — possible counterfeit",
@@ -61,7 +62,9 @@
     "install": "Add to home screen",
     "emergency_title": "Poisoning emergency",
     "emergency_soon": "Emergency first-aid guidance is coming soon. If someone is poisoned, get help now.",
-    "emergency_call_help": "Call for help"
+    "emergency_call_help": "Call for help",
+    "lang_coming_soon": "coming soon — showing English",
+    "lang_coming_soon_spoken": "This language is coming soon. You will see English for now."
   },
   "crop": {
     "potato": "Potato",
@@ -145,6 +148,7 @@
     "emergency_menu": "FIRST AID. Reply: SKIN / EYES / SWALLOWED / BREATHED",
     "call_line": "Call {agent}. Poison line {poison}.",
     "rate_limited": "Too many messages. Please wait a while and try again.",
-    "crop_unknown": "Crop not recognized. Text CROP then the crop name."
+    "crop_unknown": "Crop not recognized. Text CROP then the crop name.",
+    "lang_unavailable": "{lang} is not available yet. You will receive {fallback}."
   }
 }

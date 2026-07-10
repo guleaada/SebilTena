@@ -1,6 +1,6 @@
 import { db as defaultDb } from "../db.js";
 import { config } from "../config.js";
-import { t, normalizeLang } from "../localize.js";
+import { t, normalizeLang, isComplete, LANG_NAMES } from "../localize.js";
 import { verifyNumber as defaultVerify } from "../verify.js";
 import { getDosage as defaultGetDosage } from "../dosage.js";
 import { getFirstAid as defaultGetFirstAid } from "../firstaid.js";
@@ -20,6 +20,11 @@ import * as T from "./templates.js";
 // ---------------------------------------------------------------------------
 
 const defaultClient = createSmsClient();
+
+// SMS fallback for an incomplete language: Amharic (Ethiopia's most widely-read
+// language), not English — a text-only channel has no icons/voice to soften an
+// English message. Announced honestly; revisable per-region. See DECISIONS.md.
+const SMS_FALLBACK = "am";
 
 function sanitize(text) {
   let s = String(text || "").replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
@@ -116,8 +121,15 @@ export async function handleInbound(inbound, deps = {}) {
         await logSms(db, { status: "SMS_LANG", region, lang });
         return send(client, db, from, [T.langBadText(lang)], { status: "SMS_LANG", region, lang });
       }
-      await setLang(db, from, cmd.lang, nowIso);
-      return send(client, db, from, [T.langSetText(cmd.lang, cmd.lang)], { status: "SMS_LANG", region, lang: cmd.lang });
+      if (isComplete(cmd.lang)) {
+        await setLang(db, from, cmd.lang, nowIso);
+        return send(client, db, from, [T.langSetText(cmd.lang, LANG_NAMES[cmd.lang] || cmd.lang)], { status: "SMS_LANG", region, lang: cmd.lang });
+      }
+      // Incomplete language: NEVER silently reply in another language. Tell the
+      // farmer honestly, set the fallback, and log which language they wanted.
+      await setLang(db, from, SMS_FALLBACK, nowIso);
+      await logSms(db, { status: "LANG_FALLBACK", region, lang: cmd.lang }); // language = requested
+      return send(client, db, from, [T.langUnavailableText(cmd.lang, SMS_FALLBACK)], { status: "LANG_FALLBACK", region, lang: SMS_FALLBACK });
     }
 
     case "HELP":

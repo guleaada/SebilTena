@@ -105,6 +105,26 @@ is **not** permitted — those fields are stored, per-language, as reviewed fact
 Until reviewed, non-English locales fall back to English rather than to a
 machine guess.
 
+## Never present a language as supported when the user will receive another
+
+**Silent language fallback is a safety failure on text-only channels.** SMS has
+no icons or colour — an English (or fallback) message sent to a farmer who asked
+for their own language is unreadable exactly when it matters.
+
+- Each locale declares `complete: true|false`. Complete: `am`, `om`, `en`.
+  Incomplete (stub → fallback): `ti`, `so`, `aa`.
+- **PWA:** an incomplete language stays selectable but shows a persistent
+  "coming soon — showing English" badge and speaks that notice **in English** on
+  selection. Never a silent substitution.
+- **SMS:** `LANG ti|so|aa` replies honestly ("Tigrinya is not available yet. You
+  will receive Amharic."), then sets the fallback. The farmer is never silently
+  replied to in a language they did not choose.
+- Every fallback is logged (`scans.result_status = 'LANG_FALLBACK'`,
+  `language = requested`) so we can see which languages farmers actually want.
+- When a stub locale gains real strings (`complete: true`), the pending encoding
+  tests (Tigrinya/Afar reply UCS-2/GSM-7 + ≤2-segment fit) must be enabled and
+  re-verified before release.
+
 ## The Tier-2 fuzzy-match confirm rule (Milestone 2 — do not skip)
 
 The scan pipeline identifies a product by matching label text against the

@@ -97,6 +97,24 @@ app.get("/api/emergency-bundle", async (req, res) => {
   }
 });
 
+// POST /api/lang-fallback — log when a farmer picks an incomplete language and
+// receives a fallback, so we can see which languages are actually wanted.
+app.post("/api/lang-fallback", async (req, res) => {
+  try {
+    const { requested, channel } = req.body || {};
+    const lang = String(requested || "").slice(0, 8);
+    if (!lang) return res.status(400).json({ ok: false });
+    await db.execute({
+      sql: `INSERT INTO scans (result_status, language, channel) VALUES (?,?,?)`,
+      args: ["LANG_FALLBACK", lang, channel === "sms" ? "sms" : "app"],
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("lang-fallback log error:", err);
+    res.status(500).json({ ok: false });
+  }
+});
+
 // POST /api/sms/webhook — Africa's Talking inbound SMS. Guarded by a shared
 // secret when configured; parses { from, text, to, linkId, date }; replies via
 // verify.js / dosage.js / firstaid.js (M5). Never trusts unauthenticated posts.

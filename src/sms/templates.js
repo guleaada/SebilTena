@@ -1,4 +1,4 @@
-import { t } from "../localize.js";
+import { t, LANG_NAMES } from "../localize.js";
 import { segmentCount, fitToSegments } from "./encoding.js";
 
 // ---------------------------------------------------------------------------
@@ -58,6 +58,15 @@ export const rateLimitedText = (lang) => t(lang, "sms.rate_limited");
 export const emergencyMenuText = (lang) => t(lang, "sms.emergency_menu");
 export const langSetText = (lang, langName) => fill(t(lang, "sms.lang_set"), { lang: langName });
 export const langBadText = (lang) => t(lang, "sms.lang_bad");
+
+// Honest "not available yet" notice for an incomplete language. Written in
+// English (a one-off system notice); names the language they asked for and the
+// one they'll actually receive. Never silently substitute.
+export const langUnavailableText = (requestedCode, fallbackCode) =>
+  fill(t("en", "sms.lang_unavailable"), {
+    lang: LANG_NAMES[requestedCode] || requestedCode,
+    fallback: LANG_NAMES[fallbackCode] || fallbackCode,
+  });
 
 export function callLine(agentPhone, poison, lang) {
   return fill(t(lang, "sms.call_line"), { agent: agentPhone || "-", poison: poison || "-" });

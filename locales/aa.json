@@ -1,6 +1,7 @@
 {
   "_lang": "Qafar af (Afar)",
   "_native": "Qafar af",
+  "complete": false,
   "_status": "STUB — no translations yet; falls back to English. Native-speaker + agronomist translation required before deployment (see DECISIONS.md).",
   "status": {},
   "msg": {},
