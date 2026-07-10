@@ -209,6 +209,25 @@ first-aid/dose prose and fails if any leaks in.
 - The webhook is authenticated (shared secret) and inbound text is sanitized and
   never echoed back.
 
+## Offline (Milestone 6) — four rules
+
+1. **Never trust `navigator.onLine`.** It reports whether an interface exists, not
+   whether the server is reachable (false on working links, true on dead 2G).
+   Online-ness is decided by REQUEST OUTCOME in `public/js/net.js` — the only
+   module allowed to read the flag. Getting this wrong flips `UNCONFIRMED ↔
+   UNREGISTERED`.
+2. **Cache pessimistically — safety expires, danger does not.** A cached
+   `VERIFIED` carries a `checked_at`, is shown "as of <date>", and downgrades to
+   `STALE` (caution, no dose) past `staleAfterDays`. `BANNED`/`SUSPENDED` are
+   cached permanently and are STICKY — a sync that omits/downgrades a locally-
+   known banned reg-no never un-bans it (anomaly → `events`).
+3. **Offline cannot prove counterfeit.** You can't tell a fake from a stale cache
+   offline, so an unknown reg-no offline is `UNCONFIRMED` ("could not check"),
+   **never `UNREGISTERED`**. Counterfeit is an online-only verdict. On sync, an
+   offline `UNCONFIRMED` that the live registry says is `UNREGISTERED` (or
+   `BANNED`) notifies the farmer.
+4. **Fail toward help, never toward a menu** (SMS emergency, Part 0).
+
 ## Auditability
 
 Every scan verdict is logged to the `scans` table (status, confidence, matched

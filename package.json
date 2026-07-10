@@ -12,7 +12,7 @@
     "reset-db": "node scripts/seed.js --reset",
     "test:scan": "node scripts/test-scan.js",
     "test:firstaid": "node scripts/test-firstaid.js",
-    "test": "node scripts/test-scan.js && node scripts/test-firstaid.js && node scripts/test-sms.js && node scripts/test-offline.js",
+    "test": "node scripts/test-scan.js && node scripts/test-firstaid.js && node scripts/test-sms.js && node scripts/test-offline.js && node scripts/test-sync.js",
     "gen:audio": "node scripts/gen-audio-placeholders.js"
   },
   "dependencies": {

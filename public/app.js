@@ -289,6 +289,7 @@
     speak({ key: "scanning", text: t("ui.reading") });
     // Online-ness is decided by OUTCOME (net.js), never by the onLine flag.
     const r = await postScan(imageBase64);
+    if (r.online) flushQueue(); // reachable -> flush any queued offline scans
     if (r.online && r.ok) return renderResult(r.data);
     if (r.online && !r.ok) { console.warn("scan http error", r.status); return renderOffline(); }
     // Unreachable (timeout / network error) -> local OCR + cached registry.
@@ -300,8 +301,28 @@
     const text = await runClientOcr(imageBase64).catch(() => null);
     if (!text) return renderOffline();
     const candidates = buildOcrCandidates(text);
+    const readRegNo = extractReadReg(candidates);
     const vres = await window.Registry.verifyOffline(candidates, { now: new Date(), staleAfterDays: OFFLINE.staleAfterDays });
+    // Queue the offline scan for sync (geotag only with consent; no identity).
+    const geo = state.geoConsent === "yes" ? await getPosition().catch(() => null) : null;
+    const status = vres.matchTier === 2 ? "CONFIRM" : (vres.verdict?.status || "UNCONFIRMED");
+    vres._queueUuid = await window.Queue.enqueue({
+      registration_no_read: readRegNo,
+      result_status: status,
+      confidence: vres.matchTier === 1 ? "high" : vres.matchTier === 2 ? "medium" : "low",
+      lat: geo?.lat ?? null, lon: geo?.lon ?? null, language: state.lang,
+    });
     return renderOfflineVerify(vres);
+  }
+  // Best-effort "what reg-no did OCR read" for the queued row (longest alnum token with a digit).
+  function extractReadReg(candidates) {
+    let best = null;
+    for (const c of candidates) {
+      const up = String(c).toUpperCase();
+      const m = up.match(/[A-Z0-9\/-]{3,}/g) || [];
+      for (const tk of m) if (/\d/.test(tk) && (!best || tk.length > best.length)) best = tk;
+    }
+    return best;
   }
   // Client OCR (tesseract.js). Returns label text, or null if OCR isn't ready.
   async function runClientOcr(imageBase64) {
@@ -309,8 +330,28 @@
     try { return await window.OCR.recognize(imageBase64); }
     catch (e) { console.warn("client OCR failed:", e && e.message); return null; }
   }
-  // Offline CONFIRM resolutions queue for sync — implemented in Part C. Stub.
-  function queueConfirmResolution(_registrationNo, _confirm) { /* Part C */ }
+  // Record an offline CONFIRM answer on the queued scan so it syncs resolved.
+  function queueConfirmResolution(queueUuid, confirm) {
+    if (!queueUuid) return;
+    const resolved_status = confirm ? "CONFIRMED_BY_USER" : "REJECTED_BY_USER";
+    window.Queue.update(queueUuid, { resolved_status }).catch(() => {});
+  }
+  // Flush queued offline scans when reachable; notify on any authoritative upgrade.
+  async function flushQueue() {
+    try {
+      const r = await window.Queue.flush();
+      if (r.flushed && r.upgrades && r.upgrades.length) notifyUpgrades(r.upgrades);
+    } catch (e) { console.warn("queue flush failed:", e); }
+  }
+  function notifyUpgrades(upgrades) {
+    // Most important: a scan that was UNCONFIRMED offline is really UNREGISTERED.
+    for (const u of upgrades) {
+      if (u.to === "UNREGISTERED" || u.to === "BANNED" || u.to === "SUSPENDED") {
+        const when = u.created_at ? ` (${new Date(u.created_at).toISOString().slice(0, 10)})` : "";
+        showSyncNotice(fillDate(t("msg.sync_danger"), when), u.to);
+      }
+    }
+  }
   const buildOcrCandidates = (text) => {
     const raw = String(text || "");
     const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length >= 2);
@@ -325,7 +366,7 @@
       return {
         status: "CONFIRM", matchTier: 2, needsConfirmation: true, offline: true,
         candidate: vres.candidate, confirmRegistrationNo: vres.record.registration_no,
-        offlineRecord: vres.record,
+        offlineRecord: vres.record, queueUuid: vres._queueUuid,
         headline: t("status.CONFIRM"), message: t("msg.confirm"),
       };
     }
@@ -448,6 +489,18 @@
     const note = el("div", "cache-age", `📴 ${esc(t("ui.offline_saved") || "Saved data")} · ${esc(relativeDays(meta?.checked_at || meta?.saved_at))}`);
     $("#resultBody").prepend(note);
   }
+  // Dismissible red notice — a synced scan turned out dangerous (M6 Part C).
+  function showSyncNotice(msg) {
+    let n = $("#syncNotice");
+    if (!n) { n = el("div", "sync-notice"); n.id = "syncNotice"; document.querySelector(".topbar").insertAdjacentElement("afterend", n); }
+    n.innerHTML = "";
+    n.appendChild(el("span", null, `⚠ ${esc(msg)}`));
+    const x = el("button", "sync-notice-x", "✕");
+    x.onclick = () => { n.hidden = true; };
+    n.appendChild(x);
+    n.hidden = false;
+    speak({ key: "verdict_unregistered", text: msg });
+  }
   function renderOffline() {
     show("result");
     $("#resultBody").innerHTML = "";
@@ -534,7 +587,7 @@
         // Offline: reveal the verdict from the CACHED record (no network). The
         // resolution is queued for sync in Part C.
         const v = window.OfflineVerdict.computeVerdict(res.offlineRecord, { now: new Date(), staleAfterDays: OFFLINE.staleAfterDays });
-        queueConfirmResolution(res.confirmRegistrationNo, true);
+        queueConfirmResolution(res.queueUuid, true);
         return renderOfflineVerify({ matchTier: 1, record: res.offlineRecord, verdict: v });
       }
       show("loading");
@@ -546,7 +599,7 @@
     };
     no.onclick = () => {
       // NO = counterfeit-suspicion signal.
-      if (res.offline) queueConfirmResolution(res.confirmRegistrationNo, false);
+      if (res.offline) queueConfirmResolution(res.queueUuid, false);
       else confirmScan(res.scanId, false, res.confirmRegistrationNo).catch(() => {});
       show("home");
     };
@@ -926,6 +979,7 @@
     window.AudioLayer.loadManifest();
     loadEmergencyBundle(); // prefetch + cache the offline emergency data
     prepareOffline();      // background registry download (M6) — never blocks UI
+    flushQueue();          // flush any offline scans queued from a prior session
     if ("serviceWorker" in navigator) {
       // Register right away — gating on window 'load' can miss it when the
       // shell is tiny/cached and 'load' has already fired.

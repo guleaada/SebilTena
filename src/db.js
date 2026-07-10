@@ -33,6 +33,9 @@ export async function initSchema() {
 const MIGRATIONS = [
   "ALTER TABLE scans ADD COLUMN resolved_status TEXT",
   "ALTER TABLE scans ADD COLUMN resolved_at TEXT",
+  "ALTER TABLE scans ADD COLUMN client_uuid TEXT",
+  "ALTER TABLE scans ADD COLUMN synced_status TEXT",
+  "CREATE UNIQUE INDEX IF NOT EXISTS idx_scans_client_uuid ON scans(client_uuid)",
 ];
 
 async function migrate() {

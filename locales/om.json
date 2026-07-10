@@ -24,7 +24,8 @@
     "crop_not_covered": "Midhaan kun oomisha kanaaf hin hammatamne. Hamma isaa hin tilmaamin — ogeessa qonnaa kee gaafadhu.",
     "verified_as_of": "Hanga {date}tti galmaa’eera. Yeroo dhumaa mirkanaa’etti sirrii ture.",
     "stale": "Yeroo dhumaa {date}tti kan mirkanaa’e galmaa’ee ture. Fayyadamuu dura irra deebi’ii mirkaneessi.",
-    "offline_note": "Daataa olkaa’e fayyadamaa jira — intarneetii hin jiru."
+    "offline_note": "Daataa olkaa’e fayyadamaa jira — intarneetii hin jiru.",
+    "sync_danger": "Oomishni ati iskaani goote{date} hin galmoofne. Hin fayyadamin."
   },
   "disclaimer": {
     "official": "Odeeffannoo qajeelaa. Yoo shakkite, ogeessa qonnaa kee quunnami."

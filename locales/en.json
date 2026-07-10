@@ -23,7 +23,8 @@
     "crop_not_covered": "This crop is not covered for this product. Do not guess the dose — ask your extension agent.",
     "verified_as_of": "Registered as of {date}. This was correct when last checked.",
     "stale": "This was registered when last checked on {date}. Check again before use.",
-    "offline_note": "Using saved data — no connection."
+    "offline_note": "Using saved data — no connection.",
+    "sync_danger": "A product you scanned{date} is NOT registered. Do not use it."
   },
   "disclaimer": {
     "official": "Official information. If unsure, contact your extension agent."

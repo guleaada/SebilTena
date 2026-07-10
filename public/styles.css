@@ -279,6 +279,16 @@ body {
   background: #efe7d4; color: var(--brown); font-weight: 700; font-size: 0.98rem;
   border-radius: 14px; padding: 10px 14px; margin-top: 16px; text-align: center;
 }
+
+/* Sync notice — a queued offline scan turned out dangerous after syncing (M6). */
+.sync-notice {
+  position: sticky; top: 0; z-index: 16;
+  background: var(--red); color: #fff; font-weight: 800; font-size: 1rem; line-height: 1.3;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 16px; box-shadow: var(--shadow);
+}
+.sync-notice[hidden] { display: none; }
+.sync-notice-x { background: transparent; border: 2px solid #fff; color: #fff; border-radius: 999px; min-width: 34px; min-height: 34px; font-weight: 800; cursor: pointer; }
 .lang-banner-msg { flex: 1 1 auto; text-align: center; min-width: 100%; }
 .lang-banner-actions { display: flex; gap: 10px; }
 .lang-banner-btn {

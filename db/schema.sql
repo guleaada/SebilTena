@@ -42,8 +42,12 @@ CREATE TABLE IF NOT EXISTS scans (
   channel TEXT,              -- app / sms
   resolved_status TEXT,      -- Tier-2 CONFIRM outcome: verify verdict, or REJECTED_BY_USER
   resolved_at TEXT,          -- when the CONFIRM was answered
+  client_uuid TEXT,          -- client-generated id for idempotent offline sync (M6 Part C)
+  synced_status TEXT,        -- authoritative online verdict recorded at sync time
   created_at TEXT DEFAULT (datetime('now'))
 );
+-- The UNIQUE index on client_uuid (idempotent sync) is created by the migration
+-- in src/db.js so it runs AFTER the column exists on already-created tables.
 
 -- SMS channel (M5): per-phone language preference + short-lived "last verified
 -- product" session so `CROP <name>` and emergency-with-context work by text.

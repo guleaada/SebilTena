@@ -546,6 +546,27 @@ browser (`public/js/ocr.js`, tesseract.js 5).
   disabled (Part B); and the composition (OCR text → matchAnchor → computeVerdict
   → VERIFIED/BANNED/CONFIRM/UNCONFIRMED) is Node-tested (`test-offline.js`).
 
+### Part C — offline scan queue + idempotent sync
+- Offline scans (+ offline CONFIRM resolutions) queue in IndexedDB
+  (`public/js/queue.js`, a separate `medaguard-queue` DB) with a client-generated
+  UUID, geotag (consent-gated, default off), timestamp, verdict, confidence.
+- On reachability (net.js), the queue flushes to `POST /api/scans/sync`
+  (`src/sync.js`). **Idempotent**: `scans.client_uuid` is UNIQUE + `INSERT OR
+  IGNORE`, so a replay adds no duplicate rows. Offline verdicts were provisional,
+  so the server **re-verifies** each against the live registry, records the
+  authoritative verdict in `synced_status`, and returns "upgrades" where it
+  differs. An offline `UNCONFIRMED` that is really `UNREGISTERED`/`BANNED`
+  notifies the farmer (red sync banner + spoken).
+- **Queue is capped** (`offlineQueueMax`, 200) — oldest dropped; a full queue
+  never blocks a new scan (enqueue is fire-and-forget). **Anonymized**: location
+  + product read + verdict only; no phone/name/identity.
+- Verified: `/api/scans/sync` live over HTTP (UNCONFIRMED→UNREGISTERED upgrade;
+  replay → `inserted:0, duplicates:1`) + 12 Node assertions (idempotency,
+  upgrades, geotag, anonymity). NOTE: the in-browser queue → reconnect → flush →
+  notify walkthrough could not be driven live this session (the preview eval tool
+  was unavailable); the server contract it calls is proven live + Node, and the
+  client queue is thin IndexedDB + `Net` wiring over those proven primitives.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

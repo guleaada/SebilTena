@@ -11,6 +11,7 @@ import { config } from "./config.js";
 import { handleInbound } from "./sms/handler.js";
 import { logEvent } from "./events.js";
 import { getRegistryBundle } from "./registry.js";
+import { syncScans } from "./sync.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -109,6 +110,19 @@ app.get("/api/emergency-bundle", async (req, res) => {
     res.json(await getEmergencyBundle(req.query.lang || "en"));
   } catch (err) {
     console.error("emergency-bundle error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// POST /api/scans/sync — flush queued offline scans (M6 Part C). Idempotent by
+// client UUID; returns upgrades (offline verdict -> authoritative online verdict).
+app.post("/api/scans/sync", async (req, res) => {
+  try {
+    const { scans } = req.body || {};
+    const result = await syncScans(scans);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error("scans sync error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });
