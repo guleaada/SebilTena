@@ -196,6 +196,11 @@ first-aid/dose prose and fails if any leaks in.
   trimmed from the tail; the verdict is never trimmed.
 - **Exact match only.** No fuzzy CONFIRM over SMS — a wrong confirm is a wrong
   dose. Unknown/garbled → "could not confirm / not registered", never a dose.
+- **Fail toward help, never toward a menu.** If an SMS contains `HELP` (any
+  language) but the route word can't be parsed, send the route-agnostic first-aid
+  steps (`aid_do_not_vomit`, `aid_keep_container`, `aid_seek_help`) + phone
+  numbers FIRST, then append the route menu — never a bare menu. A poisoning
+  victim must not lose a round trip to a "didn't understand" reply.
 - **Emergency by SMS never gates on identifying a product**, never rate-limits,
   and guarantees `aid_seek_help` + a phone number in the first message. Steps are
   controlled-vocabulary codes → reviewed strings; **no LLM, no prose** — the same

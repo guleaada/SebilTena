@@ -132,6 +132,12 @@ export async function handleInbound(inbound, deps = {}) {
     case "ROUTE": {
       const lang = knownLang || "en";
       if (cmd.type === "HELP" && !cmd.route) {
+        // Bare HELP -> route menu. HELP + an UNPARSEABLE route word -> FAIL
+        // TOWARD HELP: send the route-agnostic first-aid steps + phone numbers,
+        // then the menu AFTER (never instead). See SAFETY.md.
+        if (cmd.rest && cmd.rest.trim()) {
+          return emergencyFallback({ db, client, from, lang, region });
+        }
         await logEvent({ type: "help", channel: "sms", payload: { kind: "emergency_menu" }, region }, db);
         return send(client, db, from, [T.emergencyMenuText(lang)], { status: "HELP", region, lang });
       }
@@ -199,6 +205,22 @@ async function emergencyReply({ db, client, getFirstAid, from, route, user, lang
 
   const messages = T.packEmergency({ steps: stepTexts, seekText, call, lang });
   await logSms(db, { pesticideId: fresh ? user.last_pesticide_id : null, status: "EMERGENCY", region, lang });
+  return send(client, db, from, messages, { status: "EMERGENCY", region, lang });
+}
+
+// FAIL TOWARD HELP (M6 Part 0): HELP + an unparseable route word. Send the
+// route-agnostic first-aid steps (safe regardless of route) + phone numbers in
+// the first segment, then append the route menu AFTER — never a bare menu.
+const ROUTE_AGNOSTIC_AID = ["aid_do_not_vomit", "aid_keep_container", "aid_seek_help"];
+async function emergencyFallback({ db, client, from, lang, region }) {
+  const stepTexts = ROUTE_AGNOSTIC_AID.map((c) => t(lang, `aid.${c}`));
+  const seekText = t(lang, "aid.aid_seek_help");
+  const agent = await getAgent(db, region);
+  const call = T.callLine(agent?.phone, config.poisonCentre, lang);
+  // First message(s): steps + phone (seek+phone guaranteed in msg 1). Then menu.
+  const messages = [...T.packEmergency({ steps: stepTexts, seekText, call, lang }), T.emergencyMenuText(lang)];
+  await logSms(db, { status: "EMERGENCY", region, lang });
+  await logEvent({ type: "help", channel: "sms", payload: { kind: "unparsed_route" }, region }, db);
   return send(client, db, from, messages, { status: "EMERGENCY", region, lang });
 }
 

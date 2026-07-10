@@ -47,10 +47,12 @@ export function parseCommand(text) {
   const head = parts[0].toUpperCase();
   const rest = parts.slice(1).join(" ").trim();
 
-  // HELP, optionally with a route ("HELP SWALLOWED")
+  // HELP, optionally with a route ("HELP SWALLOWED"). `rest` is carried so the
+  // handler can tell a bare HELP from HELP + an UNPARSEABLE route word (which
+  // must still get first aid — fail toward help, never toward a menu).
   if (head === "HELP") {
     const route = rest ? resolveRoute(rest.split(/\s+/)[0]) : null;
-    return { type: "HELP", route };
+    return { type: "HELP", route, rest };
   }
 
   // LANG <code>

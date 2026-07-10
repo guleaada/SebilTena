@@ -142,7 +142,24 @@ async function main() {
   console.log("\nEmergency (Part B)");
   {
     const { sent } = await sms("HELP", { from: newPhone() });
-    check("HELP -> route menu", /FIRST AID/.test(sent.at(-1).message) && /SWALLOWED/.test(sent.at(-1).message));
+    check("bare HELP -> route menu", /FIRST AID/.test(sent.at(-1).message) && /SWALLOWED/.test(sent.at(-1).message));
+  }
+  // ---- Part 0: fail toward help (HELP + unparseable route) -----------------
+  {
+    const { sent } = await sms("HELP xyzzy", { from: newPhone() }); // gibberish route
+    check("HELP <gibberish> -> first aid delivered, not just a menu", sent.length >= 2, `msgs=${sent.length}`);
+    check("first message = route-agnostic first aid (do not vomit)", /Do not make the person vomit/i.test(sent[0].message), sent[0].message);
+    check("first message has aid_seek_help + a phone number", /health centre/i.test(sent[0].message) && /\+251/.test(sent[0].message), sent[0].message);
+    check("route menu appended AFTER, not instead", /SWALLOWED/.test(sent.at(-1).message) && sent.length >= 2);
+  }
+  {
+    const { sent } = await sms("HELP maqaarkaaX", { from: newPhone() }); // near-miss/unrecognized word
+    check("HELP <unrecognized word> -> first aid, not a menu", /health centre/i.test(sent[0].message) && /\+251/.test(sent[0].message), sent[0].message);
+    const limiter = createRateLimiter({ max: 1 });
+    const p = newPhone();
+    await sms("ETH-INS-0009/05", { from: p, limiter });     // use the one allowance
+    const { sent: s2 } = await sms("HELP zzz", { from: p, limiter }); // must still work
+    check("fail-toward-help still bypasses the rate limiter", /health centre/i.test(s2[0].message));
   }
   {
     // Bare route word, no product context -> universal steps.
