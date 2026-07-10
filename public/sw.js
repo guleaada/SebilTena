@@ -5,13 +5,14 @@
    other clips are cached opportunistically as they play (lean on low-RAM
    phones). The pesticide registry and scan-queue sync are still NOT cached —
    that is M6. API calls are network-first with graceful offline fallback. */
-const CACHE = "medaguard-shell-v8";
+const CACHE = "medaguard-shell-v9";
 
 const SHELL = [
   "/",
   "/index.html",
   "/styles.css",
   "/app.js",
+  "/js/net.js",
   "/js/audio.js",
   "/manifest.json",
   "/audio/manifest.json",

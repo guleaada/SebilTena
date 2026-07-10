@@ -470,6 +470,29 @@ denominator of any counterfeit rate and throws away a real signal.
   rows are in `scans` but excluded from product-scan rates too (not an
   identification). Resolution is idempotent (a double-answer is a no-op).
 
+## Milestone 6 — genuine offline
+
+### Part A.5 — reachability by outcome, never `navigator.onLine`
+`navigator.onLine` reports whether a network interface exists, not whether the
+server is reachable — it reads `false` on working links and `true` on dead 2G.
+We hit exactly this in the preview (`onLine === false` while every fetch worked),
+and getting it wrong flips `UNCONFIRMED ↔ UNREGISTERED`, the most dangerous
+verdict, in both directions.
+
+- **`public/js/net.js` is the ONLY module that reads `navigator.onLine`**
+  (grep-enforced), and only as a non-authoritative UI *hint*.
+- **Online-ness is decided by request OUTCOME**: always attempt with a timeout
+  (`config.reachabilityTimeoutMs` / `net.js TIMEOUT_MS`, default 4s). Success
+  (even a 4xx/5xx — the server answered) = online; timeout or network error =
+  offline. `requestJSON` returns `{ online, ok, data }`.
+- **Reconciliation with the brief's rule 1** ("treat `onLine === false` as a hint
+  — skip the network attempt, go to cache"): we do NOT skip the attempt, because
+  that reintroduces the exact bug (a working link reporting `false`) and would
+  fail acceptance test A.5.1 (fetch OK while `onLine === false` → online path).
+  We attempt always and decide by outcome. Verified: in the sandbox
+  (`onLine === false`) a scan reaches the server and renders its verdict, not the
+  offline card.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

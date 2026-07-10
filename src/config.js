@@ -37,6 +37,18 @@ export const config = {
   // Max inbound characters processed (defensive cap before any handling).
   smsInboundMaxChars: num(process.env.SMS_INBOUND_MAX_CHARS, 160),
 
+  // --- Offline (M6) ---
+  // Reachability timeout: how long the client waits before deciding a request is
+  // "offline" (net.js decides by OUTCOME, not the onLine flag). Mirror of the
+  // TIMEOUT_MS constant in public/js/net.js.
+  reachabilityTimeoutMs: num(process.env.REACHABILITY_TIMEOUT_MS, 4000),
+  // A cached VERIFIED verdict downgrades to caution after this many days.
+  staleAfterDays: num(process.env.STALE_AFTER_DAYS, 90),
+  // Refresh the offline registry bundle when online and older than this.
+  refreshAfterDays: num(process.env.REFRESH_AFTER_DAYS, 7),
+  // Max queued offline scans before dropping the oldest.
+  offlineQueueMax: num(process.env.OFFLINE_QUEUE_MAX, 200),
+
   // Vision models per provider (all vision-capable). Overridable so exact model
   // IDs are never load-bearing — see DECISIONS.md.
   models: {

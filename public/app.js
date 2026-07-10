@@ -244,13 +244,14 @@
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }
+  // Returns net.js's { online, ok, data } — online-ness is decided by outcome.
   async function postScan(imageBase64) {
     const body = { imageBase64, lang: state.lang };
     if (state.geoConsent === "yes") {
       const pos = await getPosition().catch(() => null);
       if (pos) { body.lat = pos.lat; body.lon = pos.lon; }
     }
-    return api("/api/scan", {
+    return window.Net.requestJSON("/api/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -281,14 +282,17 @@
   async function runScan(imageBase64) {
     show("loading");
     speak({ key: "scanning", text: t("ui.reading") });
-    if (!navigator.onLine) return renderOffline();
-    try {
-      const result = await postScan(imageBase64);
-      renderResult(result);
-    } catch (err) {
-      console.warn("scan failed:", err);
-      renderOffline();
-    }
+    // Online-ness is decided by OUTCOME (net.js), never by the onLine flag.
+    const r = await postScan(imageBase64);
+    if (r.online && r.ok) return renderResult(r.data);
+    if (r.online && !r.ok) { console.warn("scan http error", r.status); return renderOffline(); }
+    // Unreachable (timeout / network error) -> local OCR + cached registry.
+    return scanOffline(imageBase64);
+  }
+  // Offline scan path. Parts A + B replace this stub with client OCR + the
+  // cached registry; until then, the conservative "no connection" state.
+  function scanOffline(_imageBase64) {
+    return renderOffline();
   }
   function renderOffline() {
     show("result");
@@ -562,12 +566,11 @@
       const cached = localStorage.getItem("mg_emergency_bundle");
       if (cached) { try { state.bundle = JSON.parse(cached); } catch {} }
     }
-    if (navigator.onLine) {
-      fetch(`/api/emergency-bundle?lang=${state.lang}`)
-        .then((r) => r.json())
-        .then((b) => { if (b && b.first_aid) { state.bundle = b; localStorage.setItem("mg_emergency_bundle", JSON.stringify(b)); } })
-        .catch(() => {});
-    }
+    // Opportunistic refresh — attempt via net.js (decided by outcome); failure
+    // offline is silent (we already have cache or the embedded fallback).
+    window.Net.requestJSON(`/api/emergency-bundle?lang=${state.lang}`)
+      .then((r) => { if (r.online && r.ok && r.data && r.data.first_aid) { state.bundle = r.data; localStorage.setItem("mg_emergency_bundle", JSON.stringify(r.data)); } })
+      .catch(() => {});
     return state.bundle;
   }
 
