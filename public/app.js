@@ -256,11 +256,12 @@
       body: JSON.stringify(body),
     });
   }
-  const verifyNumber = (registrationNo) =>
-    api("/api/verify-number", {
+  // Resolve a Tier-2 CONFIRM (records the outcome on the originating scan row).
+  const confirmScan = (scanId, confirm, registrationNo) =>
+    api("/api/scan/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ registrationNo, lang: state.lang }),
+      body: JSON.stringify({ scanId, confirm, registrationNo, lang: state.lang }),
     });
   const getDosage = (pesticideId, crop) =>
     api(`/api/dosage?pesticideId=${encodeURIComponent(pesticideId)}&crop=${encodeURIComponent(crop)}&lang=${state.lang}`);
@@ -373,11 +374,16 @@
     yes.onclick = async () => {
       show("loading");
       try {
-        const rec = await verifyNumber(res.confirmRegistrationNo);
-        renderResult({ status: rec.status, verify: rec });
+        // Resolve the scan row (resolved_status = verify verdict) and reveal it.
+        const r = await confirmScan(res.scanId, true, res.confirmRegistrationNo);
+        renderResult({ status: r.verify.status, verify: r.verify });
       } catch { renderOffline(); }
     };
-    no.onclick = () => show("home");
+    no.onclick = () => {
+      // NO = counterfeit-suspicion signal. Record it (best-effort), then reset.
+      confirmScan(res.scanId, false, res.confirmRegistrationNo).catch(() => {});
+      show("home");
+    };
     yn.append(yes, no);
     actions.appendChild(yn);
     $("#verdictCard").replaceChildren(card);

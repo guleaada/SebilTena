@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS scans (
   region TEXT,
   language TEXT,
   channel TEXT,              -- app / sms
+  resolved_status TEXT,      -- Tier-2 CONFIRM outcome: verify verdict, or REJECTED_BY_USER
+  resolved_at TEXT,          -- when the CONFIRM was answered
   created_at TEXT DEFAULT (datetime('now'))
 );
 

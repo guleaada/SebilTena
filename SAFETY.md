@@ -217,6 +217,11 @@ EMERGENCY` (plus the scan-pipeline `CONFIRM` state). Interaction **telemetry**
 separate `events` table, so it can never inflate scan counts or per-region
 counterfeit rates. A test enforces this. Do not overload `scans`.
 
+A `CONFIRM` is **pending** until the farmer answers (`/api/scan/confirm` →
+`resolved_status`). Counterfeit rates are computed over **resolved** scans only
+(`src/stats.js`); an unresolved `CONFIRM` is excluded from every rate. A `NO`
+answer (`REJECTED_BY_USER`) is a counterfeit-suspicion signal, not a null.
+
 ## If you are tempted to break this
 
 Don't. If a feature seems to need the LLM to produce a safety fact, the correct

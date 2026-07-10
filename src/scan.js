@@ -32,9 +32,10 @@ async function loadRegistry(dbClient) {
   }));
 }
 
+// Returns the inserted scan row id (needed to resolve a Tier-2 CONFIRM later).
 async function logScan(dbClient, row) {
   try {
-    await dbClient.execute({
+    const res = await dbClient.execute({
       sql: `INSERT INTO scans
         (registration_no_read, matched_pesticide_id, result_status, confidence,
          lat, lon, region, language, channel)
@@ -51,9 +52,11 @@ async function logScan(dbClient, row) {
         row.channel ?? "app",
       ],
     });
+    return res.lastInsertRowid != null ? Number(res.lastInsertRowid) : null;
   } catch (err) {
     // Never let audit logging break the farmer-facing response.
     console.error("scan log failed:", err?.message || err);
+    return null;
   }
 }
 
@@ -144,7 +147,7 @@ export async function runScan(input = {}, deps = {}) {
 
   // --- 3b. Tier 2 fuzzy -> CONFIRM. Withhold ALL dosage/PPE/first-aid -------
   if (match.tier === 2) {
-    await logScan(dbClient, {
+    const scanId = await logScan(dbClient, {
       registration_no_read: readRegNo,
       matched_pesticide_id: match.pesticide.id,
       result_status: "CONFIRM",
@@ -153,6 +156,7 @@ export async function runScan(input = {}, deps = {}) {
     });
     return {
       status: "CONFIRM",
+      scanId, // originating row — the client sends it back on YES/NO
       confidence: "medium",
       matchTier: 2,
       needsConfirmation: true,
@@ -165,7 +169,8 @@ export async function runScan(input = {}, deps = {}) {
       headline: t(language, "status.CONFIRM"),
       message: t(language, "msg.confirm"),
       disclaimer: t(language, "disclaimer.official"),
-      // To confirm, the client calls POST /api/verify-number with this reg no.
+      // To confirm, the client calls POST /api/scan/confirm with { scanId,
+      // confirm, registrationNo } — which resolves the originating scan row.
       confirmRegistrationNo: match.pesticide.registration_no,
       meta: scanMeta,
     };
@@ -194,6 +199,44 @@ export async function runScan(input = {}, deps = {}) {
     disclaimer: t(language, "disclaimer.official"),
     meta: scanMeta,
   };
+}
+
+// Mark a CONFIRM scan row as resolved. Only ever transitions a still-pending
+// CONFIRM row (idempotent + safe against double-answers).
+async function resolveScan(dbClient, scanId, resolvedStatus) {
+  const res = await dbClient.execute({
+    sql: `UPDATE scans SET resolved_status = ?, resolved_at = datetime('now')
+          WHERE id = ? AND result_status = 'CONFIRM' AND resolved_status IS NULL`,
+    args: [resolvedStatus, scanId],
+  });
+  return Number(res.rowsAffected || 0) > 0;
+}
+
+/**
+ * Resolve a Tier-2 CONFIRM (M5.7). YES -> verify.js verdict; NO -> REJECTED_BY_USER.
+ * Records the outcome on the originating scan row so it stops being "pending".
+ * @param {{scanId, confirm, registrationNo, lang}} input
+ * @param {{db?, verifyNumber?}} deps
+ */
+export async function resolveConfirm(input = {}, deps = {}) {
+  const dbClient = deps.db ?? defaultDb;
+  const verify = deps.verifyNumber ?? defaultVerify;
+  const language = normalizeLang(input.lang);
+  const scanId = Number(input.scanId);
+
+  if (!Number.isFinite(scanId)) {
+    return { ok: false, error: "invalid_scan_id" };
+  }
+
+  if (input.confirm) {
+    const verifyResult = await verify(input.registrationNo, language);
+    const updated = await resolveScan(dbClient, scanId, verifyResult.status);
+    // Confirmed -> reveal the full record (dosage/safety) from verify.js.
+    return { ok: true, resolved: updated, resolved_status: verifyResult.status, status: verifyResult.status, verify: verifyResult };
+  }
+
+  const updated = await resolveScan(dbClient, scanId, "REJECTED_BY_USER");
+  return { ok: true, resolved: updated, resolved_status: "REJECTED_BY_USER" };
 }
 
 async function conservative(dbClient, { language, lat, lon, region, readRegNo, provider }) {

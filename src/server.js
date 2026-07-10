@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import "dotenv/config";
 import { db, dbMode, initSchema } from "./db.js";
 import { verifyNumber } from "./verify.js";
-import { runScan } from "./scan.js";
+import { runScan, resolveConfirm } from "./scan.js";
 import { getDosage } from "./dosage.js";
 import { getFirstAid, getEmergencyBundle } from "./firstaid.js";
 import { config } from "./config.js";
@@ -59,6 +59,20 @@ app.post("/api/scan", async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("scan error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// POST /api/scan/confirm { scanId, confirm, registrationNo, lang } — resolve a
+// Tier-2 CONFIRM. YES -> verify.js verdict (returns the full record); NO ->
+// REJECTED_BY_USER. Updates the originating scan row so it stops being pending.
+app.post("/api/scan/confirm", async (req, res) => {
+  try {
+    const { scanId, confirm, registrationNo, lang } = req.body || {};
+    const result = await resolveConfirm({ scanId, confirm: Boolean(confirm), registrationNo, lang: lang || "en" });
+    res.json(result);
+  } catch (err) {
+    console.error("scan confirm error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });

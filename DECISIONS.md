@@ -447,6 +447,29 @@ working languages silently sends English — fatal on text-only SMS.
   `test-sms.js` — enable when those locales gain strings; replies flip encoding
   and the ≤2-segment fit must be re-verified.
 
+## Resolving CONFIRM rows (Part 0.7) — rates over *resolved* scans only
+
+A Tier-2 `CONFIRM` is a pending state. Left unresolved it inflates the
+denominator of any counterfeit rate and throws away a real signal.
+
+- `scans` gains `resolved_status` + `resolved_at` (added via an idempotent
+  `ALTER TABLE` migration in `initSchema`, so existing DBs upgrade without a
+  reseed). `result_status` stays `CONFIRM`; the answer lives in `resolved_status`.
+- `/api/scan` returns the originating `scanId`. `POST /api/scan/confirm
+  { scanId, confirm, registrationNo, lang }` resolves it: **YES** →
+  `resolved_status` = the `verify.js` verdict (and returns the full record so the
+  client reveals dosage/safety); **NO** → `resolved_status = 'REJECTED_BY_USER'`.
+  The client now calls this instead of `/api/verify-number` on confirm.
+- **`REJECTED_BY_USER` is a counterfeit-suspicion signal, not a null result** —
+  the label fuzzy-matched a registered product but the person holding the bottle
+  says it isn't that product. `src/stats.js` counts it (with `UNREGISTERED`) in
+  the counterfeit-suspicion layer; **M7 surfaces it as its own map layer.**
+- **Rates are computed over RESOLVED scans only** (`src/stats.js` `scanStats` is
+  the single source). An unresolved `CONFIRM` (farmer walked away) is EXCLUDED
+  from `resolvedScans` and every rate — asserted in `test-scan.js`. `EMERGENCY`
+  rows are in `scans` but excluded from product-scan rates too (not an
+  identification). Resolution is idempotent (a double-answer is a no-op).
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

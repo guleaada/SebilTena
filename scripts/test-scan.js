@@ -4,7 +4,8 @@
 //   node scripts/test-scan.js
 //
 import { db, initSchema } from "../src/db.js";
-import { runScan } from "../src/scan.js";
+import { runScan, resolveConfirm } from "../src/scan.js";
+import { scanStats } from "../src/stats.js";
 import { matchAnchor, similarity } from "../src/match.js";
 import { readLabel, VISION_PROMPT } from "../lib/aiClient.js";
 
@@ -84,6 +85,49 @@ async function main() {
     check("no dosages field leaked", res.dosages === undefined);
     check("candidate identity present", !!res.candidate?.product_name);
     check("confirmRegistrationNo provided", !!res.confirmRegistrationNo);
+    check("scanId returned for later resolution", Number.isFinite(res.scanId));
+  }
+
+  // ---- T2r: resolving a CONFIRM (Part 0.7) ---------------------------------
+  {
+    console.log("\nT2r resolve CONFIRM (YES / NO / pending exclusion)");
+    const vision = visionMock({ confidence: "low", provider: null });
+    const mkConfirm = () => runScan(
+      { ocrTextOverride: "MANCOZEB 80% WP\ncontact fungicide", lang: "en" },
+      { readLabel: vision }
+    );
+    const rowStatus = async (id) => (await db.execute({ sql: "SELECT result_status, resolved_status FROM scans WHERE id=?", args: [id] })).rows[0];
+
+    // YES -> resolved_status = the verify verdict; full record revealed.
+    const c1 = await mkConfirm();
+    const yes = await resolveConfirm({ scanId: c1.scanId, confirm: true, registrationNo: c1.confirmRegistrationNo, lang: "en" });
+    check("YES returns the verify record", yes.ok && yes.verify?.status === "VERIFIED", JSON.stringify(yes.resolved_status));
+    check("YES writes resolved_status = verdict", (await rowStatus(c1.scanId)).resolved_status === "VERIFIED");
+
+    // NO -> REJECTED_BY_USER (a counterfeit-suspicion signal, not null).
+    const c2 = await mkConfirm();
+    const no = await resolveConfirm({ scanId: c2.scanId, confirm: false, registrationNo: c2.confirmRegistrationNo, lang: "en" });
+    check("NO -> REJECTED_BY_USER", no.resolved_status === "REJECTED_BY_USER");
+    check("NO writes resolved_status = REJECTED_BY_USER", (await rowStatus(c2.scanId)).resolved_status === "REJECTED_BY_USER");
+
+    // Double-answer is a no-op (already resolved).
+    const again = await resolveConfirm({ scanId: c2.scanId, confirm: true, registrationNo: c2.confirmRegistrationNo, lang: "en" });
+    check("re-resolving an answered CONFIRM does not change it", again.resolved === false && (await rowStatus(c2.scanId)).resolved_status === "REJECTED_BY_USER");
+
+    // Rate math: pending CONFIRM excluded; REJECTED_BY_USER = counterfeit-suspicion.
+    await db.execute("DELETE FROM scans");
+    const pending = await mkConfirm();               // stays unresolved
+    const s1 = await scanStats(db);
+    check("unresolved CONFIRM excluded from resolvedScans", s1.resolvedScans === 0 && s1.unresolvedConfirm === 1, JSON.stringify(s1));
+    check("unresolved CONFIRM -> counterfeitRate is 0 (not inflated)", s1.counterfeitRate === 0);
+
+    const rej = await mkConfirm();
+    await resolveConfirm({ scanId: rej.scanId, confirm: false, registrationNo: rej.confirmRegistrationNo, lang: "en" });
+    const s2 = await scanStats(db);
+    check("resolved REJECTED_BY_USER counts as a resolved scan", s2.resolvedScans === 1, JSON.stringify(s2));
+    check("REJECTED_BY_USER counts as counterfeit-suspicion", s2.counterfeitSuspicion === 1 && s2.counterfeitRate === 1);
+    check("the still-pending CONFIRM is still excluded", s2.unresolvedConfirm === 1);
+    void pending;
   }
 
   // ---- T3a: unknown -> vision reads a fake product -> UNREGISTERED ---------

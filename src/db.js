@@ -21,8 +21,27 @@ export const db = createClient(
     : { url: `file:${path.join(ROOT, "medaguard.db")}` }
 );
 
-// Create tables from db/schema.sql (idempotent — uses IF NOT EXISTS).
+// Create tables from db/schema.sql (idempotent — uses IF NOT EXISTS), then run
+// additive column migrations for existing databases (CREATE TABLE IF NOT EXISTS
+// won't add new columns to a table that already exists).
 export async function initSchema() {
   const schema = fs.readFileSync(path.join(ROOT, "db", "schema.sql"), "utf8");
   await db.executeMultiple(schema);
+  await migrate();
+}
+
+const MIGRATIONS = [
+  "ALTER TABLE scans ADD COLUMN resolved_status TEXT",
+  "ALTER TABLE scans ADD COLUMN resolved_at TEXT",
+];
+
+async function migrate() {
+  for (const sql of MIGRATIONS) {
+    try {
+      await db.execute(sql);
+    } catch (err) {
+      // Ignore "duplicate column" — the migration has already been applied.
+      if (!/duplicate column/i.test(String(err?.message || err))) throw err;
+    }
+  }
 }
