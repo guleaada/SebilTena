@@ -49,6 +49,25 @@ export const config = {
   // Max queued offline scans before dropping the oldest.
   offlineQueueMax: num(process.env.OFFLINE_QUEUE_MAX, 200),
 
+  // --- Surveillance / counterfeit map (M7) ---
+  // A district shows a counterfeit SIGNAL only when it clears BOTH floors, else
+  // it renders "insufficient data" (never flagged, never clean). This is the
+  // single most important safeguard in M7 — one bad scan must not paint a red
+  // district. See SAFETY.md.
+  surveillance: {
+    minDistrictScans: num(process.env.SURV_MIN_DISTRICT_SCANS, 10), // denominator floor
+    minFlagCount: num(process.env.SURV_MIN_FLAG_COUNT, 3),          // flagged-count floor
+    minProductCount: num(process.env.SURV_MIN_PRODUCT_COUNT, 3),    // name a product only at/above this
+    windowDays: num(process.env.SURV_WINDOW_DAYS, 90),              // default date range
+    gridSize: num(process.env.SURV_GRID_SIZE, 0.1),                 // ~11km coarse grid for coord snapping
+    // Sample-size -> confidence label. provisional < indicativeAt <= indicative < strongAt <= strong.
+    indicativeAt: num(process.env.SURV_INDICATIVE_AT, 30),
+    strongAt: num(process.env.SURV_STRONG_AT, 100),
+  },
+  // Shared bearer token gating every /api/surveillance/* endpoint + /admin/map.
+  // No token -> 401. There is NO unauthenticated path to surveillance data.
+  adminToken: process.env.ADMIN_TOKEN || "",
+
   // Vision models per provider (all vision-capable). Overridable so exact model
   // IDs are never load-bearing — see DECISIONS.md.
   models: {
