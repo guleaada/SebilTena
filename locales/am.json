@@ -70,7 +70,8 @@
     "emergency_call_help": "እርዳታ ይጠይቁ",
     "preparing_offline": "ከመስመር ውጪ ሁነታን በማዘጋጀት ላይ…",
     "offline_saved": "የተቀመጠ መረጃ",
-    "days_today": "ዛሬ"
+    "days_today": "ዛሬ",
+    "offline_ready": "ከመስመር ውጪ ዝግጁ ✓"
   },
   "crop": {
     "potato": "ድንች",

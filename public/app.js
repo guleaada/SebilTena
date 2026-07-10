@@ -79,7 +79,7 @@
     recent: [],           // recent identified products (for emergency picker)
     bundle: null,         // cached emergency bundle
     emergencyProduct: null, // active ingredient chosen for the current emergency
-    offline: { registryReady: false, meta: null, preparing: false }, // M6 offline cache state
+    offline: { registryReady: false, meta: null, preparing: false, ocrReady: false, ocrWarming: false }, // M6 offline state
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -303,8 +303,12 @@
     const vres = await window.Registry.verifyOffline(candidates, { now: new Date(), staleAfterDays: OFFLINE.staleAfterDays });
     return renderOfflineVerify(vres);
   }
-  // Client OCR — implemented in Part A (tesseract.js). Stub until then.
-  async function runClientOcr(_imageBase64) { return null; }
+  // Client OCR (tesseract.js). Returns label text, or null if OCR isn't ready.
+  async function runClientOcr(imageBase64) {
+    if (!window.OCR) return null;
+    try { return await window.OCR.recognize(imageBase64); }
+    catch (e) { console.warn("client OCR failed:", e && e.message); return null; }
+  }
   // Offline CONFIRM resolutions queue for sync — implemented in Part C. Stub.
   function queueConfirmResolution(_registrationNo, _confirm) { /* Part C */ }
   const buildOcrCandidates = (text) => {
@@ -365,9 +369,11 @@
       .then((vres) => renderOfflineVerify(vres));
   }
 
-  // ---- Offline preparation + cache-age indicator (M6 Part B) --------------
-  // Download the registry once online, in the BACKGROUND. Never blocks the UI.
+  // ---- Offline preparation + cache-age indicator (M6 Parts A + B) ---------
+  // Download the registry + warm up client OCR once online, in the BACKGROUND.
+  // Never blocks the UI; if it never finishes, the app still works online.
   async function prepareOffline() {
+    warmUpOcr(); // background, independent of the registry fetch
     if (state.offline.preparing) return;
     try {
       state.offline.meta = await window.Registry.meta();
@@ -391,6 +397,17 @@
     state.offline.preparing = false;
     updateOfflineChip();
   }
+  function warmUpOcr() {
+    if (!window.OCR || state.offline.ocrReady || state.offline.ocrWarming) return;
+    state.offline.ocrWarming = true;
+    window.OCR.onProgress(() => updateOfflineChip());
+    updateOfflineChip();
+    window.OCR.warmUp().then((ok) => {
+      state.offline.ocrReady = ok; state.offline.ocrWarming = false;
+      if (ok) speak({ key: "offline_ready", text: t("ui.offline_ready") });
+      updateOfflineChip();
+    });
+  }
 
   function mountOfflineChip() {
     if ($("#offlineChip")) return;
@@ -407,12 +424,22 @@
   }
   function updateOfflineChip() {
     const chip = $("#offlineChip"); if (!chip) return;
-    if (state.offline.preparing) {
+    const ocrPct = window.OCR ? Math.round(window.OCR.progress() * 100) : 0;
+    const busy = state.offline.preparing || state.offline.ocrWarming;
+    if (busy) {
       chip.className = "offline-chip is-prep";
-      chip.textContent = "⏳ " + (t("ui.preparing_offline") || "Preparing offline mode…");
+      const pct = state.offline.ocrWarming && ocrPct > 0 && ocrPct < 100 ? ` ${ocrPct}%` : "";
+      chip.textContent = "⏳ " + (t("ui.preparing_offline") || "Preparing offline mode…") + pct;
       chip.hidden = false;
+    } else if (state.offline.registryReady && state.offline.ocrReady) {
+      // Briefly confirm offline readiness, then quiet down.
+      chip.className = "offline-chip is-ready";
+      chip.textContent = "✓ " + (t("ui.offline_ready") || "Offline ready");
+      chip.hidden = false;
+      clearTimeout(chip._t);
+      chip._t = setTimeout(() => { chip.hidden = true; }, 3000);
     } else {
-      chip.hidden = true; // ready state is quiet; cache-age shows on an offline verdict
+      chip.hidden = true;
     }
   }
   // Persistent cache-age line shown when a verdict was served from the cache.

@@ -11,3 +11,7 @@ data/registered_pesticides.xlsx
 # Tesseract downloaded language data
 eng.traineddata
 *.traineddata
+
+# Vendored tesseract binaries (run scripts/vendor-tesseract.sh)
+public/vendor/tesseract/*.wasm
+public/vendor/tesseract/*.traineddata.gz

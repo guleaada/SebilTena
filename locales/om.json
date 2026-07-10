@@ -70,7 +70,8 @@
     "emergency_call_help": "Gargaarsa waami",
     "preparing_offline": "Haala offline qopheessaa jira…",
     "offline_saved": "Daataa olkaa’e",
-    "days_today": "har’a"
+    "days_today": "har’a",
+    "offline_ready": "Offline qophaa’eera ✓"
   },
   "crop": {
     "potato": "Dinnicha",

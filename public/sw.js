@@ -1,11 +1,11 @@
-/* MedaGuard service worker — app shell + audio (Milestones 3–4).
-   Caches the app shell, locale JSON, icons, and the safety-critical audio clips
-   (emergency / verdict / route / PPE / hazard) for every AVAILABLE language, so
-   the emergency path speaks with zero signal. The currently-used language's
-   other clips are cached opportunistically as they play (lean on low-RAM
-   phones). The pesticide registry and scan-queue sync are still NOT cached —
-   that is M6. API calls are network-first with graceful offline fallback. */
-const CACHE = "medaguard-shell-v10";
+/* MedaGuard service worker — app shell + audio + offline OCR (M3–M6).
+   Precaches the app shell, locale JSON, icons, the offline JS (net/verdict/
+   registry/ocr + tesseract), and the safety-critical audio clips for every
+   AVAILABLE language. The large tesseract wasm + eng.traineddata.gz and the
+   audio clips beyond the critical set runtime-cache on first use (lean install).
+   API calls are network-first with graceful offline fallback; the registry is
+   cached in IndexedDB by the app (not here). */
+const CACHE = "medaguard-shell-v11";
 
 const SHELL = [
   "/",
@@ -15,6 +15,9 @@ const SHELL = [
   "/js/net.js",
   "/js/verdict.js",
   "/js/registry.js",
+  "/js/ocr.js",
+  "/vendor/tesseract/tesseract.min.js",
+  "/vendor/tesseract/worker.min.js",
   "/js/audio.js",
   "/manifest.json",
   "/audio/manifest.json",

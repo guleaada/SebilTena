@@ -17,12 +17,14 @@ function check(name, cond, detail = "") {
   else { failed++; console.error(`  FAIL ${name}${detail ? "  -> " + detail : ""}`); }
 }
 
-// Load the browser module with a fake window -> win.OfflineVerdict.
+// Load the browser modules with a fake window (verdict.js + registry.js). Only
+// the PURE parts of registry.js are exercised (matchAnchor); IndexedDB paths are
+// browser-verified in the preview.
 const win = {};
-const code = fs.readFileSync(path.join(ROOT, "public", "js", "verdict.js"), "utf8");
-// eslint-disable-next-line no-new-func
-new Function("window", code)(win);
+new Function("window", fs.readFileSync(path.join(ROOT, "public", "js", "verdict.js"), "utf8"))(win);
+new Function("window", fs.readFileSync(path.join(ROOT, "public", "js", "registry.js"), "utf8"))(win);
 const { computeVerdict, mergeBundle } = win.OfflineVerdict;
+const { matchAnchor } = win.Registry;
 
 const DAY = 86400000;
 const now = new Date("2026-07-10T00:00:00Z");
@@ -85,6 +87,24 @@ function main() {
   // A genuinely-new banned product is added.
   const m3 = mergeBundle([], { products: [{ registration_no: "ETH-INS-0009/05", status: "banned" }] });
   check("new banned product added", m3.records[0].status === "banned" && m3.anomalies.length === 0);
+
+  console.log("\noffline scan composition (OCR text -> matchAnchor -> computeVerdict)");
+  const records = [
+    { registration_no: "ETH-FUN-0142/17", product_name: "Mancozeb 80% WP", active_ingredient: "Mancozeb 800 g/kg", status: "registered", expiry_date: "2027-05-12", checked_at: daysAgo(1) },
+    { registration_no: "ETH-INS-0009/05", product_name: "Endosulfan 35% EC", active_ingredient: "Endosulfan 350 g/L", status: "banned", checked_at: daysAgo(1) },
+  ];
+  // Tier-1: OCR read the reg-no (even split across tokens) -> exact -> VERIFIED.
+  const ocr1 = ["MINISTRY OF AGRICULTURE", "MANCOZEB 80% WP", "Reg. No: ETH-FUN-0142/17", "ETH", "FUN", "0142", "17"];
+  const cm = matchAnchor(ocr1, records);
+  check("OCR reg-no -> Tier-1 exact match", cm.tier === 1 && cm.record.registration_no === "ETH-FUN-0142/17");
+  check("Tier-1 -> VERIFIED offline", cv(cm.record).status === "VERIFIED");
+  // Tier-1 on a banned product -> BANNED (from cache).
+  check("OCR of a banned product -> BANNED", cv(matchAnchor(["ENDOSULFAN 35% EC", "ETH-INS-0009/05"], records).record).status === "BANNED");
+  // Tier-2: name only (reg-no worn off) -> fuzzy CONFIRM.
+  check("OCR name only -> Tier-2 (CONFIRM)", matchAnchor(["MANCOZEB 80% WP", "contact fungicide"], records).tier === 2);
+  // Tier-3: unknown product offline -> miss -> UNCONFIRMED (never UNREGISTERED).
+  check("OCR unknown -> Tier-3 miss", matchAnchor(["SUPER GROW BOOSTER XYZ 500"], records).tier === 3);
+  check("Tier-3 miss -> UNCONFIRMED (never UNREGISTERED)", cv(null).status === "UNCONFIRMED");
 
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed === 0 ? 0 : 1);

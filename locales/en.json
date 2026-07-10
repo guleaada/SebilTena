@@ -71,7 +71,8 @@
     "lang_offer_spoken": "This language is coming soon. Please choose Amharic or English.",
     "preparing_offline": "Preparing offline mode…",
     "offline_saved": "Saved data",
-    "days_today": "today"
+    "days_today": "today",
+    "offline_ready": "Offline ready ✓"
   },
   "crop": {
     "potato": "Potato",

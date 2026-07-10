@@ -517,6 +517,35 @@ cache, so **counterfeit is an online-only verdict**.
 - Verified in preview **with fetch disabled**: BANNED (no dose), unknown →
   UNCONFIRMED, VERIFIED "as of <date>" + dose from cache, STALE → caution/no dose.
 
+### Part A — client-side OCR (the real offline blocker)
+M2's Tesseract ran server-side, so scanning needed a network. Moved into the
+browser (`public/js/ocr.js`, tesseract.js 5).
+
+- **Assets served from OUR origin, never a CDN** (`public/vendor/tesseract/`, via
+  `scripts/vendor-tesseract.sh`) so they are SW-cacheable and work offline. The
+  worker/core `.js` loaders are committed; the `.wasm` (~3 MB, one variant is
+  actually fetched) and `eng.traineddata.gz` (~2.8 MB) are gitignored (run the
+  vendor script after `npm i`). Client download is ~5 MB, not the 10 MB assumed.
+- **Absolute URLs are mandatory**: tesseract's blob worker does
+  `importScripts(workerPath)`, which rejects a root-relative path
+  ("URL invalid"). `ocr.js` builds `new URL('/vendor/tesseract/', location.href)`.
+  (Found + fixed live.)
+- **Background, non-blocking, resumable-enough**: warm-up runs on first online
+  load and NEVER blocks the UI; a spoken + visible "preparing offline mode…"
+  chip shows progress. tesseract caches the traineddata in IndexedDB + the SW
+  runtime-caches the assets, so once downloaded it is **never re-downloaded**
+  ("don't restart from zero on every app open"); a failed warm-up retries next
+  open. Byte-range resume of a single interrupted transfer is not implemented
+  (the browser/HTTP layer may resume; we rely on the persistent cache instead).
+- **Offline there is NO vision-LLM fallback** — a Tier-3 miss with no network is
+  `UNCONFIRMED` (conservative), never a dose. This is the correct answer, not a
+  degradation. Tier-1/Tier-2 work offline against the cached registry with the
+  same dosage-withholding rules; offline CONFIRM resolutions queue for sync (C).
+- Verified: tesseract read a clear label **in the browser** ("MANCOZEB 80% WP …
+  Reg. No: ETH-FUN-0142/17"); the offline cache renders verdicts with fetch
+  disabled (Part B); and the composition (OCR text → matchAnchor → computeVerdict
+  → VERIFIED/BANNED/CONFIRM/UNCONFIRMED) is Node-tested (`test-offline.js`).
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.
