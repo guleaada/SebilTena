@@ -14,6 +14,8 @@ import { logEvent } from "./events.js";
 import { getRegistryBundle } from "./registry.js";
 import { syncScans } from "./sync.js";
 import { districtAggregates, nationalSummary, districtsCsv } from "./surveillance.js";
+import { issueDeviceToken, verifyDeviceToken } from "./deviceToken.js";
+import { createRateLimiter } from "./sms/rateLimit.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -122,11 +124,50 @@ app.get("/api/emergency-bundle", async (req, res) => {
   }
 });
 
-// POST /api/scans/sync — flush queued offline scans (M6 Part C). Idempotent by
+// --- Write-side anti-abuse (M7.5 Part B). In-memory, per-process (move to a
+// shared store behind multiple instances — same caveat as the M5 SMS limiter).
+// These guard ONLY the write/register surface; farmer verdict + emergency paths
+// are never throttled.
+const deviceRegLimiter = createRateLimiter({ windowMs: 3600_000, max: config.deviceRegPerHourPerIp });
+const syncIpLimiter = createRateLimiter({ windowMs: 3600_000, max: config.syncCallsPerHourPerIp });
+const syncTokenLimiter = createRateLimiter({ windowMs: 3600_000, max: config.syncScansPerHourPerToken });
+const clientIp = (req) => req.ip || req.socket?.remoteAddress || "?";
+
+// POST /api/register-device — issue an opaque, PII-free write token (M7.5 B).
+// Not authentication of a person: it only proves the writer went through the app
+// once, raising the cost of scripted flooding. Rate-limited per IP.
+app.post("/api/register-device", (req, res) => {
+  const ip = clientIp(req);
+  if (deviceRegLimiter.isLimited(ip)) return res.status(429).json({ ok: false, error: "rate_limited" });
+  deviceRegLimiter.record(ip);
+  const { token, expMs } = issueDeviceToken();
+  // Record issuance only — no token value, no IP-to-token link, no PII.
+  logEvent({ type: "device_registered", channel: "app", payload: {} }).catch(() => {});
+  res.json({ ok: true, token, expires_at: new Date(expMs).toISOString() });
+});
+
+// POST /api/scans/sync — flush queued offline scans (M6 Part C). Requires a
+// valid app-issued write token (M7.5 B): absent/expired -> 401. Rate-limited per
+// token and per IP; oversized batches are rejected, not truncated. Idempotent by
 // client UUID; returns upgrades (offline verdict -> authoritative online verdict).
+// The token is NEVER passed to syncScans or stored on a row — anonymity intact.
 app.post("/api/scans/sync", async (req, res) => {
   try {
+    const token = req.get("x-device-token") || (req.body && req.body.deviceToken) || "";
+    if (!verifyDeviceToken(token)) return res.status(401).json({ ok: false, error: "device_token_required" });
+
+    const ip = clientIp(req);
+    if (syncIpLimiter.isLimited(ip) || syncTokenLimiter.isLimited(token)) {
+      return res.status(429).json({ ok: false, error: "rate_limited" });
+    }
     const { scans } = req.body || {};
+    const batch = Array.isArray(scans) ? scans : [];
+    if (batch.length > config.syncMaxBatch) {
+      return res.status(413).json({ ok: false, error: "batch_too_large", max: config.syncMaxBatch });
+    }
+    syncIpLimiter.record(ip);
+    for (let i = 0; i < batch.length; i++) syncTokenLimiter.record(token); // budget in SCANS
+
     const result = await syncScans(scans);
     res.json({ ok: true, ...result });
   } catch (err) {
@@ -331,6 +372,9 @@ initSchema()
     await checkReviewGate();
     if (!config.adminToken) {
       console.warn("[surveillance] ADMIN_TOKEN unset — /api/surveillance/* is LOCKED (all requests 401). Set ADMIN_TOKEN to enable the regulator map.");
+    }
+    if (!config.deviceTokenIssuedFromEnv) {
+      console.warn("[write-token] DEVICE_TOKEN_SECRET unset — using a random per-process secret. Write tokens will not survive a restart or span instances. Set it in production.");
     }
     app.listen(PORT, () => {
       console.log(`MedaGuard listening on http://localhost:${PORT}  (db: ${dbMode})`);

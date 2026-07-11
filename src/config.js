@@ -1,4 +1,5 @@
 import "dotenv/config";
+import crypto from "node:crypto";
 
 // Tunables for the scan pipeline. Everything the M2 flow needs to be tuned
 // against real Ethiopian label photos later lives here, env-overridable.
@@ -67,6 +68,22 @@ export const config = {
   // Shared bearer token gating every /api/surveillance/* endpoint + /admin/map.
   // No token -> 401. There is NO unauthenticated path to surveillance data.
   adminToken: process.env.ADMIN_TOKEN || "",
+
+  // --- Write-side anti-abuse (M7.5 Part B) ---
+  // Opaque, PII-free, rotating write token proving the writer went through the
+  // app once (NOT identity — no farmer accounts). HMAC secret: set in prod so
+  // tokens survive restarts / span instances; a random per-process default keeps
+  // dev working (clients just re-register, which is cheap + rate-limited).
+  deviceTokenSecret: process.env.DEVICE_TOKEN_SECRET || crypto.randomBytes(32).toString("hex"),
+  deviceTokenIssuedFromEnv: Boolean(process.env.DEVICE_TOKEN_SECRET),
+  deviceTokenTtlDays: num(process.env.DEVICE_TOKEN_TTL_DAYS, 7),
+  // Rate limits on the WRITE + REGISTER surface only. Farmer-facing verdict and
+  // emergency paths are NEVER throttled. In-memory (per-process) — move to a
+  // shared store behind multiple instances (same caveat as the M5 SMS limiter).
+  deviceRegPerHourPerIp: num(process.env.DEVICE_REG_PER_HOUR_PER_IP, 10),
+  syncScansPerHourPerToken: num(process.env.SYNC_SCANS_PER_HOUR_PER_TOKEN, 60),
+  syncCallsPerHourPerIp: num(process.env.SYNC_CALLS_PER_HOUR_PER_IP, 120),
+  syncMaxBatch: num(process.env.SYNC_MAX_BATCH, 200), // = offlineQueueMax; reject, don't truncate
 
   // Vision models per provider (all vision-capable). Overridable so exact model
   // IDs are never load-bearing — see DECISIONS.md.

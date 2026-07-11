@@ -336,10 +336,24 @@
     const resolved_status = confirm ? "CONFIRMED_BY_USER" : "REJECTED_BY_USER";
     window.Queue.update(queueUuid, { resolved_status }).catch(() => {});
   }
-  // Flush queued offline scans when reachable; notify on any authoritative upgrade.
-  async function flushQueue() {
+  // Obtain an app-issued write token (M7.5 B) — opaque, PII-free, anti-abuse
+  // (NOT a farmer account). Cached in localStorage; re-registered on demand.
+  async function ensureDeviceToken(force) {
+    if (!force && localStorage.getItem("mg_device_token")) return;
     try {
+      const r = await window.Net.requestJSON("/api/register-device", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+      });
+      if (r.online && r.ok && r.data && r.data.token) localStorage.setItem("mg_device_token", r.data.token);
+    } catch (e) { console.warn("device register failed:", e); }
+  }
+  // Flush queued offline scans when reachable; notify on any authoritative upgrade.
+  // A 401 means the write token expired -> re-register once and retry.
+  async function flushQueue(retried) {
+    try {
+      await ensureDeviceToken();
       const r = await window.Queue.flush();
+      if (r.tokenExpired && !retried) { await ensureDeviceToken(true); return flushQueue(true); }
       if (r.flushed && r.upgrades && r.upgrades.length) notifyUpgrades(r.upgrades);
     } catch (e) { console.warn("queue flush failed:", e); }
   }
@@ -978,6 +992,7 @@
     }
     window.AudioLayer.loadManifest();
     loadEmergencyBundle(); // prefetch + cache the offline emergency data
+    ensureDeviceToken();   // obtain the app-issued write token (M7.5) in the background
     prepareOffline();      // background registry download (M6) — never blocks UI
     flushQueue();          // flush any offline scans queued from a prior session
     if ("serviceWorker" in navigator) {

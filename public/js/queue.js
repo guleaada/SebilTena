@@ -77,14 +77,21 @@ window.Queue = (() => {
   }
 
   // Flush to the server (idempotent). Removes flushed items on success; returns
-  // any upgrades (offline verdict -> authoritative online verdict).
+  // any upgrades (offline verdict -> authoritative online verdict). Sends the
+  // app-issued write token (M7.5 B) — an expired/absent token yields 401, which
+  // the caller handles by re-registering and retrying once. The token is opaque
+  // and PII-free; it is never stored with the scans.
   async function flush() {
     const items = await all();
     if (!items.length) return { flushed: 0, upgrades: [] };
+    const token = (typeof localStorage !== "undefined" && localStorage.getItem("mg_device_token")) || "";
     const r = await window.Net.requestJSON("/api/scans/sync", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scans: items }),
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-device-token": token },
+      body: JSON.stringify({ scans: items }),
     });
-    if (!r.online || !r.ok) return { flushed: 0, offline: true };
+    if (r.online && !r.ok && r.status === 401) return { flushed: 0, tokenExpired: true };
+    if (!r.online || !r.ok) return { flushed: 0, offline: true }; // incl. 429 rate-limit -> retry later
     await remove(items.map((i) => i.uuid)); // server is idempotent -> safe to clear
     return { flushed: items.length, upgrades: (r.data && r.data.upgrades) || [] };
   }
