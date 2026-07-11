@@ -157,6 +157,9 @@
     $("#geoText").textContent = t("ui.share_location");
     $("#geoAllow").textContent = t("ui.allow");
     $("#geoSkip").textContent = t("ui.skip");
+    // Keep the demonstration banner in the current language.
+    const sb = $("#stagingBanner span:last-child");
+    if (sb) sb.textContent = t("ui.staging_notice");
   }
 
   // ---- Language sheet ----------------------------------------------------
@@ -964,6 +967,33 @@
     verifyOfflineAndRender, prepareOffline,   // M6 offline verification hooks
   };
 
+  // Staging posture (M8 Part D): a clear, NON-DISMISSIBLE "demonstration" banner
+  // whenever the server reports STAGING=true. Cached in localStorage so it also
+  // shows on later offline loads. There is no close button — it cannot be
+  // dismissed; this is a demonstration, not a live safety service.
+  async function applyStagingPosture() {
+    let staging = localStorage.getItem("mg_staging") === "true";
+    try {
+      const r = await window.Net.requestJSON("/api/app-config");
+      if (r.online && r.ok && r.data) {
+        staging = Boolean(r.data.staging);
+        localStorage.setItem("mg_staging", String(staging));
+      }
+    } catch { /* offline -> use the cached value */ }
+    if (staging) mountStagingBanner(); else unmountStagingBanner();
+  }
+  function mountStagingBanner() {
+    if ($("#stagingBanner")) return;
+    const b = el("div", "staging-banner");
+    b.id = "stagingBanner";
+    b.setAttribute("role", "alert");
+    b.innerHTML = `<span aria-hidden="true">⚠</span> <span>${esc(t("ui.staging_notice"))}</span>`;
+    document.body.insertBefore(b, document.body.firstChild); // above the topbar, normal flow
+  }
+  function unmountStagingBanner() {
+    const b = $("#stagingBanner"); if (b) b.remove();
+  }
+
   // Insert the language-offer banner container under the top bar.
   function mountLangBanner() {
     if ($("#langBanner")) return;
@@ -975,6 +1005,7 @@
 
   async function init() {
     bind();
+    applyStagingPosture(); // show the demonstration banner if the server is STAGING
     mountLangBanner();
     mountOfflineChip();
     await ensureLangMeta();

@@ -72,7 +72,8 @@
     "preparing_offline": "Haala offline qopheessaa jira…",
     "offline_saved": "Daataa olkaa’e",
     "days_today": "har’a",
-    "offline_ready": "Offline qophaa’eera ✓"
+    "offline_ready": "Offline qophaa’eera ✓",
+    "staging_notice": "AGARSIISA QOFA — tajaajila nageenyaa kan dhugaa miti. Murtii qorichaa dhugaatiif itti hin fayyadaminaa."
   },
   "crop": {
     "potato": "Dinnicha",

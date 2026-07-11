@@ -306,3 +306,23 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Staging demonstration banner (M8 Part D) — non-dismissible, unmissable. */
+.staging-banner {
+  background: #b23b34;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  padding: 8px 14px calc(8px + env(safe-area-inset-top, 0));
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid #7f2a25;
+  /* Normal flow (first child, above the sticky topbar) so it never hides the
+     language switcher. No close control — it cannot be dismissed. */
+  flex: 0 0 auto;
+}
+.staging-banner span[aria-hidden] { font-size: 16px; }

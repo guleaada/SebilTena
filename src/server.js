@@ -25,6 +25,15 @@ const app = express();
 app.use(express.json({ limit: "12mb" })); // headroom for base64 images (M2)
 app.use(express.urlencoded({ extended: false })); // Africa's Talking posts form-encoded
 
+// Staging posture (M8 Part D): this is a demonstration, not a farmer-facing
+// launch — no crawler may index or cache ANY part of it. Whole-app noindex +
+// a disallow-all robots.txt (the surveillance routes additionally set no-store).
+app.use((_req, res, next) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  next();
+});
+app.get("/robots.txt", (_req, res) => res.type("text/plain").send("User-agent: *\nDisallow: /\n"));
+
 // --- Static: PWA shell + locale JSON (reused by the frontend and SW) --------
 app.use("/locales", express.static(path.join(ROOT, "locales")));
 app.use(express.static(path.join(ROOT, "public")));
@@ -43,6 +52,15 @@ app.get("/api/health", async (_req, res) => {
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
   }
+});
+
+// GET /api/app-config — public, no secrets. Drives the demonstration banner and
+// tells the client whether SMS is enabled. Never returns tokens or credentials.
+app.get("/api/app-config", (_req, res) => {
+  res.json({
+    staging: config.staging,
+    smsEnabled: Boolean(process.env.AT_API_KEY && process.env.AT_USERNAME),
+  });
 });
 
 // POST /api/verify-number { registrationNo, lang } -> status + safety.

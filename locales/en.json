@@ -73,7 +73,8 @@
     "preparing_offline": "Preparing offline mode…",
     "offline_saved": "Saved data",
     "days_today": "today",
-    "offline_ready": "Offline ready ✓"
+    "offline_ready": "Offline ready ✓",
+    "staging_notice": "DEMONSTRATION ONLY — not a live safety service. Do not rely on it for real pesticide decisions."
   },
   "crop": {
     "potato": "Potato",

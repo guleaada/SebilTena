@@ -72,7 +72,8 @@
     "preparing_offline": "ከመስመር ውጪ ሁነታን በማዘጋጀት ላይ…",
     "offline_saved": "የተቀመጠ መረጃ",
     "days_today": "ዛሬ",
-    "offline_ready": "ከመስመር ውጪ ዝግጁ ✓"
+    "offline_ready": "ከመስመር ውጪ ዝግጁ ✓",
+    "staging_notice": "ለማሳያ ብቻ — ቀጥታ የደህንነት አገልግሎት አይደለም። ለእውነተኛ የፀረ-ተባይ ውሳኔዎች አይጠቀሙበት።"
   },
   "crop": {
     "potato": "ድንች",
