@@ -64,6 +64,15 @@ export const config = {
     // Sample-size -> confidence label. provisional < indicativeAt <= indicative < strongAt <= strong.
     indicativeAt: num(process.env.SURV_INDICATIVE_AT, 30),
     strongAt: num(process.env.SURV_STRONG_AT, 100),
+    // --- Anomaly quarantine (M7.5 Part C) — coarse filters, not fraud AI. A
+    // synced batch that trips any of these has its FLAGGED scans held in
+    // `pending_review` (excluded from the live aggregate) until a human releases
+    // them. Genuine farmer scans don't arrive in synchronized bursts of made-up
+    // numbers; fail conservative (when in doubt, quarantine).
+    quarantineFlagBurst: num(process.env.SURV_QUARANTINE_FLAG_BURST, 5), // flagged scans in one batch
+    quarantineUniformMin: num(process.env.SURV_QUARANTINE_UNIFORM_MIN, 3), // min flagged for pattern checks
+    quarantinePrefixLen: num(process.env.SURV_QUARANTINE_PREFIX_LEN, 6),   // shared reg-no prefix = uniform
+    quarantineClusterSpan: num(process.env.SURV_QUARANTINE_CLUSTER_SPAN, 0.05), // deg bbox = tight cluster
   },
   // Shared bearer token gating every /api/surveillance/* endpoint + /admin/map.
   // No token -> 401. There is NO unauthenticated path to surveillance data.

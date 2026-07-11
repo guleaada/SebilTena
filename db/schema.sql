@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS scans (
   resolved_at TEXT,          -- when the CONFIRM was answered
   client_uuid TEXT,          -- client-generated id for idempotent offline sync (M6 Part C)
   synced_status TEXT,        -- authoritative online verdict recorded at sync time
+  review_status TEXT,        -- M7.5 Part C: NULL=live, 'pending_review'=quarantined, 'released'=cleared by a human
   created_at TEXT DEFAULT (datetime('now'))
 );
 -- The UNIQUE index on client_uuid (idempotent sync) is created by the migration

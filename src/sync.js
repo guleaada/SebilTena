@@ -2,6 +2,10 @@ import { db as defaultDb } from "./db.js";
 import { verifyNumber as defaultVerify } from "./verify.js";
 import { config } from "./config.js";
 import { SUPPORTED_LANGS } from "./localize.js";
+import { evaluateBatchAnomaly } from "./anomaly.js";
+import { logEvent } from "./events.js";
+
+const FLAGGED = new Set(["UNREGISTERED", "BANNED"]);
 
 // ---------------------------------------------------------------------------
 // OFFLINE SCAN SYNC (M6 Part C). Flushes queued offline scans to `scans`.
@@ -75,6 +79,7 @@ export async function syncScans(scans, deps = {}) {
   let duplicates = 0;
   let rejected = 0;
   const upgrades = [];
+  const flagged = []; // scans in THIS batch whose authoritative verdict is UNREGISTERED/BANNED
 
   const list = Array.isArray(scans) ? scans : [];
   for (let i = 0; i < list.length; i++) {
@@ -128,6 +133,9 @@ export async function syncScans(scans, deps = {}) {
             created_at: s.created_at ?? null,
           });
         }
+        if (FLAGGED.has(v.status)) {
+          flagged.push({ uuid, regNoRead, lat: cleanCoord(s.lat, 90), lon: cleanCoord(s.lon, 180) });
+        }
       }
     } catch (err) {
       // One malformed item must never 500 the batch (it would wedge the
@@ -137,5 +145,28 @@ export async function syncScans(scans, deps = {}) {
     }
   }
 
-  return { inserted, duplicates, rejected, upgrades };
+  // --- Anomaly quarantine (M7.5 Part C). A burst of flagged scans from one
+  // source (this batch) is the fingerprint of poisoning. If it trips a coarse
+  // heuristic, hold the FLAGGED scans in `pending_review` — excluded from the
+  // live surveillance aggregate until a human releases them. Fail conservative:
+  // a real hotspot delayed by review is safe; a poisoned district shown live is
+  // not. Never auto-delete. The farmer's own upgrade notice is unaffected.
+  let quarantined = 0;
+  const anomaly = evaluateBatchAnomaly(flagged);
+  if (anomaly.quarantine && flagged.length) {
+    const uuids = flagged.map((f) => f.uuid);
+    const placeholders = uuids.map(() => "?").join(",");
+    await dbc.execute({
+      sql: `UPDATE scans SET review_status = 'pending_review' WHERE client_uuid IN (${placeholders})`,
+      args: uuids,
+    });
+    quarantined = uuids.length;
+    logEvent({
+      type: "surveillance_quarantine",
+      channel: "admin",
+      payload: { reason: anomaly.reason, count: quarantined },
+    }, dbc).catch(() => {});
+  }
+
+  return { inserted, duplicates, rejected, quarantined, upgrades };
 }

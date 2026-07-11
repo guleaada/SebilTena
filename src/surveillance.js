@@ -83,12 +83,24 @@ export async function districtAggregates(opts = {}, dbClient = defaultDb) {
 
   // Pull only what aggregation needs. created_at bounds the window. We read
   // lat/lon here purely to bucket them server-side; they are discarded after.
+  // Quarantined scans (review_status='pending_review', M7.5 Part C) are EXCLUDED
+  // from the live aggregate until a human releases them ('released' or NULL live).
   const res = await dbClient.execute({
     sql: `SELECT result_status, resolved_status, region, lat, lon, matched_pesticide_id, created_at
           FROM scans
-          WHERE created_at >= ? AND created_at <= ?`,
+          WHERE created_at >= ? AND created_at <= ?
+            AND (review_status IS NULL OR review_status = 'released')`,
     args: [range.from, range.to],
   });
+
+  // How many scans in this window are held for review (surfaced to the admin so
+  // a human can see "N scans quarantined"). Never silently dropped.
+  const heldRes = await dbClient.execute({
+    sql: `SELECT COUNT(*) AS n FROM scans
+          WHERE created_at >= ? AND created_at <= ? AND review_status = 'pending_review'`,
+    args: [range.from, range.to],
+  });
+  const pendingReview = Number(heldRes.rows[0].n);
 
   const buckets = new Map();
   for (const row of res.rows) {
@@ -173,13 +185,14 @@ export async function districtAggregates(opts = {}, dbClient = defaultDb) {
   return {
     range,
     floors: { minDistrictScans, minFlagCount, minProductCount },
+    pendingReview, // scans held for human review, excluded from the districts above
     districts,
   };
 }
 
 /** National roll-up. Same resolved-only + separated-rejections rules. */
 export async function nationalSummary(opts = {}, dbClient = defaultDb) {
-  const { districts, range, floors } = await districtAggregates(opts, dbClient);
+  const { districts, range, floors, pendingReview } = await districtAggregates(opts, dbClient);
   const totals = districts.reduce(
     (t, d) => {
       t.resolvedScans += d.resolvedScans;
@@ -199,7 +212,7 @@ export async function nationalSummary(opts = {}, dbClient = defaultDb) {
   const flagged = totals.unregisteredCount + totals.bannedCount;
   totals.flaggedReportRate = totals.resolvedScans ? Number((flagged / totals.resolvedScans).toFixed(4)) : 0;
   totals.confidence = confidenceLabel(totals.resolvedScans);
-  return { range, floors, districtCount: districts.length, totals };
+  return { range, floors, districtCount: districts.length, pendingReview, totals };
 }
 
 // The permanent caption that rides with every export and the map view.

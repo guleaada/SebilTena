@@ -300,7 +300,8 @@
       { n: (t.flaggedReportRate * 100).toFixed(1) + "%", l: "National flagged-report rate", sub: `${t.confidence} · (unreg+banned)/resolved` },
       { n: t.reviewDistricts, l: "Review-recommended districts", sub: "inspector leads, not findings" },
       { n: t.insufficientDistricts, l: "Insufficient data", sub: "below the data threshold" },
-      { n: t.rejectedByUserCount, l: "User-rejected (noisy)", sub: "NOT in the counterfeit rate" },
+      { n: state.data.summary.pendingReview || 0, l: "Held for review", sub: "quarantined anomalies, excluded from the map" },
+      { n: t.rejectedByUserCount, l: "User-rejected (noisy)", sub: "NOT in the flagged-report rate" },
     ];
     $("tiles").innerHTML = tiles.map((x) =>
       `<div class="tile"><div class="n">${x.n}</div><div class="l">${x.l}</div><div class="sub">${x.sub}</div></div>`).join("");
