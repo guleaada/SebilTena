@@ -1,0 +1,40 @@
+# MedaGuard — Fly.io STAGING deployment (M8). This is a demonstration system,
+# not a farmer-facing launch (see SAFETY.md + DEPLOY.md). The production boot-gate
+# refuses to serve unreviewed first-aid; the demo runs via the explicit,
+# banner-showing STAGING path (STAGING=true), never by flipping data to reviewed.
+
+app = "medaguard-staging"
+
+# Johannesburg is Fly's closest region to Ethiopia; Frankfurt ("fra") is the
+# main alternative (better global peering, further away). Pick per measured
+# latency at deploy time — see DEPLOY.md.
+primary_region = "jnb"
+
+[build]
+
+[env]
+  PORT = "8080"
+  # Demonstration deployment: enables the honest non-cleared boot path + the
+  # non-dismissible "demonstration system" banner. Remove for a cleared pilot
+  # build (which also requires reviewed:true first-aid to pass the boot-gate).
+  STAGING = "true"
+  # NODE_ENV=production is baked into the image (hardening + preflight). Secrets
+  # (ADMIN_TOKEN, DEVICE_TOKEN_SECRET, TURSO_*, AT_*) are set via `fly secrets`.
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false      # demo: keep it up so the URL is always live
+  auto_start_machines = true
+  min_machines_running = 1        # low, single instance for a demo
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "25s"
+    method = "get"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1024mb"               # headroom for the Tesseract wasm core

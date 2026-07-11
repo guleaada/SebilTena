@@ -1,0 +1,31 @@
+# Keep secrets, local data, dev artifacts, and tests OUT of the image.
+node_modules
+.git
+.gitignore
+
+# Secrets + local env (never in an image)
+.env
+.env.*
+!.env.example
+
+# Local databases + journals
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Tests + audit notes (not shipped)
+scripts/test-*.js
+AUDIT_REPORT.md
+
+# Downloaded/vendored artifacts (re-vendored in the image at build time)
+eng.traineddata
+*.traineddata
+public/vendor/tesseract/*.wasm
+public/vendor/tesseract/*.traineddata.gz
+
+# OS / editor cruft
+.DS_Store
+**/.DS_Store
+npm-debug.log*
+.claude
