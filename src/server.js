@@ -1,4 +1,5 @@
 import express from "express";
+import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import "dotenv/config";
@@ -184,6 +185,15 @@ app.post("/api/lang-fallback", async (req, res) => {
 // server (the aggregator returns district/grid-centroid aggregates only).
 // ---------------------------------------------------------------------------
 
+// Constant-time secret comparison (hash both sides so lengths always match) —
+// a plain === leaks match-prefix length through response timing.
+function safeEqual(a, b) {
+  if (!a || !b) return false;
+  const ha = crypto.createHash("sha256").update(String(a)).digest();
+  const hb = crypto.createHash("sha256").update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
 // Bearer-token gate. Token from `Authorization: Bearer`, `x-admin-token`, or
 // `?token=`. Empty config token => LOCKED (every request 401). Every access is
 // audited to `events`.
@@ -191,7 +201,7 @@ function requireAdmin(req, res, next) {
   const auth = req.get("authorization") || "";
   const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
   const provided = bearer || req.get("x-admin-token") || req.query.token || "";
-  const ok = config.adminToken && provided === config.adminToken;
+  const ok = Boolean(config.adminToken) && safeEqual(provided, config.adminToken);
   // Audit the attempt (never log the token itself).
   logEvent({
     type: ok ? "surveillance_access" : "surveillance_denied",
@@ -252,7 +262,7 @@ app.get("/admin/map", (_req, res) => {
 app.post("/api/sms/webhook", async (req, res) => {
   if (config.smsWebhookSecret) {
     const provided = req.get("x-webhook-secret") || req.query.secret;
-    if (provided !== config.smsWebhookSecret) {
+    if (!safeEqual(provided, config.smsWebhookSecret)) {
       return res.status(401).json({ ok: false, error: "unauthorized" });
     }
   } else {
