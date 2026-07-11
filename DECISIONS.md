@@ -705,6 +705,42 @@ accounts were deliberately NOT added — anonymity is a privacy choice and stays
   the rate limit is the residual gap (accepted: it's slow, capped, and still only
   ever produces an inspector lead, never a public claim).
 
+## Milestone 8 — staging deploy (Fly.io + Turso)
+
+**Staging, not a launch.** A real, secure, demonstrable system that is safe by
+construction: the production boot-gate refuses to serve unreviewed first-aid, so
+the demo runs only via the explicit, banner-showing `STAGING=true` path — never
+by flipping data to `reviewed:true`. Remaining pre-pilot inputs are listed in
+DEPLOY.md.
+
+### Part B — one fail-closed preflight (`src/preflight.js`)
+- "Hardened" = `NODE_ENV=production` OR `STAGING=true`. All fail-closed startup
+  conditions are centralized and logged together, then `process.exit(1)` on any
+  fatal: cleared-production + unreviewed first-aid; `DEVICE_TOKEN_SECRET`
+  missing/weak; `ADMIN_TOKEN`/`AT_WEBHOOK_SECRET` set-but-weak; and it fails
+  closed if it can't even verify the review gate. Plain dev only warns.
+- The demonstration path is honest: `STAGING=true` may boot with unreviewed data
+  but logs "NOT CLEARED FOR FIELD USE" and shows the non-dismissible banner.
+
+### Part C — shared-store rate limiting (`src/rateStore.js`)
+- **Choice: a `rate_limits` table in the SAME libSQL DB** (Turso in prod, local
+  SQLite in dev) — no new infra. Fixed-window counters keyed by `<prefix>:<key>`,
+  incremented via an atomic UPSERT+CASE that resets an expired window in one
+  statement, so all Fly machines share one budget. Interface matches the
+  in-memory limiter (isLimited/record) but async — call sites just add `await`,
+  and an injected in-memory limiter (returning a plain boolean) still works under
+  `await`, so the offline tests are unchanged. The in-memory `createRateLimiter`
+  is kept for those tests.
+- **Fail-open vs fail-closed split:** if the store is unreachable, the SMS
+  non-emergency cost-guard (farmer-facing) fails OPEN — never block a verdict or
+  emergency — while the write/sync surface fails CLOSED (deny conservatively).
+  Verdict/dosage/first-aid/emergency paths are never rate-limited at all;
+  emergency SMS still bypasses the limiter entirely; `HELP` still bypasses.
+- **TTL cleanup:** expired counter rows are swept once at boot and every 15 min
+  (`cleanupRateLimits`, interval `.unref()`ed). `test-ratestore.js` (12) proves
+  fixed-window counting, window reset, batch increment, **two instances sharing
+  one budget**, the fail-open/closed split, and cleanup.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

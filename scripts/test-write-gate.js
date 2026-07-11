@@ -40,6 +40,7 @@ const scan = (uuid, reg = "FAKE-9999/99") => ({ uuid, registration_no_read: reg,
 async function main() {
   await initSchema();
   await db.execute("DELETE FROM scans");
+  await db.execute("DELETE FROM rate_limits"); // shared-store limiter — clean slate (M8 C)
 
   const child = spawn("node", ["src/server.js"], {
     cwd: ROOT,

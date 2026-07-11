@@ -1,12 +1,12 @@
 import { config } from "../config.js";
+import { createSharedRateLimiter } from "../rateStore.js";
 
-// In-memory sliding-window rate limiter, per phone number. Outbound SMS costs
-// real money, so non-emergency inbound is capped. Emergency (HELP / route) must
-// NEVER be limited — a person may be dying — so the handler simply doesn't call
-// this for those.
+// In-memory sliding-window rate limiter, per phone number. Kept for the offline
+// tests (which inject their own limiter). The LIVE default (`rateLimiter` below)
+// is the shared-store limiter so the SMS cost-guard holds across Fly machines.
 //
-// NOTE: in-memory = per-process. Behind multiple instances, move this to a
-// shared store (Redis/Turso). Fine for M5 / single instance. See DECISIONS.md.
+// Emergency (HELP / route) is NEVER limited — a person may be dying — so the
+// handler simply doesn't call the limiter for those.
 export function createRateLimiter({
   windowMs = 3600_000,
   max = config.smsRateLimitPerHour,
@@ -35,5 +35,11 @@ export function createRateLimiter({
   };
 }
 
-// Shared default instance for the live webhook.
-export const rateLimiter = createRateLimiter();
+// Live default: SHARED-STORE limiter (holds across Fly machines). Fails OPEN —
+// the SMS non-emergency cost guard is farmer-facing, so if the store is
+// unreachable we never block a reply (a verdict/emergency must get through).
+export const rateLimiter = createSharedRateLimiter({
+  prefix: "sms",
+  max: config.smsRateLimitPerHour,
+  failOpen: true,
+});

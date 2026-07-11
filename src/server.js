@@ -15,7 +15,7 @@ import { getRegistryBundle } from "./registry.js";
 import { syncScans } from "./sync.js";
 import { districtAggregates, nationalSummary, districtsCsv } from "./surveillance.js";
 import { issueDeviceToken, verifyDeviceToken } from "./deviceToken.js";
-import { createRateLimiter } from "./sms/rateLimit.js";
+import { createSharedRateLimiter, cleanupRateLimits } from "./rateStore.js";
 import { runPreflight } from "./preflight.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -126,22 +126,22 @@ app.get("/api/emergency-bundle", async (req, res) => {
   }
 });
 
-// --- Write-side anti-abuse (M7.5 Part B). In-memory, per-process (move to a
-// shared store behind multiple instances — same caveat as the M5 SMS limiter).
-// These guard ONLY the write/register surface; farmer verdict + emergency paths
-// are never throttled.
-const deviceRegLimiter = createRateLimiter({ windowMs: 3600_000, max: config.deviceRegPerHourPerIp });
-const syncIpLimiter = createRateLimiter({ windowMs: 3600_000, max: config.syncCallsPerHourPerIp });
-const syncTokenLimiter = createRateLimiter({ windowMs: 3600_000, max: config.syncScansPerHourPerToken });
+// --- Write-side anti-abuse (M7.5 B; SHARED STORE in M8 C so limits hold across
+// machines). These guard ONLY the write/register surface and fail CLOSED (deny)
+// if the store is unreachable — farmer verdict + emergency paths are never
+// throttled at all.
+const deviceRegLimiter = createSharedRateLimiter({ prefix: "devreg", max: config.deviceRegPerHourPerIp, failOpen: false });
+const syncIpLimiter = createSharedRateLimiter({ prefix: "syncip", max: config.syncCallsPerHourPerIp, failOpen: false });
+const syncTokenLimiter = createSharedRateLimiter({ prefix: "synctok", max: config.syncScansPerHourPerToken, failOpen: false });
 const clientIp = (req) => req.ip || req.socket?.remoteAddress || "?";
 
 // POST /api/register-device — issue an opaque, PII-free write token (M7.5 B).
 // Not authentication of a person: it only proves the writer went through the app
 // once, raising the cost of scripted flooding. Rate-limited per IP.
-app.post("/api/register-device", (req, res) => {
+app.post("/api/register-device", async (req, res) => {
   const ip = clientIp(req);
-  if (deviceRegLimiter.isLimited(ip)) return res.status(429).json({ ok: false, error: "rate_limited" });
-  deviceRegLimiter.record(ip);
+  if (await deviceRegLimiter.isLimited(ip)) return res.status(429).json({ ok: false, error: "rate_limited" });
+  await deviceRegLimiter.record(ip);
   const { token, expMs } = issueDeviceToken();
   // Record issuance only — no token value, no IP-to-token link, no PII.
   logEvent({ type: "device_registered", channel: "app", payload: {} }).catch(() => {});
@@ -159,7 +159,7 @@ app.post("/api/scans/sync", async (req, res) => {
     if (!verifyDeviceToken(token)) return res.status(401).json({ ok: false, error: "device_token_required" });
 
     const ip = clientIp(req);
-    if (syncIpLimiter.isLimited(ip) || syncTokenLimiter.isLimited(token)) {
+    if ((await syncIpLimiter.isLimited(ip)) || (await syncTokenLimiter.isLimited(token))) {
       return res.status(429).json({ ok: false, error: "rate_limited" });
     }
     const { scans } = req.body || {};
@@ -167,8 +167,8 @@ app.post("/api/scans/sync", async (req, res) => {
     if (batch.length > config.syncMaxBatch) {
       return res.status(413).json({ ok: false, error: "batch_too_large", max: config.syncMaxBatch });
     }
-    syncIpLimiter.record(ip);
-    for (let i = 0; i < batch.length; i++) syncTokenLimiter.record(token); // budget in SCANS
+    await syncIpLimiter.record(ip);
+    await syncTokenLimiter.record(token, Date.now(), batch.length); // budget in SCANS
 
     const result = await syncScans(scans);
     res.json({ ok: true, ...result });
@@ -348,6 +348,9 @@ initSchema()
     app.listen(PORT, () => {
       console.log(`MedaGuard listening on http://localhost:${PORT}  (db: ${dbMode})`);
     });
+    // Sweep expired rate-limit counters periodically (shared-store TTL cleanup).
+    cleanupRateLimits();
+    setInterval(() => cleanupRateLimits(), 15 * 60 * 1000).unref();
   })
   .catch((err) => {
     console.error("Failed to initialise schema:", err);

@@ -41,6 +41,7 @@ async function main() {
   await db.execute("DELETE FROM sms_users"); // deterministic
   await db.execute("DELETE FROM scans");     // clean slate for scans-purity assertion
   await db.execute("DELETE FROM events");    // clean slate for telemetry assertions
+  await db.execute("DELETE FROM rate_limits"); // shared-store SMS limiter — clean slate (M8 C)
 
   // ---- Section 0: encoding --------------------------------------------------
   console.log("\nEncoding");

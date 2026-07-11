@@ -101,12 +101,12 @@ export async function handleInbound(inbound, deps = {}) {
 
   // --- Cost guard: rate-limit everything EXCEPT emergency ---
   if (!isEmergency) {
-    if (limiter.isLimited(from, nowMs)) {
+    if (await limiter.isLimited(from, nowMs)) {
       const lang = knownLang || "en";
       await logEvent({ type: "rate_limited", channel: "sms", region }, db);
       return send(client, db, from, [T.rateLimitedText(lang)], { status: "RATE_LIMITED", region, lang });
     }
-    limiter.record(from, nowMs);
+    await limiter.record(from, nowMs);
   }
   await touchUser(db, from, nowIso);
 

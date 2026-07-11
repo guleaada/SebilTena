@@ -81,6 +81,15 @@ CREATE TABLE IF NOT EXISTS extension_agents (
   name TEXT, phone TEXT, region TEXT
 );
 
+-- Shared-store rate limiter (M8 Part C). Fixed-window counters keyed by bucket
+-- ("<prefix>:<key>"), so limits are enforced correctly across multiple Fly
+-- machines (all point at the same Turso DB). Stale rows are swept periodically.
+CREATE TABLE IF NOT EXISTS rate_limits (
+  bucket TEXT PRIMARY KEY,
+  window_start INTEGER NOT NULL,  -- epoch ms of the current window
+  count INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_pesticides_regno ON pesticides(registration_no);
 CREATE INDEX IF NOT EXISTS idx_dosages_pesticide ON dosages(pesticide_id);
 CREATE INDEX IF NOT EXISTS idx_scans_status ON scans(result_status);
