@@ -640,6 +640,71 @@ control. It is built **internal-only, aggregated, gated** from the first commit.
   token / 200 caption-headed CSV with token, access audited. `scripts/
   seed-surveillance.js` is a dev-only demo seeder (not in `npm test`).
 
+## Milestone 7.5 — surveillance poisoning containment (three stacked layers)
+
+The Fable 5 audit's biggest open finding (P5-1): validation alone cannot close
+surveillance poisoning. An attacker posts scans bearing made-up registration
+numbers at chosen coordinates; the server honestly re-verifies each, honestly
+finds them unregistered, and writes legitimate `UNREGISTERED` rows. Every row is
+valid; the map still lights up a chosen district. M7.5 makes that a *nuisance*
+(a wasted inspector visit), not a *threat* (a false public claim). **Farmer
+accounts were deliberately NOT added — anonymity is a privacy choice and stays.**
+
+### Part A — advisory-lead-only, as a hard property (not a caption)
+- The containment that matters most: a flagged district can only ever mean "an
+  authorized human should look here." Made structural: district `status` is
+  `review_recommended` / `insufficient_data`; the rate field is renamed
+  `counterfeitRate` → `flaggedReportRate` (a rate of scan *reports*). "This
+  location sells fakes" is now unrepresentable in the payload.
+- No unauthenticated path exists by construction (all `/api/surveillance/*` +
+  export behind `requireAdmin`, grep-confirmed no bypass; `/admin/map` is a
+  dataless login shell). Every surveillance response + its 401s carry
+  `X-Robots-Tag: noindex` + `Cache-Control: no-store`. New top invariant in
+  SAFETY.md + audit list I-13.
+
+### Part B — raise the cost of writing (anonymous, but not free)
+- `POST /api/register-device` issues an opaque, HMAC-signed, PII-free write token
+  (`src/deviceToken.js`): payload is only `{iat, exp, nonce}`. It is **stateless
+  (never stored) and never linked to a scan row**, so it proves the writer went
+  through the app once and nothing about who — anonymity preserved, verified by
+  test (token absent from the row; payload has no identity keys). Not a farmer
+  account. `/api/scans/sync` requires a valid, unexpired token → 401 otherwise.
+- Rate limits (reuse the M5 in-memory limiter; **same per-process caveat — move
+  to a shared store behind multiple instances**, carried forward for M8): per-
+  token budget in *scans* (`syncScansPerHourPerToken`=60), per-IP sync-call cap
+  (120), per-IP registration cap (10). Oversized batches are REJECTED (413), not
+  truncated (`syncMaxBatch`=200 = `offlineQueueMax`).
+- **Farmer-facing paths (verdict, dosage, first-aid, emergency-bundle) are NEVER
+  throttled** — limits apply only to the write/register surface (tested: 60
+  verdict/scan calls, zero 429s). Client obtains the token on load and
+  re-registers + retries once on a 401.
+- `DEVICE_TOKEN_SECRET` must be set in production (else a random per-process
+  secret is used and tokens don't survive a restart / span instances — a loud
+  startup warning fires). Env-documented.
+
+### Part C — quarantine anomalies instead of trusting them live
+- A burst of made-up numbers from one source is the fingerprint of poisoning;
+  genuine farmer scans don't arrive that way. `src/anomaly.js` (pure, tested)
+  runs coarse per-batch heuristics — flag burst (≥`quarantineFlagBurst`=5),
+  uniform reg-nos (shared prefix ≥`quarantinePrefixLen`=6), sequential reg-nos,
+  and a tight spatial cluster (≤`quarantineClusterSpan`=0.05°) of ≥
+  `quarantineUniformMin`=3 flagged scans. **Fail conservative** — any trigger
+  quarantines.
+- A tripped batch has its FLAGGED scans set to `review_status='pending_review'`
+  (new `scans` column; additive migration) and logs `surveillance_quarantine` to
+  `events` (reason + count). `surveillance.js` excludes `pending_review` from the
+  live aggregate (only `NULL`/`released` count) and surfaces a `pendingReview`
+  held-count (admin "Held for review" tile). **Never auto-deletes** — a human
+  releases held scans (`review_status='released'` re-admits them). The farmer's
+  own upgrade notice is unaffected by quarantine.
+- **Scope, by design:** a sync call is one source's burst, and we deliberately
+  store no source id on scan rows (anonymity), so cross-batch correlation is out
+  of scope — this is a coarse filter, not fraud AI. The Part B per-token/IP rate
+  limits already bound per-source volume; the burst heuristic catches the obvious
+  attack. A patient attacker drip-feeding distinct non-patterned numbers under
+  the rate limit is the residual gap (accepted: it's slow, capped, and still only
+  ever produces an inspector lead, never a public claim).
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

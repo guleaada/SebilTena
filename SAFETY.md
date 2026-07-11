@@ -271,6 +271,17 @@ accusation with a coordinate). Consequences, all enforced in code and tests:
   into a verdict.** A test fails if any surveillance route is reachable without
   the gate, or if a district payload gains a fact-asserting field.
 
+**Poisoning is contained to wasted inspector time, never a false public claim.**
+Because the map is advisory-lead-only, the worst a poisoned district can do is
+send an inspector to look — annoying, not dangerous. Two further layers raise the
+cost and quarantine the fingerprint: writes to `/api/scans/sync` require an
+opaque, PII-free, rate-limited app-issued token (anti-abuse, **not** a farmer
+account — anonymity is preserved; the token is never stored with a scan), and a
+burst of made-up registration numbers from one source is held in `pending_review`
+(excluded from the live aggregate, surfaced to a human, never auto-deleted).
+**Do not weaken any layer, and never throttle the farmer-facing verdict or
+emergency paths — the write surface is the only thing rate-limited.**
+
 ## Surveillance / the counterfeit map (Milestone 7) — four rules
 
 The map turns farmer scans into a regulator's view. That view can accuse a place,
