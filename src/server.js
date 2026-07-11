@@ -282,8 +282,9 @@ app.post("/api/sms/webhook", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 // Release gate: if any seeded product's first-aid is not toxicologist-reviewed,
-// print a loud, unmissable warning. This build is NOT cleared for field use.
-// See SAFETY.md.
+// print a loud, unmissable warning — and in production, REFUSE TO START.
+// SAFETY.md: "Production deploys must refuse to start (or be blocked in CI)
+// while that warning fires." This build is NOT cleared for field use.
 async function checkReviewGate() {
   try {
     const r = await db.execute("SELECT COUNT(*) AS n FROM pesticides WHERE reviewed = 0");
@@ -296,9 +297,18 @@ async function checkReviewGate() {
       console.warn("!! poison-control professional. This build is NOT CLEARED FOR FIELD USE.");
       console.warn("!! See SAFETY.md (First-aid content release gate).");
       console.warn(`${bar}\n`);
+      if (process.env.NODE_ENV === "production") {
+        console.error("!! NODE_ENV=production with unreviewed first-aid data — refusing to start (SAFETY.md release gate). No override exists by design.");
+        process.exit(1);
+      }
     }
   } catch (err) {
     console.warn("review-gate check failed:", err?.message || err);
+    if (process.env.NODE_ENV === "production") {
+      // Cannot PROVE the data is reviewed -> fail closed in production.
+      console.error("!! Could not verify the first-aid review gate in production — refusing to start.");
+      process.exit(1);
+    }
   }
 }
 
