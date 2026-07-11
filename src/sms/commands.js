@@ -49,10 +49,11 @@ export function parseCommand(text) {
 
   // HELP, optionally with a route ("HELP SWALLOWED"). `rest` is carried so the
   // handler can tell a bare HELP from HELP + an UNPARSEABLE route word (which
-  // must still get first aid — fail toward help, never toward a menu).
+  // must still get first aid — fail toward help, never toward a menu). Every
+  // word of the rest is scanned so "HELP HE SWALLOWED IT" still resolves the
+  // route instead of falling back to the route-agnostic steps.
   if (head === "HELP") {
-    const route = rest ? resolveRoute(rest.split(/\s+/)[0]) : null;
-    return { type: "HELP", route, rest };
+    return { type: "HELP", route: firstRoute(rest.split(/\s+/)), rest };
   }
 
   // LANG <code>
@@ -73,5 +74,25 @@ export function parseCommand(text) {
   // Registration-number attempt
   if (looksLikeRegNo(raw)) return { type: "REGNO", regNo: raw };
 
+  // FAIL TOWARD HELP (SAFETY.md): an otherwise-unparseable message that
+  // CONTAINS the word HELP is a cry for help, not a bad command — "I NEED HELP"
+  // must never get a commands menu. Scan every word for a recognizable route so
+  // "MY SON SWALLOWED IT HELP" gets route-specific aid; with no route the
+  // handler sends the route-agnostic steps + numbers first, menu after.
+  // (Localized help words await native review — English HELP only for now;
+  // localized bare ROUTE words above already work in all six languages.)
+  if (/\bHELP\b/i.test(raw)) {
+    return { type: "HELP", route: firstRoute(parts), rest: raw };
+  }
+
   return { type: "UNKNOWN" };
+}
+
+// First recognizable route word in a list of words (any supported language).
+function firstRoute(words) {
+  for (const w of words || []) {
+    const r = resolveRoute(w);
+    if (r) return r;
+  }
+  return null;
 }

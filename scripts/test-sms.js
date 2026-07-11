@@ -161,6 +161,36 @@ async function main() {
     const { sent: s2 } = await sms("HELP zzz", { from: p, limiter }); // must still work
     check("fail-toward-help still bypasses the rate limiter", /health centre/i.test(s2[0].message));
   }
+  // ---- CONTAINS HELP (SAFETY.md: a message containing HELP must never get a
+  // ---- commands menu — panicking people don't type command syntax) ----------
+  {
+    const { sent } = await sms("I NEED HELP", { from: newPhone() }); // HELP not the first word
+    check("message CONTAINING HELP -> first aid, never a commands menu", /health centre/i.test(sent[0].message) && /\+251/.test(sent[0].message), sent[0].message);
+    check("contains-HELP appends the route menu AFTER the aid", sent.length >= 2 && /SWALLOWED/.test(sent.at(-1).message));
+  }
+  {
+    const { sent } = await sms("MY SON SWALLOWED IT HELP", { from: newPhone() }); // route word mid-message
+    check("contains-HELP + route word anywhere -> route-specific aid", /Do not make the person vomit/i.test(sent[0].message), sent[0].message);
+    check("route-specific aid still has seek+phone in msg 1", /health centre/i.test(sent[0].message) && /\+251/.test(sent[0].message));
+  }
+  {
+    const { sent } = await sms("HELP HE SWALLOWED IT", { from: newPhone() }); // route not the first rest word
+    check("HELP + route later in the message -> route-specific aid", /Do not make the person vomit/i.test(sent[0].message), sent[0].message);
+  }
+  {
+    // Contains-HELP is an emergency: it must bypass the rate limiter too.
+    const limiter = createRateLimiter({ max: 1 });
+    const p = newPhone();
+    await sms("ETH-INS-0009/05", { from: p, limiter });
+    const { sent } = await sms("PLEASE HELP ME", { from: p, limiter });
+    check("contains-HELP bypasses the rate limiter", /health centre/i.test(sent[0].message), sent[0].message);
+  }
+  {
+    // Command precedence unchanged: "CROP HELP" is still a CROP lookup.
+    const from = await withLang("en");
+    const { sent } = await sms("CROP HELP", { from });
+    check("CROP HELP still parses as a CROP command (precedence unchanged)", !/health centre/i.test(sent.at(-1).message), sent.at(-1).message);
+  }
   {
     // Bare route word, no product context -> universal steps.
     const from = await withLang("en");
