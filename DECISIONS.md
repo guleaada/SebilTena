@@ -741,6 +741,31 @@ DEPLOY.md.
   fixed-window counting, window reset, batch increment, **two instances sharing
   one budget**, the fail-open/closed split, and cleanup.
 
+### Part D — staging posture (undiscoverable, clearly a demo)
+- Whole-app `noindex, nofollow` (an app-wide `X-Robots-Tag` middleware on every
+  response + a disallow-all `/robots.txt` + `<meta robots>`), so no crawler
+  indexes or caches any part of the demo. A **non-dismissible** demonstration
+  banner (red bar, no close control, first body child above the topbar) shows
+  whenever the server reports `STAGING=true` via the new public `GET
+  /api/app-config` (no secrets); cached in localStorage so it shows offline too,
+  re-translated on language change (en/am/om; ti/so/aa fall back to English). No
+  analytics, trackers, or third-party calls (verified: every request is
+  same-origin). SW shell v14.
+
+### Part E — deploy verification (`scripts/test-deploy-config.js`, 21 assertions)
+- CI-runnable black-box proof of the production posture: spawns the real server
+  across env configs and asserts the boot-gate + preflight FAIL CLOSED (cleared-
+  prod+unreviewed, missing `DEVICE_TOKEN_SECRET`, weak `ADMIN_TOKEN` all exit
+  non-zero) and that a STAGING build comes up secure (staging flag + M8; robots
+  disallow + whole-app noindex; surveillance 401 without / 200 with `ADMIN_TOKEN`
+  + noindex/no-store; SMS webhook 401 unauthenticated; verdict path BANNED/
+  UNREGISTERED/VERIFIED+dosage against the DB; write surface still device-token
+  gated).
+- **Fly access was not available this session, so Part E was verified against
+  local `NODE_ENV=production` / `STAGING=true` runs** (the exact code the image
+  runs) rather than the deployed URL. The image + `fly.toml` + `DEPLOY.md` are in
+  place for the actual `fly deploy`.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

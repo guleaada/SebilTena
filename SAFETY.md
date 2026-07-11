@@ -35,6 +35,31 @@ The same sign-off requirement applies to the localized `aid.*` strings and the
 recorded audio clips (a mistranslated first-aid step is as dangerous as a wrong
 one).
 
+## Staging is a demonstration, not a launch (Milestone 8)
+
+**The deployed staging system is a DEMONSTRATION. A farmer-facing launch requires
+the real-world inputs and toxicologist sign-off — enforced by the boot-gate.**
+
+- With unreviewed first-aid, a **cleared production build refuses to start**
+  (`NODE_ENV=production`, no `STAGING`). The demo runs only via the explicit
+  `STAGING=true` path, which logs "NOT CLEARED FOR FIELD USE" and shows a
+  **non-dismissible demonstration banner**. **Never set `reviewed:true` to force a
+  boot** — the honest way to show the demo is to announce it is not cleared.
+- A hardened deployment (`production` or `staging`) runs one **fail-closed
+  preflight** (`src/preflight.js`): missing/weak `DEVICE_TOKEN_SECRET`, a
+  set-but-weak `ADMIN_TOKEN`/`AT_WEBHOOK_SECRET`, or an unverifiable review gate
+  → the process exits non-zero. It fails closed; it does not run with weak
+  defaults.
+- The whole app is `noindex`/`nofollow` with a disallow-all `robots.txt`, makes
+  no third-party calls, and ships no trackers.
+
+The remaining real-world inputs before a pilot are listed in [DEPLOY.md](DEPLOY.md):
+toxicologist sign-off of every first-aid mapping, the real MoA registry, real
+label photos to tune matching, native-speaker recordings + agronomist-reviewed
+translations, and the real poison-control number. **Until the first lands, this
+build cannot serve a farmer — the boot-gate makes that a property of the code,
+not a promise.**
+
 ## The one rule
 
 > The AI is a **RETRIEVER**, not an **ADVISER**.
