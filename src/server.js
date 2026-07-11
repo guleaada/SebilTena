@@ -53,12 +53,18 @@ app.post("/api/verify-number", async (req, res) => {
   }
 });
 
+// Coordinates from the wire must be finite numbers in range, else null —
+// `scans` feeds the surveillance grid, and SQLite's flexible typing would
+// happily store client garbage in a REAL column.
+const cleanCoord = (v, absMax) =>
+  typeof v === "number" && Number.isFinite(v) && Math.abs(v) <= absMax ? v : null;
+
 // POST /api/scan { imageBase64, lang, lat?, lon? } -> runs the scan pipeline
 // (Section 3). Reuses verify.js for the VERIFIED payload; logs a geotagged row.
 app.post("/api/scan", async (req, res) => {
   try {
     const { imageBase64, lang, lat, lon } = req.body || {};
-    const result = await runScan({ imageBase64, lang: lang || "en", lat, lon });
+    const result = await runScan({ imageBase64, lang: lang || "en", lat: cleanCoord(lat, 90), lon: cleanCoord(lon, 180) });
     res.json(result);
   } catch (err) {
     console.error("scan error:", err);
