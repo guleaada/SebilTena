@@ -88,6 +88,34 @@ function main() {
   const m3 = mergeBundle([], { products: [{ registration_no: "ETH-INS-0009/05", status: "banned" }] });
   check("new banned product added", m3.records[0].status === "banned" && m3.anomalies.length === 0);
 
+  console.log("\nsingle-module rules (grep-enforced, now test-enforced)");
+  // net.js is the ONLY module allowed to read navigator.onLine (SAFETY.md M6
+  // rule 1) and audio.js the only one to touch speechSynthesis. A stray reader
+  // reintroduces the exact UNCONFIRMED<->UNREGISTERED flip this rule prevents.
+  {
+    const pubJs = [];
+    const walk = (dir) => {
+      for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p = path.join(dir, f.name);
+        if (f.isDirectory() && f.name !== "vendor" && f.name !== "audio" && f.name !== "icons") walk(p);
+        else if (f.isFile() && (f.name.endsWith(".js") || f.name.endsWith(".html"))) pubJs.push(p);
+      }
+    };
+    walk(path.join(ROOT, "public"));
+    pubJs.push(path.join(ROOT, "admin", "map.html"));
+    const onLineReaders = [];
+    const ttsTouchers = [];
+    for (const p of pubJs) {
+      const src = fs.readFileSync(p, "utf8");
+      // Strip comments so documentation mentions don't count as readers.
+      const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+      if (/navigator\.onLine/.test(code) && !p.endsWith(`js${path.sep}net.js`)) onLineReaders.push(p);
+      if (/speechSynthesis|SpeechSynthesisUtterance/.test(code) && !p.endsWith(`js${path.sep}audio.js`)) ttsTouchers.push(p);
+    }
+    check("navigator.onLine read ONLY in public/js/net.js", onLineReaders.length === 0, onLineReaders.join(", "));
+    check("speechSynthesis touched ONLY in public/js/audio.js", ttsTouchers.length === 0, ttsTouchers.join(", "));
+  }
+
   console.log("\noffline scan composition (OCR text -> matchAnchor -> computeVerdict)");
   const records = [
     { registration_no: "ETH-FUN-0142/17", product_name: "Mancozeb 80% WP", active_ingredient: "Mancozeb 800 g/kg", status: "registered", expiry_date: "2027-05-12", checked_at: daysAgo(1) },
