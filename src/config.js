@@ -74,6 +74,13 @@ export const config = {
     quarantinePrefixLen: num(process.env.SURV_QUARANTINE_PREFIX_LEN, 6),   // shared reg-no prefix = uniform
     quarantineClusterSpan: num(process.env.SURV_QUARANTINE_CLUSTER_SPAN, 0.05), // deg bbox = tight cluster
   },
+  // Deployment posture (M8). STAGING=true = a clearly-labelled DEMONSTRATION
+  // build: it may boot with unreviewed first-aid (the honest non-cleared path,
+  // banner shown), but is still hardened (preflight secrets enforced). A cleared
+  // production build (NODE_ENV=production, no STAGING) refuses to serve unreviewed
+  // first-aid. See src/preflight.js + SAFETY.md.
+  staging: process.env.STAGING === "true",
+
   // Shared bearer token gating every /api/surveillance/* endpoint + /admin/map.
   // No token -> 401. There is NO unauthenticated path to surveillance data.
   adminToken: process.env.ADMIN_TOKEN || "",

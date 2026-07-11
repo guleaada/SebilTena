@@ -16,6 +16,7 @@ import { syncScans } from "./sync.js";
 import { districtAggregates, nationalSummary, districtsCsv } from "./surveillance.js";
 import { issueDeviceToken, verifyDeviceToken } from "./deviceToken.js";
 import { createRateLimiter } from "./sms/rateLimit.js";
+import { runPreflight } from "./preflight.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -36,7 +37,8 @@ app.get("/api/health", async (_req, res) => {
       ok: true,
       db: dbMode,
       pesticides: Number(r.rows[0].n),
-      milestone: "M7",
+      milestone: "M8",
+      staging: config.staging,
     });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });
@@ -336,46 +338,13 @@ app.post("/api/sms/webhook", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-// Release gate: if any seeded product's first-aid is not toxicologist-reviewed,
-// print a loud, unmissable warning — and in production, REFUSE TO START.
-// SAFETY.md: "Production deploys must refuse to start (or be blocked in CI)
-// while that warning fires." This build is NOT cleared for field use.
-async function checkReviewGate() {
-  try {
-    const r = await db.execute("SELECT COUNT(*) AS n FROM pesticides WHERE reviewed = 0");
-    const unreviewed = Number(r.rows[0].n);
-    if (unreviewed > 0) {
-      const bar = "!".repeat(64);
-      console.warn(`\n${bar}`);
-      console.warn(`!! MedaGuard: ${unreviewed} product(s) have UNREVIEWED first-aid data.`);
-      console.warn("!! First-aid steps have NOT been signed off by a toxicologist /");
-      console.warn("!! poison-control professional. This build is NOT CLEARED FOR FIELD USE.");
-      console.warn("!! See SAFETY.md (First-aid content release gate).");
-      console.warn(`${bar}\n`);
-      if (process.env.NODE_ENV === "production") {
-        console.error("!! NODE_ENV=production with unreviewed first-aid data — refusing to start (SAFETY.md release gate). No override exists by design.");
-        process.exit(1);
-      }
-    }
-  } catch (err) {
-    console.warn("review-gate check failed:", err?.message || err);
-    if (process.env.NODE_ENV === "production") {
-      // Cannot PROVE the data is reviewed -> fail closed in production.
-      console.error("!! Could not verify the first-aid review gate in production — refusing to start.");
-      process.exit(1);
-    }
-  }
-}
-
+// Startup: ensure schema, then run the centralized preflight (SAFETY.md release
+// gate + required-secret checks). Any fatal condition on a hardened deployment
+// (NODE_ENV=production or STAGING=true) => exit non-zero. Fail closed.
 initSchema()
   .then(async () => {
-    await checkReviewGate();
-    if (!config.adminToken) {
-      console.warn("[surveillance] ADMIN_TOKEN unset — /api/surveillance/* is LOCKED (all requests 401). Set ADMIN_TOKEN to enable the regulator map.");
-    }
-    if (!config.deviceTokenIssuedFromEnv) {
-      console.warn("[write-token] DEVICE_TOKEN_SECRET unset — using a random per-process secret. Write tokens will not survive a restart or span instances. Set it in production.");
-    }
+    const pf = await runPreflight();
+    if (!pf.ok) process.exit(1);
     app.listen(PORT, () => {
       console.log(`MedaGuard listening on http://localhost:${PORT}  (db: ${dbMode})`);
     });
