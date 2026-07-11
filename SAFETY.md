@@ -246,6 +246,31 @@ A `CONFIRM` is **pending** until the farmer answers (`/api/scan/confirm` →
 (`src/stats.js`); an unresolved `CONFIRM` is excluded from every rate. A `NO`
 answer (`REJECTED_BY_USER`) is a counterfeit-suspicion signal, not a null.
 
+## Surveillance is advisory-lead-only (Milestone 7.5) — the top invariant
+
+**Surveillance output is an INVESTIGATIVE LEAD for authorized regulators, never a
+public or factual claim about any location. This posture is architectural and
+must not be weakened by config, caption, or feature.**
+
+A flagged district can only ever mean "a human inspector should look here." It
+must never be capable of asserting — publicly or as fact — that a location sells
+counterfeits. This is the containment that makes surveillance poisoning a
+*nuisance* (a wasted inspector visit) rather than a *threat* (a false public
+accusation with a coordinate). Consequences, all enforced in code and tests:
+
+- **No unauthenticated path exists, by construction.** Every `/api/surveillance/*`
+  route and the CSV export require the `ADMIN_TOKEN` gate; there is no env var,
+  flag, or config that exposes them. `/admin/map` is a dataless login shell.
+  Responses (incl. 401s) carry `X-Robots-Tag: noindex` + `Cache-Control:
+  no-store` so nothing is crawled or cached by an intermediary.
+- **The data model makes "this location sells fakes" unrepresentable.** A district
+  is typed `review_recommended` or `insufficient_data` — never a confirmed
+  finding. The rate field is `flaggedReportRate` (a rate of *scan reports*), not
+  a "counterfeit rate" that reads as a property of the place.
+- **Do not add a public route, do not return raw scan rows, do not rename a lead
+  into a verdict.** A test fails if any surveillance route is reachable without
+  the gate, or if a district payload gains a fact-asserting field.
+
 ## Surveillance / the counterfeit map (Milestone 7) — four rules
 
 The map turns farmer scans into a regulator's view. That view can accuse a place,

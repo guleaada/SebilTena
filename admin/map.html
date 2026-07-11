@@ -67,7 +67,7 @@
   tr.insufficient td { color: var(--muted); }
   tr.provisional { opacity: .72; }
   .pill { font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); }
-  .pill.assessed { background: #eaf3ea; color: var(--brand); border-color: #cbe3cc; }
+  .pill.review { background: #eaf3ea; color: var(--brand); border-color: #cbe3cc; }
   .pill.insufficient { background: #f1f0ea; color: var(--muted); }
   .conf { font-size: 11px; color: var(--muted); }
   #tooltip { position: fixed; pointer-events: none; background: #1f1f1c; color: #fff; padding: 8px 10px;
@@ -90,8 +90,8 @@
 <!-- Token gate: the shell carries NO data until a valid token is entered. -->
 <div id="gate">
   <h2>Surveillance — restricted</h2>
-  <p>This internal tool shows aggregated counterfeit-report patterns for regulators.
-     Enter your access token to continue.</p>
+  <p>This internal tool shows aggregated scan-report patterns as investigative
+     leads for authorized regulators. Enter your access token to continue.</p>
   <input id="gateToken" type="password" placeholder="ADMIN_TOKEN" autocomplete="off" />
   <div id="gateErr"></div>
   <button class="btn btn-primary" id="gateGo" style="width:100%">Unlock</button>
@@ -121,7 +121,7 @@
       <div>
         <label>Layer</label>
         <div class="layers" id="layers">
-          <button data-layer="rate" aria-pressed="true">Counterfeit rate</button>
+          <button data-layer="rate" aria-pressed="true">Flagged-report rate</button>
           <button data-layer="banned" aria-pressed="false">Banned sightings</button>
           <button data-layer="expired" aria-pressed="false">Expired sightings</button>
           <button data-layer="rejected" aria-pressed="false">User-rejected</button>
@@ -203,7 +203,7 @@
   function styleFor(d, maxCounts) {
     if (state.layer === "rate") {
       if (!d.sufficient) return { color: null, insufficient: true, value: null };
-      return { color: rateColor(d.counterfeitRate), insufficient: false, value: (d.counterfeitRate * 100).toFixed(0) + "%" };
+      return { color: rateColor(d.flaggedReportRate), insufficient: false, value: (d.flaggedReportRate * 100).toFixed(0) + "%" };
     }
     const key = state.layer === "banned" ? "bannedCount" : state.layer === "expired" ? "expiredCount" : "rejectedByUserCount";
     const c = d[key] || 0;
@@ -266,10 +266,12 @@
   }
 
   function tipHtml(d) {
-    const rate = d.sufficient ? (d.counterfeitRate * 100).toFixed(1) + "%" : "not assessed (below data threshold)";
+    const rate = d.sufficient ? (d.flaggedReportRate * 100).toFixed(1) + "%" : "not assessed (below data threshold)";
+    const lead = d.sufficient ? "⚑ REVIEW RECOMMENDED — inspector lead, not a finding" : "insufficient data — not assessed";
     return `<b>${esc(d.district)}</b> <span style="opacity:.7">(${d.granularity})</span><br>
+      <span style="opacity:.85">${lead}</span><br>
       sample size: <b>${d.sampleSize}</b> · ${d.confidence}<br>
-      counterfeit rate: <b>${rate}</b><br>
+      flagged-report rate: <b>${rate}</b><br>
       unregistered ${d.unregisteredCount} · banned ${d.bannedCount} · expired ${d.expiredCount}<br>
       <span style="opacity:.7">user-rejected (noisy): ${d.rejectedByUserCount}</span>`;
   }
@@ -295,8 +297,8 @@
     const t = state.data.summary.totals;
     const tiles = [
       { n: t.resolvedScans, l: "Resolved scans", sub: `window ${state.data.districts.length} districts` },
-      { n: (t.counterfeitRate * 100).toFixed(1) + "%", l: "National counterfeit rate", sub: `${t.confidence} · (unreg+banned)/resolved` },
-      { n: t.assessedDistricts, l: "Assessed districts", sub: "cleared both floors" },
+      { n: (t.flaggedReportRate * 100).toFixed(1) + "%", l: "National flagged-report rate", sub: `${t.confidence} · (unreg+banned)/resolved` },
+      { n: t.reviewDistricts, l: "Review-recommended districts", sub: "inspector leads, not findings" },
       { n: t.insufficientDistricts, l: "Insufficient data", sub: "below the data threshold" },
       { n: t.rejectedByUserCount, l: "User-rejected (noisy)", sub: "NOT in the counterfeit rate" },
     ];
@@ -309,14 +311,14 @@
       Number(b.sufficient) - Number(a.sufficient) || b.sampleSize - a.sampleSize);
     $("metricHead").textContent = LAYER[state.layer].head;
     const metric = (d) => {
-      if (state.layer === "rate") return d.sufficient ? (d.counterfeitRate * 100).toFixed(1) + "%" : "—";
+      if (state.layer === "rate") return d.sufficient ? (d.flaggedReportRate * 100).toFixed(1) + "%" : "—";
       const key = state.layer === "banned" ? "bannedCount" : state.layer === "expired" ? "expiredCount" : "rejectedByUserCount";
       return String(d[key] || 0);
     };
     $("rows").innerHTML = districts.map((d) => {
       const cls = [d.sufficient ? "" : "insufficient", d.confidence === "provisional" ? "provisional" : ""].join(" ").trim();
       const status = d.sufficient
-        ? `<span class="pill assessed">assessed</span>`
+        ? `<span class="pill review" title="An inspector lead — not a finding that this location sells counterfeits">⚑ review</span>`
         : `<span class="pill insufficient">insufficient</span>`;
       return `<tr class="${cls}">
         <td>${esc(d.district)} <span class="conf">${d.granularity === "grid_approx" ? "≈" : ""}</span></td>
@@ -363,8 +365,9 @@
   function boot() {
     // Permanent caption text injected once; the element is never removed.
     $("captionText").textContent =
-      "This map shows patterns in farmer scan reports. It is NOT a confirmed record of counterfeit sales. "
-      + "Districts below the data threshold are not assessed. Single reports are noise; only clusters are signal.";
+      "Every flagged district is an INVESTIGATIVE LEAD — it means only that an authorized inspector should look there, "
+      + "NEVER a finding that a location sells counterfeits. This is patterns in farmer scan reports, not confirmed sales. "
+      + "Districts below the data threshold are not assessed. Single reports are noise; only clusters are a lead.";
     // Default window: last 90 days.
     const today = new Date(), from = new Date(Date.now() - 90 * 86400000);
     $("to").value = today.toISOString().slice(0, 10);

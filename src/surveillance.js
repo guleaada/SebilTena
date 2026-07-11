@@ -128,9 +128,12 @@ export async function districtAggregates(opts = {}, dbClient = defaultDb) {
   const districts = [];
   for (const agg of buckets.values()) {
     const flaggedCount = agg.unregisteredCount + agg.bannedCount; // rate numerator
-    // counterfeitRate = (unregistered + banned) / resolved. EXPIRED and
-    // REJECTED_BY_USER are deliberately excluded.
-    const counterfeitRate = agg.resolvedScans ? flaggedCount / agg.resolvedScans : 0;
+    // flaggedReportRate = (unregistered + banned) / resolved. This is a rate of
+    // SCAN REPORTS, deliberately NOT named a "counterfeit rate": the map is a
+    // statistical lead for inspectors, never a factual claim that a location
+    // sells fakes (SAFETY.md — advisory-lead-only). EXPIRED and REJECTED_BY_USER
+    // are excluded from the numerator.
+    const flaggedReportRate = agg.resolvedScans ? flaggedCount / agg.resolvedScans : 0;
     // The two floors. Below EITHER -> insufficient data, never a claim.
     const sufficient =
       agg.granularity !== "none" &&
@@ -153,17 +156,19 @@ export async function districtAggregates(opts = {}, dbClient = defaultDb) {
       bannedCount: agg.bannedCount,
       expiredCount: agg.expiredCount,
       flaggedCount,
-      counterfeitRate: Number(counterfeitRate.toFixed(4)),
+      flaggedReportRate: Number(flaggedReportRate.toFixed(4)),
       rejectedByUserCount: agg.rejectedByUserCount, // separate layer, not in rate
       confidence: confidenceLabel(agg.resolvedScans),
       sufficient,
-      status: sufficient ? "assessed" : "insufficient_data",
+      // Typed as a LEAD, never a verdict about a location. A cleared-floors
+      // district only ever means "an authorized inspector should look here."
+      status: sufficient ? "review_recommended" : "insufficient_data",
       topProducts,
     });
   }
 
-  // Assessed districts first, then by rate — but ordering carries no accusation.
-  districts.sort((a, b) => Number(b.sufficient) - Number(a.sufficient) || b.counterfeitRate - a.counterfeitRate);
+  // Review-recommended districts first, then by rate — ordering carries no accusation.
+  districts.sort((a, b) => Number(b.sufficient) - Number(a.sufficient) || b.flaggedReportRate - a.flaggedReportRate);
 
   return {
     range,
@@ -182,25 +187,27 @@ export async function nationalSummary(opts = {}, dbClient = defaultDb) {
       t.bannedCount += d.bannedCount;
       t.expiredCount += d.expiredCount;
       t.rejectedByUserCount += d.rejectedByUserCount;
-      if (d.sufficient) t.assessedDistricts++;
+      if (d.sufficient) t.reviewDistricts++;
       else t.insufficientDistricts++;
       return t;
     },
     {
       resolvedScans: 0, unregisteredCount: 0, bannedCount: 0, expiredCount: 0,
-      rejectedByUserCount: 0, assessedDistricts: 0, insufficientDistricts: 0,
+      rejectedByUserCount: 0, reviewDistricts: 0, insufficientDistricts: 0,
     },
   );
   const flagged = totals.unregisteredCount + totals.bannedCount;
-  totals.counterfeitRate = totals.resolvedScans ? Number((flagged / totals.resolvedScans).toFixed(4)) : 0;
+  totals.flaggedReportRate = totals.resolvedScans ? Number((flagged / totals.resolvedScans).toFixed(4)) : 0;
   totals.confidence = confidenceLabel(totals.resolvedScans);
   return { range, floors, districtCount: districts.length, totals };
 }
 
 // The permanent caption that rides with every export and the map view.
 export const SURVEILLANCE_CAPTION =
-  "This shows PATTERNS in farmer scan reports — NOT a confirmed record of " +
-  "counterfeit sales. Districts below the data threshold are not assessed. " +
+  "INVESTIGATIVE LEAD, not a finding. A flagged district means only that an " +
+  "authorized inspector should look there — NEVER that a location sells " +
+  "counterfeits. This is patterns in farmer scan reports, not a confirmed " +
+  "record of sales. Districts below the data threshold are not assessed. " +
   "Aggregated to district level, internal regulator use only.";
 
 // CSV of the aggregates. Carries the caption as header rows; a below-floor
@@ -215,13 +222,13 @@ export function districtsCsv({ range, districts }) {
   lines.push(`# window: ${range.from} .. ${range.to}`);
   lines.push([
     "district", "granularity", "status", "sampleSize", "confidence",
-    "counterfeitRate", "unregistered", "banned", "expired", "rejectedByUser",
+    "flaggedReportRate", "unregistered", "banned", "expired", "rejectedByUser",
     "lat_centroid", "lon_centroid",
   ].join(","));
   for (const d of districts) {
     lines.push([
       cell(d.district), d.granularity, d.status, d.sampleSize, d.confidence,
-      d.sufficient ? d.counterfeitRate : "", // no rate below the floor
+      d.sufficient ? d.flaggedReportRate : "", // no rate below the floor
       d.unregisteredCount, d.bannedCount, d.expiredCount, d.rejectedByUserCount,
       d.lat ?? "", d.lon ?? "",
     ].join(","));

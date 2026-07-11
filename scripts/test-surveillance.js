@@ -55,14 +55,15 @@ async function main() {
   check("minDistrictScans floor is 10", floors.minDistrictScans === 10, JSON.stringify(floors));
   const big = byName(districts, "Big District");
   check("Big District resolvedScans = 12", big.resolvedScans === 12, JSON.stringify(big.resolvedScans));
-  check("Big District is assessed (both floors cleared)", big.sufficient === true && big.status === "assessed");
-  check("counterfeitRate = (unreg+banned)/resolved = 4/12", big.counterfeitRate === Number((4 / 12).toFixed(4)), JSON.stringify(big.counterfeitRate));
+  check("Big District cleared both floors -> status review_recommended (a lead, not a verdict)", big.sufficient === true && big.status === "review_recommended");
+  check("no field asserts the location sells counterfeits", !("counterfeitRate" in big) && !("confirmed" in big) && typeof big.flaggedReportRate === "number", Object.keys(big).join(","));
+  check("flaggedReportRate = (unreg+banned)/resolved = 4/12", big.flaggedReportRate === Number((4 / 12).toFixed(4)), JSON.stringify(big.flaggedReportRate));
   check("EXPIRED counted separately, not in rate", big.expiredCount === 1);
 
   console.log("\nREJECTED_BY_USER is a SEPARATE layer, never in the rate");
   check("rejectedByUserCount = 2", big.rejectedByUserCount === 2, JSON.stringify(big.rejectedByUserCount));
   // If rejections were (wrongly) summed in, the rate would be 6/12 = 0.5, not 0.3333.
-  check("rate excludes REJECTED_BY_USER (0.3333, not 0.5)", big.counterfeitRate !== 0.5 && big.counterfeitRate === 0.3333);
+  check("rate excludes REJECTED_BY_USER (0.3333, not 0.5)", big.flaggedReportRate !== 0.5 && big.flaggedReportRate === 0.3333);
 
   console.log("\nThe single most important rule: one bad scan never flags a district");
   const thin = byName(districts, "Thin District");
@@ -122,7 +123,7 @@ async function main() {
   const nat = await nationalSummary();
   check("national totals resolvedScans = 12 (default window excludes old)", nat.totals.resolvedScans === 12, JSON.stringify(nat.totals.resolvedScans));
   check("widened national window sums both districts (24)", (await nationalSummary({ windowDays: 500 })).totals.resolvedScans === 24);
-  check("national counterfeitRate present", typeof nat.totals.counterfeitRate === "number");
+  check("national flaggedReportRate present (not a 'counterfeitRate' claim)", typeof nat.totals.flaggedReportRate === "number" && !("counterfeitRate" in nat.totals));
 
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed === 0 ? 0 : 1);

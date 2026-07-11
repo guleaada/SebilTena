@@ -25,6 +25,7 @@ The invariants the code claims to uphold, as reconstructed from SAFETY.md, DECIS
 | I-10 | **CONFIRM rows get resolved; rates over resolved scans only.** |
 | I-11 | **Release gate:** all first-aid data `reviewed:false` until toxicologist sign-off; loud startup warning; production must refuse to start while it fires. |
 | I-12 | **Honest language handling:** never present an incomplete language as working; never choose a fallback for the farmer; SMS verdict-first within segment budgets. |
+| I-13 | **Surveillance is advisory-lead-only (M7.5):** output is an investigative lead for authorized regulators, never a public or factual claim about a location. No unauthenticated path exists by construction (gate + noindex/no-store, dataless map shell); districts are typed `review_recommended`/`insufficient_data` with a `flaggedReportRate` (report rate, not a location property) — "this location sells fakes" is unrepresentable. Writes are token-gated + rate-limited; anomalous bursts are quarantined out of the live aggregate. Posture is architectural; must not be weakened. |
 
 ---
 

@@ -194,10 +194,20 @@ function safeEqual(a, b) {
   return crypto.timingSafeEqual(ha, hb);
 }
 
+// Surveillance data must never be crawled, cached by an intermediary, or
+// indexed. Applied to every surveillance route + the admin map (M7.5 Part A).
+function setNoIndexNoStore(res) {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+  res.setHeader("Referrer-Policy", "no-referrer");
+}
+
 // Bearer-token gate. Token from `Authorization: Bearer`, `x-admin-token`, or
 // `?token=`. Empty config token => LOCKED (every request 401). Every access is
-// audited to `events`.
+// audited to `events`. There is NO env var, flag, or config that disables this
+// gate — surveillance has no unauthenticated path, by construction (M7.5 A).
 function requireAdmin(req, res, next) {
+  setNoIndexNoStore(res);
   const auth = req.get("authorization") || "";
   const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
   const provided = bearer || req.get("x-admin-token") || req.query.token || "";
@@ -249,10 +259,14 @@ app.get("/api/surveillance/export", requireAdmin, async (req, res) => {
   }
 });
 
-// GET /admin/map — the gated regulator dashboard shell. The shell carries NO
-// data (all figures come from the gated APIs above); it prompts for the token
-// and keeps it in sessionStorage. Served from a protected path, never /public.
+// GET /admin/map — the regulator dashboard shell. It is a DATALESS login form:
+// it embeds no surveillance data and prompts for the token, which it keeps in
+// sessionStorage and sends to the gated APIs above. A browser can't attach a
+// bearer header to a navigation, so the shell itself is served unauthenticated,
+// but it exposes nothing — every figure requires the gate. noindex + no-store
+// so it is never crawled or cached (M7.5 Part A).
 app.get("/admin/map", (_req, res) => {
+  setNoIndexNoStore(res);
   res.sendFile(path.join(ROOT, "admin", "map.html"));
 });
 
