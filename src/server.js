@@ -12,7 +12,7 @@ import { handleInbound } from "./sms/handler.js";
 import { logEvent } from "./events.js";
 import { getRegistryBundle } from "./registry.js";
 import { syncScans } from "./sync.js";
-import { districtAggregates, nationalSummary } from "./surveillance.js";
+import { districtAggregates, nationalSummary, districtsCsv } from "./surveillance.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -216,6 +216,28 @@ app.get("/api/surveillance/summary", requireAdmin, async (req, res) => {
     console.error("surveillance summary error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
+});
+
+// GET /api/surveillance/export?from=&to= — CSV of the aggregates (gated + audited
+// via requireAdmin). Carries the permanent caption as header rows.
+app.get("/api/surveillance/export", requireAdmin, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    const csv = districtsCsv(await districtAggregates({ from, to }));
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="surveillance-districts.csv"');
+    res.send(csv);
+  } catch (err) {
+    console.error("surveillance export error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// GET /admin/map — the gated regulator dashboard shell. The shell carries NO
+// data (all figures come from the gated APIs above); it prompts for the token
+// and keeps it in sessionStorage. Served from a protected path, never /public.
+app.get("/admin/map", (_req, res) => {
+  res.sendFile(path.join(ROOT, "admin", "map.html"));
 });
 
 // POST /api/sms/webhook — Africa's Talking inbound SMS. Guarded by a shared

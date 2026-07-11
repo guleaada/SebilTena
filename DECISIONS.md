@@ -608,6 +608,35 @@ control. It is built **internal-only, aggregated, gated** from the first commit.
   wrong token, 200 with valid token (three carriers), payload carries no raw
   coordinate, access audited.
 
+### Part C — the map view (`admin/map.html`, served at gated `/admin/map`)
+- Single self-contained admin page (no framework, no external mapping lib — a
+  hand-drawn SVG choropleth over Ethiopia's approximate bounding box, so it's
+  self-hosted and never blocks on GeoJSON boundary files; district GeoJSON noted
+  as a follow-up). Served from `/admin` (a protected path), **never** `/public`.
+- **Token gate:** the shell carries NO data. It prompts for the token, validates
+  it against `/api/surveillance/summary`, keeps it in `sessionStorage`, and sends
+  it as `x-admin-token` on every call. 401 → re-locks. A "Lock" button clears it.
+- **Choropleth, not pins:** grid-cell districts drawn as squares at their
+  centroid, coloured by `counterfeitRate`. Below-floor districts render in a
+  distinct hatched neutral style (never a rate claim). Marker size ∝ sample size
+  and provisional districts are faded, so n=3 can't be mistaken for n=300.
+- **Layer toggles:** rate · banned sightings · expired sightings · user-rejected
+  (the last one captioned "INCLUDES OCR ERRORS, not confirmed counterfeits"). The
+  rate layer always neutralises below-floor cells.
+- **Date range** defaults to the last 90 days. **Permanent, non-removable
+  caption** at the top (patterns not confirmed sales; below-threshold districts
+  not assessed). National summary tiles keep the user-rejected count visibly
+  OUT of the rate.
+- **Export:** `GET /api/surveillance/export` (gated + audited via requireAdmin)
+  returns CSV with the caption as header rows and a BLANK rate for below-floor
+  districts.
+- Verified live in the preview: wrong token rejected + app stays gated; correct
+  token loads 8 seeded districts; Bahir Dar (n=35, 2 flags) and Shashamane (n=3)
+  both render "insufficient" (floors are AND); 24 user-rejected excluded from the
+  17.2% national rate; tooltip shows sample size + confidence; export 401 without
+  token / 200 caption-headed CSV with token, access audited. `scripts/
+  seed-surveillance.js` is a dev-only demo seeder (not in `npm test`).
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

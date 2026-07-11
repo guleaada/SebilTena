@@ -197,6 +197,38 @@ export async function nationalSummary(opts = {}, dbClient = defaultDb) {
   return { range, floors, districtCount: districts.length, totals };
 }
 
+// The permanent caption that rides with every export and the map view.
+export const SURVEILLANCE_CAPTION =
+  "This shows PATTERNS in farmer scan reports — NOT a confirmed record of " +
+  "counterfeit sales. Districts below the data threshold are not assessed. " +
+  "Aggregated to district level, internal regulator use only.";
+
+// CSV of the aggregates. Carries the caption as header rows; a below-floor
+// district emits a BLANK rate (never a rate claim below the floor).
+export function districtsCsv({ range, districts }) {
+  const cell = (v) => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [];
+  lines.push(`# ${SURVEILLANCE_CAPTION}`);
+  lines.push(`# window: ${range.from} .. ${range.to}`);
+  lines.push([
+    "district", "granularity", "status", "sampleSize", "confidence",
+    "counterfeitRate", "unregistered", "banned", "expired", "rejectedByUser",
+    "lat_centroid", "lon_centroid",
+  ].join(","));
+  for (const d of districts) {
+    lines.push([
+      cell(d.district), d.granularity, d.status, d.sampleSize, d.confidence,
+      d.sufficient ? d.counterfeitRate : "", // no rate below the floor
+      d.unregisteredCount, d.bannedCount, d.expiredCount, d.rejectedByUserCount,
+      d.lat ?? "", d.lon ?? "",
+    ].join(","));
+  }
+  return lines.join("\n") + "\n";
+}
+
 // Product-identification verdicts that count toward a district denominator.
 function isProductVerdict(eff) {
   return (

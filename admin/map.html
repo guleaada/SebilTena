@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>MedaGuard — Counterfeit Surveillance (internal)</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #fff; --ink: #2b2b26; --muted: #6b6b60;
+    --line: #e0ded6; --brand: #2f6d33; --danger: #b23b34; --amber: #d69a2d;
+    --neutral: #c8c6bd; --shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); }
+  header { background: var(--brand); color: #fff; padding: 12px 18px; display: flex;
+    align-items: center; justify-content: space-between; gap: 12px; }
+  header h1 { font-size: 17px; margin: 0; font-weight: 700; }
+  header .who { font-size: 12px; opacity: .9; }
+  /* Permanent, non-removable caption. */
+  .caption { background: #fff7e6; border-bottom: 1px solid #e9d9a8; color: #6a5320;
+    padding: 8px 18px; font-size: 12.5px; }
+  .caption strong { color: #7a4a15; }
+  main { max-width: 1180px; margin: 0 auto; padding: 18px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .controls label { display: block; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--muted); margin-bottom: 3px; }
+  .controls input[type=date] { font: inherit; padding: 5px 7px; border: 1px solid var(--line);
+    border-radius: 7px; background: #fff; }
+  .layers { display: flex; gap: 6px; flex-wrap: wrap; }
+  .layers button { font: inherit; font-size: 13px; padding: 5px 11px; border: 1px solid var(--line);
+    background: #fff; border-radius: 999px; cursor: pointer; color: var(--ink); }
+  .layers button[aria-pressed=true] { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .btn { font: inherit; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line);
+    background: #fff; cursor: pointer; }
+  .btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .grow { flex: 1; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 16px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; box-shadow: var(--shadow); }
+  .tile .n { font-size: 24px; font-weight: 700; }
+  .tile .l { font-size: 12px; color: var(--muted); }
+  .tile .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .layout { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow); overflow: hidden; }
+  .card h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--line);
+    text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; }
+  .card .body { padding: 12px 14px; }
+  svg .grat { stroke: #e5e3da; stroke-width: 1; }
+  svg .grat-label { fill: #a9a79c; font-size: 9px; }
+  .marker { cursor: pointer; stroke: rgba(0,0,0,.25); stroke-width: 1; }
+  .legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 12px;
+    color: var(--muted); margin-top: 8px; }
+  .swatch { width: 13px; height: 13px; border-radius: 3px; display: inline-block; vertical-align: -2px;
+    margin-right: 4px; border: 1px solid rgba(0,0,0,.15); }
+  .hatch { background: repeating-linear-gradient(45deg, var(--neutral), var(--neutral) 3px, #eeece4 3px, #eeece4 6px); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.insufficient td { color: var(--muted); }
+  tr.provisional { opacity: .72; }
+  .pill { font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); }
+  .pill.assessed { background: #eaf3ea; color: var(--brand); border-color: #cbe3cc; }
+  .pill.insufficient { background: #f1f0ea; color: var(--muted); }
+  .conf { font-size: 11px; color: var(--muted); }
+  #tooltip { position: fixed; pointer-events: none; background: #1f1f1c; color: #fff; padding: 8px 10px;
+    border-radius: 8px; font-size: 12px; max-width: 240px; box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    opacity: 0; transition: opacity .1s; z-index: 20; }
+  /* Token gate */
+  #gate { max-width: 420px; margin: 12vh auto; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 24px; box-shadow: var(--shadow); }
+  #gate h2 { margin: 0 0 6px; }
+  #gate p { color: var(--muted); font-size: 13px; }
+  #gate input { width: 100%; font: inherit; padding: 9px 10px; border: 1px solid var(--line);
+    border-radius: 8px; margin: 10px 0; }
+  #gateErr { color: var(--danger); font-size: 13px; min-height: 18px; }
+  .hidden { display: none !important; }
+  .note { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- Token gate: the shell carries NO data until a valid token is entered. -->
+<div id="gate">
+  <h2>Surveillance — restricted</h2>
+  <p>This internal tool shows aggregated counterfeit-report patterns for regulators.
+     Enter your access token to continue.</p>
+  <input id="gateToken" type="password" placeholder="ADMIN_TOKEN" autocomplete="off" />
+  <div id="gateErr"></div>
+  <button class="btn btn-primary" id="gateGo" style="width:100%">Unlock</button>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>🛰️ MedaGuard — Counterfeit Surveillance</h1>
+    <span class="who">internal · aggregated · gated <button class="btn" id="lock" style="margin-left:8px;padding:3px 9px;font-size:12px">Lock</button></span>
+  </header>
+
+  <!-- PERMANENT caption — must always be visible, cannot be dismissed. -->
+  <div class="caption" id="caption">
+    <strong>Read this map carefully.</strong> <span id="captionText"></span>
+  </div>
+
+  <main>
+    <div class="controls">
+      <div>
+        <label for="from">From</label>
+        <input type="date" id="from" />
+      </div>
+      <div>
+        <label for="to">To</label>
+        <input type="date" id="to" />
+      </div>
+      <div>
+        <label>Layer</label>
+        <div class="layers" id="layers">
+          <button data-layer="rate" aria-pressed="true">Counterfeit rate</button>
+          <button data-layer="banned" aria-pressed="false">Banned sightings</button>
+          <button data-layer="expired" aria-pressed="false">Expired sightings</button>
+          <button data-layer="rejected" aria-pressed="false">User-rejected</button>
+        </div>
+      </div>
+      <div class="grow"></div>
+      <div>
+        <button class="btn" id="reload">Refresh</button>
+        <button class="btn" id="export">Export CSV</button>
+      </div>
+    </div>
+
+    <div id="layerNote" class="note"></div>
+
+    <div class="tiles" id="tiles"></div>
+
+    <div class="layout">
+      <div class="card">
+        <h2>District map — Ethiopia (approximate extent)</h2>
+        <div class="body">
+          <svg id="map" viewBox="0 0 620 500" width="100%" role="img" aria-label="District choropleth"></svg>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Districts</h2>
+        <div class="body" style="padding:0">
+          <table>
+            <thead><tr>
+              <th>District</th><th class="num">n</th><th>Confidence</th>
+              <th class="num" id="metricHead">Rate</th><th>Status</th>
+            </tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <div class="note" style="padding:10px 14px" id="tableNote"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+(() => {
+  // ---- Projection over Ethiopia's approximate bounding box -----------------
+  const BBOX = { lonMin: 33, lonMax: 48, latMin: 3, latMax: 15 };
+  const W = 620, H = 500, PAD = 28;
+  const projX = (lon) => PAD + (lon - BBOX.lonMin) / (BBOX.lonMax - BBOX.lonMin) * (W - 2 * PAD);
+  const projY = (lat) => PAD + (BBOX.latMax - lat) / (BBOX.latMax - BBOX.latMin) * (H - 2 * PAD);
+
+  const $ = (id) => document.getElementById(id);
+  const state = { token: null, data: null, layer: "rate" };
+
+  const LAYER = {
+    rate:     { head: "Rate",     note: "" },
+    banned:   { head: "Banned",   note: "Banned-product sightings (count). A sighting is a scan, not a confirmed sale." },
+    expired:  { head: "Expired",  note: "Expired-product sightings (count) — a real product past its date, not a fake." },
+    rejected: { head: "Rejected", note: "User-rejected label matches — INCLUDES OCR ERRORS, not confirmed counterfeits. Never part of the counterfeit rate." },
+  };
+
+  // ---- Colour scales -------------------------------------------------------
+  function rateColor(r) { // 0 green -> amber -> red
+    if (r <= 0.05) return "#3f8f43";
+    if (r <= 0.15) return "#8bb03a";
+    if (r <= 0.30) return "#d69a2d";
+    if (r <= 0.50) return "#d1662b";
+    return "#b23b34";
+  }
+  function countColor(c, max) {
+    if (!max) return "#c8c6bd";
+    const t = Math.min(1, c / max);
+    const g = Math.round(150 - t * 110), r = Math.round(80 + t * 130);
+    return `rgb(${r},${g},60)`;
+  }
+
+  // Value + colour for a district under the active layer. Below-floor districts
+  // are ALWAYS neutral for the rate layer (never a rate claim below the floor).
+  function styleFor(d, maxCounts) {
+    if (state.layer === "rate") {
+      if (!d.sufficient) return { color: null, insufficient: true, value: null };
+      return { color: rateColor(d.counterfeitRate), insufficient: false, value: (d.counterfeitRate * 100).toFixed(0) + "%" };
+    }
+    const key = state.layer === "banned" ? "bannedCount" : state.layer === "expired" ? "expiredCount" : "rejectedByUserCount";
+    const c = d[key] || 0;
+    return { color: c > 0 ? countColor(c, maxCounts[key]) : "#dcdad2", insufficient: !d.sufficient, value: String(c) };
+  }
+
+  // ---- Rendering -----------------------------------------------------------
+  const tooltip = $("tooltip");
+  function showTip(e, html) { tooltip.innerHTML = html; tooltip.style.opacity = 1;
+    tooltip.style.left = Math.min(e.clientX + 14, innerWidth - 250) + "px"; tooltip.style.top = (e.clientY + 14) + "px"; }
+  function hideTip() { tooltip.style.opacity = 0; }
+
+  function drawMap() {
+    const svg = $("map");
+    const districts = state.data.districts;
+    const maxCounts = {
+      bannedCount: Math.max(1, ...districts.map((d) => d.bannedCount)),
+      expiredCount: Math.max(1, ...districts.map((d) => d.expiredCount)),
+      rejectedByUserCount: Math.max(1, ...districts.map((d) => d.rejectedByUserCount)),
+    };
+    let s = "";
+    // Graticule.
+    for (let lon = 34; lon <= 47; lon += 2) {
+      const x = projX(lon);
+      s += `<line class="grat" x1="${x}" y1="${PAD}" x2="${x}" y2="${H - PAD}"/>`;
+      s += `<text class="grat-label" x="${x + 2}" y="${H - PAD + 12}">${lon}°E</text>`;
+    }
+    for (let lat = 4; lat <= 14; lat += 2) {
+      const y = projY(lat);
+      s += `<line class="grat" x1="${PAD}" y1="${y}" x2="${W - PAD}" y2="${y}"/>`;
+      s += `<text class="grat-label" x="4" y="${y - 2}">${lat}°N</text>`;
+    }
+    // District markers (only those with a centroid are mappable).
+    const mappable = districts.filter((d) => d.lat != null && d.lon != null);
+    for (const d of mappable) {
+      const st = styleFor(d, maxCounts);
+      const x = projX(d.lon), y = projY(d.lat);
+      const size = 13 + Math.min(14, Math.sqrt(d.sampleSize) * 1.6); // n-scaled, so n=3 != n=300
+      const half = size / 2;
+      const op = d.confidence === "provisional" ? 0.5 : d.confidence === "indicative" ? 0.78 : 1;
+      const idx = districts.indexOf(d);
+      if (st.insufficient) {
+        s += `<rect class="marker" data-i="${idx}" x="${x - half}" y="${y - half}" width="${size}" height="${size}" rx="3"
+                fill="url(#hatch)" opacity="0.9"/>`;
+      } else {
+        s += `<rect class="marker" data-i="${idx}" x="${x - half}" y="${y - half}" width="${size}" height="${size}" rx="3"
+                fill="${st.color}" opacity="${op}"/>`;
+      }
+    }
+    svg.innerHTML =
+      `<defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+         <rect width="6" height="6" fill="#eeece4"/><rect width="3" height="6" fill="#c8c6bd"/></pattern></defs>` + s;
+
+    svg.querySelectorAll(".marker").forEach((m) => {
+      const d = districts[+m.dataset.i];
+      m.addEventListener("mousemove", (e) => showTip(e, tipHtml(d)));
+      m.addEventListener("mouseleave", hideTip);
+    });
+    drawLegend();
+  }
+
+  function tipHtml(d) {
+    const rate = d.sufficient ? (d.counterfeitRate * 100).toFixed(1) + "%" : "not assessed (below data threshold)";
+    return `<b>${esc(d.district)}</b> <span style="opacity:.7">(${d.granularity})</span><br>
+      sample size: <b>${d.sampleSize}</b> · ${d.confidence}<br>
+      counterfeit rate: <b>${rate}</b><br>
+      unregistered ${d.unregisteredCount} · banned ${d.bannedCount} · expired ${d.expiredCount}<br>
+      <span style="opacity:.7">user-rejected (noisy): ${d.rejectedByUserCount}</span>`;
+  }
+
+  function drawLegend() {
+    const el = $("legend");
+    if (state.layer === "rate") {
+      el.innerHTML =
+        `<span><span class="swatch" style="background:#3f8f43"></span>low</span>
+         <span><span class="swatch" style="background:#d69a2d"></span>elevated</span>
+         <span><span class="swatch" style="background:#b23b34"></span>high</span>
+         <span><span class="swatch hatch"></span>insufficient data (not assessed)</span>
+         <span style="opacity:.7">marker size ∝ sample size · faded = provisional</span>`;
+    } else {
+      el.innerHTML =
+        `<span><span class="swatch" style="background:#dcdad2"></span>none</span>
+         <span><span class="swatch" style="background:#8a5a1e"></span>more sightings</span>
+         <span style="opacity:.7">marker size ∝ sample size · faded = provisional</span>`;
+    }
+  }
+
+  function drawTiles() {
+    const t = state.data.summary.totals;
+    const tiles = [
+      { n: t.resolvedScans, l: "Resolved scans", sub: `window ${state.data.districts.length} districts` },
+      { n: (t.counterfeitRate * 100).toFixed(1) + "%", l: "National counterfeit rate", sub: `${t.confidence} · (unreg+banned)/resolved` },
+      { n: t.assessedDistricts, l: "Assessed districts", sub: "cleared both floors" },
+      { n: t.insufficientDistricts, l: "Insufficient data", sub: "below the data threshold" },
+      { n: t.rejectedByUserCount, l: "User-rejected (noisy)", sub: "NOT in the counterfeit rate" },
+    ];
+    $("tiles").innerHTML = tiles.map((x) =>
+      `<div class="tile"><div class="n">${x.n}</div><div class="l">${x.l}</div><div class="sub">${x.sub}</div></div>`).join("");
+  }
+
+  function drawTable() {
+    const districts = [...state.data.districts].sort((a, b) =>
+      Number(b.sufficient) - Number(a.sufficient) || b.sampleSize - a.sampleSize);
+    $("metricHead").textContent = LAYER[state.layer].head;
+    const metric = (d) => {
+      if (state.layer === "rate") return d.sufficient ? (d.counterfeitRate * 100).toFixed(1) + "%" : "—";
+      const key = state.layer === "banned" ? "bannedCount" : state.layer === "expired" ? "expiredCount" : "rejectedByUserCount";
+      return String(d[key] || 0);
+    };
+    $("rows").innerHTML = districts.map((d) => {
+      const cls = [d.sufficient ? "" : "insufficient", d.confidence === "provisional" ? "provisional" : ""].join(" ").trim();
+      const status = d.sufficient
+        ? `<span class="pill assessed">assessed</span>`
+        : `<span class="pill insufficient">insufficient</span>`;
+      return `<tr class="${cls}">
+        <td>${esc(d.district)} <span class="conf">${d.granularity === "grid_approx" ? "≈" : ""}</span></td>
+        <td class="num">${d.sampleSize}</td>
+        <td class="conf">${d.confidence}</td>
+        <td class="num">${metric(d)}</td>
+        <td>${status}</td></tr>`;
+    }).join("");
+    const regionOnly = state.data.districts.filter((d) => d.lat == null && d.granularity === "region").length;
+    const unlocated = state.data.districts.filter((d) => d.granularity === "none").length;
+    $("tableNote").textContent =
+      `${regionOnly} region-level district(s) have no coordinates and are listed but not plotted. `
+      + (unlocated ? `${unlocated} unlocated scan-group(s) excluded from the map. ` : "")
+      + "A rate is shown only for districts that cleared both floors.";
+  }
+
+  function setLayerNote() { $("layerNote").textContent = LAYER[state.layer].note; }
+
+  // ---- Data load -----------------------------------------------------------
+  async function api(path) {
+    const res = await fetch(path, { headers: { "x-admin-token": state.token } });
+    if (res.status === 401) throw new Error("unauthorized");
+    if (!res.ok) throw new Error("http " + res.status);
+    return res.json();
+  }
+  function range() {
+    const q = [];
+    if ($("from").value) q.push("from=" + encodeURIComponent($("from").value));
+    if ($("to").value) q.push("to=" + encodeURIComponent($("to").value + "T23:59:59"));
+    return q.length ? "?" + q.join("&") : "";
+  }
+  async function load() {
+    const [districts, summary] = await Promise.all([
+      api("/api/surveillance/districts" + range()),
+      api("/api/surveillance/summary" + range()),
+    ]);
+    state.data = { districts: districts.districts, floors: districts.floors, range: districts.range, summary };
+    drawTiles(); drawMap(); drawTable(); setLayerNote();
+  }
+
+  // ---- Wiring --------------------------------------------------------------
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+  function boot() {
+    // Permanent caption text injected once; the element is never removed.
+    $("captionText").textContent =
+      "This map shows patterns in farmer scan reports. It is NOT a confirmed record of counterfeit sales. "
+      + "Districts below the data threshold are not assessed. Single reports are noise; only clusters are signal.";
+    // Default window: last 90 days.
+    const today = new Date(), from = new Date(Date.now() - 90 * 86400000);
+    $("to").value = today.toISOString().slice(0, 10);
+    $("from").value = from.toISOString().slice(0, 10);
+
+    $("gateGo").onclick = tryUnlock;
+    $("gateToken").addEventListener("keydown", (e) => { if (e.key === "Enter") tryUnlock(); });
+    $("lock").onclick = () => { sessionStorage.removeItem("mg_admin_token"); location.reload(); };
+    $("reload").onclick = () => load().catch(onErr);
+    $("from").onchange = () => load().catch(onErr);
+    $("to").onchange = () => load().catch(onErr);
+    $("export").onclick = () => {
+      // Export flows through the gated, audited endpoint (adds the token so the
+      // server logs the access and returns caption-headed CSV).
+      const url = "/api/surveillance/export" + range();
+      fetch(url, { headers: { "x-admin-token": state.token } })
+        .then((r) => r.blob()).then((b) => {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(b); a.download = "surveillance-districts.csv"; a.click();
+          URL.revokeObjectURL(a.href);
+        }).catch(onErr);
+    };
+    $("layers").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-layer]"); if (!btn) return;
+      state.layer = btn.dataset.layer;
+      [...$("layers").children].forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      if (state.data) { drawMap(); drawTable(); setLayerNote(); }
+    });
+
+    const saved = sessionStorage.getItem("mg_admin_token");
+    if (saved) { state.token = saved; unlock(); } // try silently
+  }
+
+  function onErr(e) {
+    if (String(e.message).includes("unauthorized")) {
+      sessionStorage.removeItem("mg_admin_token");
+      $("app").classList.add("hidden"); $("gate").classList.remove("hidden");
+      $("gateErr").textContent = "Session expired or token invalid.";
+    } else { alert("Load failed: " + e.message); }
+  }
+  async function tryUnlock() {
+    state.token = $("gateToken").value.trim();
+    if (!state.token) { $("gateErr").textContent = "Enter a token."; return; }
+    $("gateErr").textContent = "Checking…";
+    try { await api("/api/surveillance/summary"); sessionStorage.setItem("mg_admin_token", state.token); unlock(); }
+    catch { $("gateErr").textContent = "Invalid token."; }
+  }
+  async function unlock() {
+    try {
+      await api("/api/surveillance/summary"); // validate silently
+      $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
+      await load();
+    } catch (e) { onErr(e); }
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
