@@ -34,7 +34,7 @@ app.get("/api/health", async (_req, res) => {
       ok: true,
       db: dbMode,
       pesticides: Number(r.rows[0].n),
-      milestone: "M3",
+      milestone: "M7",
     });
   } catch (err) {
     res.status(500).json({ ok: false, error: String(err) });

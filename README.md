@@ -13,7 +13,7 @@ See [SAFETY.md](SAFETY.md). Do not break this boundary.
 
 ## Status
 
-Milestones 1–3 complete:
+Milestones 1–7 complete:
 - **M1** — Express + libSQL (Turso / local-SQLite fallback), schema, seed script,
   `/api/verify-number`.
 - **M2** — scan pipeline: `lib/aiClient.js` vision fallback chain
@@ -28,10 +28,27 @@ Milestones 1–3 complete:
   (B) one-tap **offline poison-control** flow (route-of-exposure → DB first-aid,
   step-by-step) with `GET /api/first-aid` + `GET /api/emergency-bundle`. First-aid
   is pure DB retrieval — no LLM ever (see [SAFETY.md](SAFETY.md)).
+- **M5** — SMS channel (`POST /api/sms/webhook`, Africa's Talking): verdict-first
+  replies fitted to ≤2 segments (GSM-7/UCS-2 aware), exact-match only, emergency
+  first aid that never rate-limits and fails toward help, per-phone language.
+- **M6** — genuinely offline: client-side OCR (tesseract.js from our origin),
+  asymmetric registry cache in IndexedDB ("safety expires, danger does not"),
+  reachability by request outcome (never `navigator.onLine`), offline scan queue
+  with idempotent re-verifying sync. Offline unknowns are `UNCONFIRMED`, never
+  `UNREGISTERED`.
+- **M7** — counterfeit surveillance for regulators: district-level aggregates
+  only (no raw coordinates leave the server), two-floor minimum before any flag,
+  `ADMIN_TOKEN`-gated endpoints + `/admin/map` choropleth, audited access,
+  gated CSV export.
 
-Run the tests (no network / API keys needed): `npm test`
-(`test:scan` = 41 checks, `test:firstaid` = 26 checks). Regenerate English audio
-placeholders with `npm run gen:audio` (macOS `say`).
+Remaining: **M8** — Fly.io deploy (`fly.toml` + `Dockerfile`). Note the
+[SAFETY.md](SAFETY.md) release gate: with unreviewed first-aid data the server
+**refuses to start** under `NODE_ENV=production`.
+
+Run the tests (no network / API keys needed): `npm test` — seven suites
+(scan, first-aid, SMS, offline verdict/merge, sync hardening, surveillance
+aggregation, surveillance gate). Regenerate English audio placeholders with
+`npm run gen:audio` (macOS `say`).
 
 ## Quick start (local dev)
 
@@ -120,9 +137,9 @@ is not yet parsed — export to CSV first.
 
 ## Roadmap
 
-M1 DB + verify ✅ · M2 vision/OCR scan · M3 PWA + 6 languages + voice ·
-M4 poison-control emergency path · M5 SMS webhook · M6 offline PWA ·
-M7 admin surveillance map · M8 Fly.io deploy.
+M1 DB + verify ✅ · M2 vision/OCR scan ✅ · M3 PWA + 6 languages + voice ✅ ·
+M4 poison-control emergency path ✅ · M5 SMS webhook ✅ · M6 offline PWA ✅ ·
+M7 admin surveillance map ✅ · M8 Fly.io deploy.
 
 ## Environment
 

@@ -311,9 +311,12 @@ returned recordings drop in by exact key. Changes:
 - **Renamed audio keys** to canonical: `reading→scanning`, `no_connection→verdict_offline`,
   `wear_this→wear_protection`, `ppe_face_mask→ppe_mask`, `ppe_long_sleeves→ppe_overall`,
   `emergency_choose_route→emergency_ask_route`, `firstaid_intro→emergency_stay_calm`.
-- **Hazard clips** now the canonical 4-level set: WHO `Ia→hazard_extreme,
-  Ib→hazard_high, II→hazard_moderate, III/U→hazard_low` (mapped in app.js;
-  on-screen text still per WHO class from /locales).
+- **Hazard clips**: initially collapsed to 4 levels (`III/U→hazard_low`);
+  **superseded by M4.5 Part B**, which restored the 5-level 1:1 mapping — WHO
+  `Ia→hazard_extreme, Ib→hazard_high, II→hazard_moderate, III→hazard_low,
+  U→hazard_unlikely` (HAZARD_AUDIO in app.js; `hazard_unlikely` was added to
+  the recording script v1.1 and the placeholder set). Do not re-collapse U
+  into III — "unlikely to be dangerous" and "low danger" are different claims.
 - **Verdict clips**: `SUSPENDED` reuses `verdict_banned` (no separate suspended
   clip in the script; both say "do not use").
 - **Universal first-aid is now atomic** `aid_*` steps (9 keys) sequenced per
