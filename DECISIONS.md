@@ -567,6 +567,47 @@ browser (`public/js/ocr.js`, tesseract.js 5).
   was unavailable); the server contract it calls is proven live + Node, and the
   client queue is thin IndexedDB + `Net` wiring over those proven primitives.
 
+## Milestone 7 — counterfeit surveillance (regulator view)
+
+This milestone changes the project's risk surface: it turns per-farmer scans into
+data a regulator, a manufacturer, and a corrupt distributor would each want to
+control. It is built **internal-only, aggregated, gated** from the first commit.
+
+### Part A — aggregation (`src/surveillance.js`)
+- Returns **district-level aggregates only**. Raw `lat`/`lon` never appear in any
+  output: each scan is bucketed to a named `region`, or its coordinate is snapped
+  to a coarse ~0.1° (~11km) grid and only the cell **centroid** is returned,
+  labelled `grid_approx`. Original coordinates are dropped.
+- **Two floors** gate any counterfeit signal: `≥ minDistrictScans` (10) resolved
+  scans AND `≥ minFlagCount` (3) flagged scans. Below either → `insufficient_data`
+  (never flagged, never clean). This is the most important safeguard in M7 — a red
+  district on one bad scan is defamation.
+- `counterfeitRate = (unregistered + banned) / resolved`. `EXPIRED` and
+  `REJECTED_BY_USER` are separate counts, **never** in the rate (the latter is
+  noisy: OCR errors, not confirmed counterfeits). Reuses `stats.js`
+  `effectiveStatus` (resolved-only; unresolved `CONFIRM` excluded).
+- Every district carries `sampleSize` + `confidence` (provisional < 30, indicative
+  < 100, strong ≥ 100). Date-boxed, default 90 days; `resolveRange` emits
+  SQLite-comparable bounds (space-separated, no `Z`) so it doesn't mis-order at day
+  boundaries. Optional product breakdown capped at `minProductCount` so one scan
+  never names a product. `nationalSummary()` rolls districts up.
+- Tested: `test-surveillance.js` (28 assertions) — floors incl. single-scan → not
+  flagged and 15-resolved/2-flagged → insufficient (floors are AND), rate excludes
+  rejections (0.3333 not 0.5), **no raw coord in output**, grid centroid, confidence
+  scaling, date window.
+
+### Part B — access gate (built before the view)
+- `requireAdmin` middleware gates every `/api/surveillance/*` endpoint. Token via
+  `Authorization: Bearer`, `x-admin-token`, or `?token=`, compared to
+  `config.adminToken` (`ADMIN_TOKEN`). **Empty token → LOCKED** (all requests 401,
+  loud startup warning). There is no unauthenticated path to the data, not even the
+  aggregates. `GET /api/surveillance/districts` + `/summary`. Every access (allow +
+  deny) audited to `events` (channel `admin`; path/range/ip, never the token).
+- No public route; no route returns raw scan rows. Verified live over HTTP and by
+  `test-surveillance-gate.js` (12 assertions, spawns the real server): 401 without/
+  wrong token, 200 with valid token (three carriers), payload carries no raw
+  coordinate, access audited.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

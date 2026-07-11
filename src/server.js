@@ -12,6 +12,7 @@ import { handleInbound } from "./sms/handler.js";
 import { logEvent } from "./events.js";
 import { getRegistryBundle } from "./registry.js";
 import { syncScans } from "./sync.js";
+import { districtAggregates, nationalSummary } from "./surveillance.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -171,6 +172,52 @@ app.post("/api/lang-fallback", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// SURVEILLANCE (M7) — regulator-only, aggregated, gated. There is NO
+// unauthenticated path to this data. Raw row-level coordinates never leave the
+// server (the aggregator returns district/grid-centroid aggregates only).
+// ---------------------------------------------------------------------------
+
+// Bearer-token gate. Token from `Authorization: Bearer`, `x-admin-token`, or
+// `?token=`. Empty config token => LOCKED (every request 401). Every access is
+// audited to `events`.
+function requireAdmin(req, res, next) {
+  const auth = req.get("authorization") || "";
+  const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
+  const provided = bearer || req.get("x-admin-token") || req.query.token || "";
+  const ok = config.adminToken && provided === config.adminToken;
+  // Audit the attempt (never log the token itself).
+  logEvent({
+    type: ok ? "surveillance_access" : "surveillance_denied",
+    channel: "admin",
+    payload: { path: req.path, from: req.query.from || null, to: req.query.to || null, ip: req.ip },
+  }).catch(() => {});
+  if (!ok) return res.status(401).json({ ok: false, error: "unauthorized" });
+  next();
+}
+
+// GET /api/surveillance/districts?from=&to= — district-level aggregates (gated).
+app.get("/api/surveillance/districts", requireAdmin, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    res.json({ ok: true, ...(await districtAggregates({ from, to })) });
+  } catch (err) {
+    console.error("surveillance districts error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// GET /api/surveillance/summary?from=&to= — national roll-up (gated).
+app.get("/api/surveillance/summary", requireAdmin, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    res.json({ ok: true, ...(await nationalSummary({ from, to })) });
+  } catch (err) {
+    console.error("surveillance summary error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
 // POST /api/sms/webhook — Africa's Talking inbound SMS. Guarded by a shared
 // secret when configured; parses { from, text, to, linkId, date }; replies via
 // verify.js / dosage.js / firstaid.js (M5). Never trusts unauthenticated posts.
@@ -220,6 +267,9 @@ async function checkReviewGate() {
 initSchema()
   .then(async () => {
     await checkReviewGate();
+    if (!config.adminToken) {
+      console.warn("[surveillance] ADMIN_TOKEN unset — /api/surveillance/* is LOCKED (all requests 401). Set ADMIN_TOKEN to enable the regulator map.");
+    }
     app.listen(PORT, () => {
       console.log(`MedaGuard listening on http://localhost:${PORT}  (db: ${dbMode})`);
     });

@@ -246,6 +246,37 @@ A `CONFIRM` is **pending** until the farmer answers (`/api/scan/confirm` →
 (`src/stats.js`); an unresolved `CONFIRM` is excluded from every rate. A `NO`
 answer (`REJECTED_BY_USER`) is a counterfeit-suspicion signal, not a null.
 
+## Surveillance / the counterfeit map (Milestone 7) — four rules
+
+The map turns farmer scans into a regulator's view. That view can accuse a place,
+a product, or a distributor, so it is built defensively. `src/surveillance.js` is
+the only place these aggregates are computed. Do not add a public route, and do
+not return raw scan rows from any surveillance endpoint.
+
+1. **The map is a statistical instrument, not an accusation.** A district shows a
+   counterfeit signal only when it clears BOTH floors: `≥ minDistrictScans` (10)
+   resolved scans AND `≥ minFlagCount` (3) flagged scans. Below either → the
+   district is `insufficient_data` — never flagged, never called clean. One bad
+   scan (bad OCR, stale cache, a curious farmer) must never paint a district red.
+   This is the single most important rule in M7. A test asserts a single-scan
+   district is not flagged.
+2. **Private by default — no raw points ever leave the server.** Aggregate to a
+   named district/region, or snap `lat`/`lon` to a coarse ~10km grid and return
+   only the cell **centroid**, labelled approximate. Original coordinates are
+   dropped in the aggregator. There is **no** public point-map of "counterfeit
+   shops" — that is defamation with a coordinate. Every endpoint is gated by
+   `ADMIN_TOKEN` (empty token → locked, all requests 401); every access is
+   audited to `events`.
+3. **Separate the noisy signal.** `REJECTED_BY_USER` (a fuzzy label the holder
+   said was wrong) is the noisiest input we have — it includes OCR errors, not
+   confirmed counterfeits. It is its own count/layer and is **never** summed into
+   `counterfeitRate` (which is `(unregistered + banned) / resolved`). A test
+   proves the arithmetic (rate stays 0.3333, not 0.5, when rejections are added).
+4. **Show uncertainty honestly.** Every figure carries its `sampleSize` and a
+   `confidence` label (provisional < 30, indicative < 100, strong ≥ 100). n=3 is
+   rendered visibly differently from n=300, and the map carries a permanent,
+   non-removable caption that it shows scan-report patterns, not confirmed sales.
+
 ## If you are tempted to break this
 
 Don't. If a feature seems to need the LLM to produce a safety fact, the correct
