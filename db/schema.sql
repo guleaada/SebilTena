@@ -18,6 +18,23 @@ CREATE TABLE IF NOT EXISTS pesticides (
   first_aid TEXT,             -- JSON: { route: [aid_code, ...] } — controlled vocab (src/aidCodes.js)
   approved_crops TEXT,        -- JSON array
   reviewed INTEGER DEFAULT 0, -- 1 only after toxicologist sign-off (SAFETY.md release gate)
+  reviewed_by TEXT,           -- M10: reviewing professional's name (set on approve, cleared on revoke)
+  reviewer_credential TEXT,   -- M10: their credential (e.g. "Clinical toxicologist, MD")
+  reviewed_at TEXT,           -- M10: server timestamp of the current approval
+  review_notes TEXT,          -- M10: reviewer's notes for the current approval
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Append-only review audit trail (M10). Every sign-off action (approve / revoke /
+-- annotate) inserts a row here. This table is NEVER updated or deleted — it is
+-- the auditable record handed to a regulator or attached to a grant application.
+CREATE TABLE IF NOT EXISTS review_log (
+  id INTEGER PRIMARY KEY,
+  pesticide_id INTEGER REFERENCES pesticides(id),
+  action TEXT CHECK(action IN ('approved','revoked','annotated')) NOT NULL,
+  reviewer TEXT NOT NULL,     -- who performed the action
+  credential TEXT,            -- their stated credential
+  notes TEXT,                 -- approval notes, or the mandatory revoke reason
   created_at TEXT DEFAULT (datetime('now'))
 );
 

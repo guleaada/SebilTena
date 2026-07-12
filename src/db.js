@@ -37,6 +37,11 @@ const MIGRATIONS = [
   "ALTER TABLE scans ADD COLUMN synced_status TEXT",
   "ALTER TABLE scans ADD COLUMN review_status TEXT",
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_scans_client_uuid ON scans(client_uuid)",
+  // M10 — toxicologist sign-off fields on existing pesticide rows.
+  "ALTER TABLE pesticides ADD COLUMN reviewed_by TEXT",
+  "ALTER TABLE pesticides ADD COLUMN reviewer_credential TEXT",
+  "ALTER TABLE pesticides ADD COLUMN reviewed_at TEXT",
+  "ALTER TABLE pesticides ADD COLUMN review_notes TEXT",
 ];
 
 async function migrate() {

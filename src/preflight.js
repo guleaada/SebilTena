@@ -1,5 +1,6 @@
 import { config } from "./config.js";
 import { db as defaultDb } from "./db.js";
+import { CLEARED_SQL } from "./review.js";
 
 // ---------------------------------------------------------------------------
 // PRODUCTION PREFLIGHT (M8 Part B) — one place where every fail-closed
@@ -40,27 +41,32 @@ export async function runPreflight({ dbClient = defaultDb } = {}) {
   const warn = [];
 
   // --- 1. First-aid release boot-gate -----------------------------------------
-  let unreviewed = 0;
+  // "Cleared" is the STRICTER M10 definition: reviewed AND signed (reviewed_by +
+  // reviewed_at). A product flagged reviewed=1 without a named reviewer/timestamp
+  // is NOT cleared — sign-off happens only through /admin/review.
+  let uncleared = 0, cleared = 0, total = 0;
   try {
-    unreviewed = Number((await dbClient.execute("SELECT COUNT(*) AS n FROM pesticides WHERE reviewed = 0")).rows[0].n);
+    total = Number((await dbClient.execute("SELECT COUNT(*) AS n FROM pesticides")).rows[0].n);
+    cleared = Number((await dbClient.execute(`SELECT COUNT(*) AS n FROM pesticides WHERE ${CLEARED_SQL}`)).rows[0].n);
+    uncleared = total - cleared;
   } catch (e) {
     // Cannot PROVE the data is reviewed -> fail closed on a hardened deployment.
     if (hardened) fatal.push(`Could not verify the first-aid review gate (${e?.message || e}). Failing closed.`);
   }
-  if (unreviewed > 0) {
+  if (uncleared > 0) {
     if (production && !staging) {
       fatal.push(
-        `${unreviewed} product(s) have UNREVIEWED first-aid data — NOT CLEARED FOR FIELD USE. ` +
+        `${uncleared} of ${total} product(s) are NOT CLEARED for field use (unsigned first-aid). ` +
         `A cleared production build refuses to start (SAFETY.md release gate). ` +
-        `To run a clearly-labelled demonstration instead, set STAGING=true (do NOT set reviewed:true).`
+        `Sign each off through /admin/review; to run a clearly-labelled demonstration set STAGING=true.`
       );
     } else if (staging) {
       warn.push(
-        `DEMONSTRATION build (STAGING=true): ${unreviewed} product(s) have UNREVIEWED first-aid — ` +
-        `NOT CLEARED FOR FIELD USE. Serving with the demonstration banner.`
+        `DEMONSTRATION build (STAGING=true): ${cleared} of ${total} products reviewed — ` +
+        `${uncleared} NOT CLEARED FOR FIELD USE. Serving with the demonstration banner.`
       );
     } else {
-      warn.push(`${unreviewed} product(s) have unreviewed first-aid (dev). Not cleared for field use.`);
+      warn.push(`${cleared} of ${total} products reviewed; ${uncleared} not cleared for field use (dev).`);
     }
   }
 
