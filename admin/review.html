@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>MedaGuard — First-aid Review (internal)</title>
+<style>
+  :root {
+    --bg:#f6f5f1; --panel:#fff; --ink:#2b2b26; --muted:#6b6b60; --line:#e0ded6;
+    --brand:#2f6d33; --danger:#b23b34; --amber:#d69a2d; --shadow:0 1px 3px rgba(0,0,0,.08);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--brand); color:#fff; padding:12px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  header h1 { font-size:17px; margin:0; font-weight:700; }
+  header .who { font-size:12px; opacity:.9; }
+  main { max-width:1080px; margin:0 auto; padding:16px; }
+  .btn { font:inherit; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; color:var(--ink); }
+  .btn-primary { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .btn-danger { background:var(--danger); color:#fff; border-color:var(--danger); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  /* progress + gate statement */
+  .progress { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .progress .n { font-size:22px; font-weight:800; }
+  .progress .bar { height:8px; background:#eee; border-radius:99px; overflow:hidden; margin:8px 0 6px; }
+  .progress .bar > span { display:block; height:100%; background:var(--brand); }
+  .progress .gate { font-size:12.5px; color:var(--muted); }
+  /* reviewer identity */
+  .identity { background:#fff7e6; border:1px solid #e9d9a8; border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13.5px; }
+  .identity.set { background:#eef5ee; border-color:#cbe3cc; }
+  .identity input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:7px; margin:0 6px 4px 0; }
+  .tabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .tabs button { font:inherit; font-size:14px; padding:6px 14px; border:1px solid var(--line); background:#fff; border-radius:999px; cursor:pointer; color:var(--ink); }
+  .tabs button[aria-pressed=true] { background:var(--brand); color:#fff; border-color:var(--brand); }
+  table { width:100%; border-collapse:collapse; font-size:14px; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); }
+  th { font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); }
+  tbody tr { cursor:pointer; }
+  tbody tr:hover { background:#faf9f5; }
+  .pill { font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); white-space:nowrap; }
+  .pill.approved { background:#eaf3ea; color:var(--brand); border-color:#cbe3cc; }
+  .pill.unreviewed { background:#f1f0ea; color:var(--muted); }
+  .pill.revoked { background:#f7e9e8; color:var(--danger); border-color:#e6c4c1; }
+  .hz { font-variant-numeric:tabular-nums; }
+  /* detail */
+  #detail { display:none; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .card h2 { font-size:13px; margin:0; padding:10px 14px; border-bottom:1px solid var(--line); text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .card .body { padding:12px 14px; }
+  .prod-head { display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; }
+  .prod-name { font-size:20px; font-weight:800; }
+  .prod-meta { color:var(--muted); font-size:13px; }
+  .route { margin-bottom:12px; }
+  .route h3 { margin:0 0 4px; font-size:14px; color:var(--brand); text-transform:capitalize; }
+  .route ol { margin:0; padding-left:22px; }
+  .route li { margin:2px 0; }
+  .route .universal { font-size:11px; color:var(--amber); font-weight:700; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:3px 9px; font-size:13px; }
+  .dose-row td { font-size:13.5px; }
+  .actionbox { display:flex; flex-direction:column; gap:8px; }
+  .actionbox textarea, .actionbox input { font:inherit; width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; }
+  .err { color:var(--danger); font-size:13px; min-height:18px; }
+  .logrow { font-size:13px; padding:6px 0; border-bottom:1px dashed var(--line); }
+  .logrow b { text-transform:uppercase; font-size:11px; }
+  .logrow .approved { color:var(--brand); } .logrow .revoked { color:var(--danger); }
+  .back { margin-bottom:10px; }
+  /* gate */
+  #gate { max-width:420px; margin:12vh auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:24px; box-shadow:var(--shadow); }
+  #gate input { width:100%; font:inherit; padding:9px 10px; border:1px solid var(--line); border-radius:8px; margin:10px 0; }
+  #gateErr { color:var(--danger); font-size:13px; min-height:18px; }
+  .hidden { display:none !important; }
+  .muted { color:var(--muted); font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h2 style="margin:0 0 6px">First-aid review — restricted</h2>
+  <p class="muted">This internal tool signs off the first-aid content that reaches farmers. Enter your access token to continue.</p>
+  <input id="gateToken" type="password" placeholder="ADMIN_TOKEN" autocomplete="off" />
+  <div id="gateErr"></div>
+  <button class="btn btn-primary" id="gateGo" style="width:100%">Unlock</button>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>🧪 MedaGuard — First-aid Review</h1>
+    <span class="who">internal · gated
+      <button class="btn" id="exportBtn" style="margin-left:8px;padding:3px 9px;font-size:12px">Export log (CSV)</button>
+      <button class="btn" id="lock" style="padding:3px 9px;font-size:12px">Lock</button>
+    </span>
+  </header>
+  <main>
+    <div class="progress" id="progress"></div>
+
+    <div class="identity" id="identity"></div>
+
+    <div id="listView">
+      <div class="tabs" id="tabs">
+        <button data-filter="unreviewed" aria-pressed="true">Unreviewed</button>
+        <button data-filter="approved" aria-pressed="false">Approved</button>
+        <button data-filter="revoked" aria-pressed="false">Revoked</button>
+      </div>
+      <table>
+        <thead><tr><th>Product</th><th>Active ingredient</th><th class="hz">WHO</th><th>Reg. no</th><th>Status</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="muted" id="listNote" style="margin-top:10px"></p>
+    </div>
+
+    <div id="detail"></div>
+  </main>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const state = { token:null, filter:"unreviewed", reviewer:null, credential:null };
+  const esc = (s) => String(s==null?"":s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  async function api(path, opts={}) {
+    const res = await fetch(path, { ...opts, headers: { "x-admin-token": state.token, ...(opts.headers||{}) } });
+    if (res.status === 401) throw new Error("unauthorized");
+    return res;
+  }
+  const j = async (path, opts) => (await api(path, opts)).json();
+
+  // ---- Reviewer identity (attributed to every log entry) ------------------
+  function loadIdentity() {
+    state.reviewer = sessionStorage.getItem("mg_reviewer_name") || null;
+    state.credential = sessionStorage.getItem("mg_reviewer_cred") || null;
+  }
+  function renderIdentity() {
+    const box = $("identity");
+    if (state.reviewer && state.credential) {
+      box.className = "identity set";
+      box.innerHTML = `Signing as <b>${esc(state.reviewer)}</b> — ${esc(state.credential)} <button class="btn" id="idEdit" style="margin-left:8px;padding:2px 8px;font-size:12px">Change</button>`;
+      $("idEdit").onclick = editIdentity;
+    } else {
+      editIdentity();
+    }
+  }
+  function editIdentity() {
+    const box = $("identity");
+    box.className = "identity";
+    box.innerHTML =
+      `<b>Who is signing?</b> Every approval and revocation is recorded against this name + credential.<br>
+       <input id="idName" placeholder="Full name" value="${esc(state.reviewer||"")}" style="min-width:200px">
+       <input id="idCred" placeholder="Credential (e.g. Clinical toxicologist, MD)" value="${esc(state.credential||"")}" style="min-width:260px">
+       <button class="btn btn-primary" id="idSave" style="padding:6px 12px">Save</button>
+       <div class="err" id="idErr"></div>`;
+    $("idSave").onclick = () => {
+      const n = $("idName").value.trim(), c = $("idCred").value.trim();
+      if (!n || !c) { $("idErr").textContent = "Both name and credential are required."; return; }
+      sessionStorage.setItem("mg_reviewer_name", n); sessionStorage.setItem("mg_reviewer_cred", c);
+      state.reviewer = n; state.credential = c; renderIdentity();
+    };
+  }
+  const haveIdentity = () => Boolean(state.reviewer && state.credential);
+
+  // ---- Progress -----------------------------------------------------------
+  async function loadProgress() {
+    const s = await j("/api/review/summary");
+    const pct = s.total ? Math.round(s.cleared / s.total * 100) : 0;
+    $("progress").innerHTML =
+      `<div class="n">${s.cleared} of ${s.total} products reviewed</div>
+       <div class="bar"><span style="width:${pct}%"></span></div>
+       <div class="gate">A cleared production build boots only when <b>all ${s.total}</b> products are signed off (name + credential). ${s.remaining} remaining.</div>`;
+  }
+
+  // ---- List ---------------------------------------------------------------
+  async function loadList() {
+    const data = await j(`/api/review/products?filter=${state.filter}`);
+    const rows = data.products || [];
+    $("rows").innerHTML = rows.map((p) =>
+      `<tr data-id="${p.id}">
+        <td><b>${esc(p.product_name)}</b></td>
+        <td>${esc(p.active_ingredient)}</td>
+        <td class="hz">${esc(p.hazard_class||"—")}</td>
+        <td>${esc(p.registration_no)}</td>
+        <td><span class="pill ${p.status}">${p.status}</span></td>
+      </tr>`).join("");
+    $("rows").querySelectorAll("tr").forEach((tr) => tr.onclick = () => openDetail(tr.dataset.id));
+    $("listNote").textContent = rows.length ? "" : `No products in “${state.filter}”.`;
+  }
+
+  // ---- Detail + actions ---------------------------------------------------
+  async function openDetail(id) {
+    const { product: p } = await j(`/api/review/product/${id}`);
+    $("listView").style.display = "none";
+    const d = $("detail");
+    d.style.display = "block";
+
+    const routesHtml = p.routes.map((r) =>
+      `<div class="route">
+        <h3>${esc(r.route)} ${r.source==="universal" ? '<span class="universal">(universal fallback)</span>' : ''}</h3>
+        <ol>${r.steps.map((s)=>`<li>${esc(s.text)} <span class="muted">(${esc(s.code)})</span></li>`).join("")}</ol>
+      </div>`).join("");
+    const dosesHtml = p.dosages.length
+      ? `<table><thead><tr><th>Crop</th><th>Dose</th><th>PHI (days)</th></tr></thead><tbody>${
+          p.dosages.map((x)=>`<tr class="dose-row"><td>${esc(x.crop)}</td><td>${esc(x.dose_per_unit)}</td><td>${x.pre_harvest_interval_days??"—"}</td></tr>`).join("")
+        }</tbody></table>`
+      : `<p class="muted">No dosage rows.</p>`;
+    const logHtml = p.log.length
+      ? p.log.map((l)=>`<div class="logrow"><b class="${l.action}">${l.action}</b> — ${esc(l.reviewer)}${l.credential?` (${esc(l.credential)})`:""} · <span class="muted">${esc(l.created_at)} UTC</span>${l.notes?`<br>${esc(l.notes)}`:""}</div>`).join("")
+      : `<p class="muted">No review actions yet.</p>`;
+
+    // Approve (unreviewed/revoked) or Revoke (approved).
+    const actionHtml = p.status === "approved"
+      ? `<div class="actionbox">
+           <div class="muted">Approved by <b>${esc(p.reviewed_by||"")}</b> — ${esc(p.reviewer_credential||"")} · ${esc(p.reviewed_at||"")} UTC</div>
+           <textarea id="reason" rows="2" placeholder="Reason for revoking (required) — e.g. new toxicology data"></textarea>
+           <div class="err" id="actErr"></div>
+           <button class="btn btn-danger" id="revokeBtn">Revoke — no longer cleared for field use</button>
+         </div>`
+      : `<div class="actionbox">
+           <textarea id="notes" rows="2" placeholder="Review notes (optional)"></textarea>
+           <div class="err" id="actErr"></div>
+           <button class="btn btn-primary" id="approveBtn">Approve this product for field use</button>
+         </div>`;
+
+    d.innerHTML =
+      `<button class="btn back" id="backBtn">← Back to list</button>
+       <div class="card"><div class="body">
+         <div class="prod-head">
+           <div><div class="prod-name">${esc(p.product_name)}</div>
+             <div class="prod-meta">${esc(p.active_ingredient)} · ${esc(p.registration_no)} · WHO ${esc(p.hazard_class||"—")}</div></div>
+           <span class="pill ${p.status}">${p.status}</span>
+         </div></div></div>
+       <div class="card"><h2>First aid the farmer will receive — review each step</h2><div class="body">${routesHtml}</div></div>
+       <div class="card"><h2>Protective equipment</h2><div class="body"><div class="chips">${(p.ppe_required||[]).map((x)=>`<span class="chip">${esc(x)}</span>`).join("") || '<span class="muted">none listed</span>'}</div></div></div>
+       <div class="card"><h2>Dosages per crop</h2><div class="body">${dosesHtml}</div></div>
+       <div class="card"><h2>${p.status==="approved" ? "Revoke sign-off" : "Sign off"}</h2><div class="body">${actionHtml}</div></div>
+       <div class="card"><h2>Review history (append-only)</h2><div class="body">${logHtml}</div></div>`;
+
+    $("backBtn").onclick = () => { d.style.display="none"; d.innerHTML=""; $("listView").style.display="block"; };
+    if (p.status === "approved") $("revokeBtn").onclick = () => doAction("revoke", id);
+    else $("approveBtn").onclick = () => doAction("approve", id);
+  }
+
+  async function doAction(kind, id) {
+    if (!haveIdentity()) { $("actErr").textContent = "Set your name + credential (top of page) before signing."; editIdentity(); return; }
+    const body = { pesticideId: Number(id), reviewer: state.reviewer, credential: state.credential };
+    if (kind === "approve") body.notes = ($("notes")?.value||"").trim();
+    else { body.reason = ($("reason")?.value||"").trim(); if (!body.reason) { $("actErr").textContent = "A reason is required to revoke."; return; } }
+    const r = await j(`/api/review/${kind}`, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+    if (!r.ok) { $("actErr").textContent = "Failed: " + (r.error||"error"); return; }
+    await loadProgress();
+    await openDetail(id);        // re-render with the new state + log
+    await loadList();            // keep the (hidden) list fresh
+  }
+
+  // ---- Wiring -------------------------------------------------------------
+  $("tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-filter]"); if (!b) return;
+    state.filter = b.dataset.filter;
+    [...$("tabs").children].forEach((x)=>x.setAttribute("aria-pressed", String(x===b)));
+    loadList();
+  });
+  $("exportBtn").onclick = () => {
+    api("/api/review/export").then((r)=>r.blob()).then((b)=>{
+      const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="review-log.csv"; a.click(); URL.revokeObjectURL(a.href);
+    }).catch(onErr);
+  };
+  $("lock").onclick = () => { sessionStorage.removeItem("mg_admin_token"); location.reload(); };
+  $("gateGo").onclick = tryUnlock;
+  $("gateToken").addEventListener("keydown", (e)=>{ if(e.key==="Enter") tryUnlock(); });
+
+  function onErr(e){ if(String(e.message).includes("unauthorized")){ sessionStorage.removeItem("mg_admin_token"); $("app").classList.add("hidden"); $("gate").classList.remove("hidden"); $("gateErr").textContent="Session expired."; } else { alert("Error: "+e.message); } }
+  async function tryUnlock() {
+    state.token = $("gateToken").value.trim();
+    if (!state.token) { $("gateErr").textContent="Enter a token."; return; }
+    $("gateErr").textContent="Checking…";
+    try { await j("/api/review/summary"); sessionStorage.setItem("mg_admin_token", state.token); unlock(); }
+    catch { $("gateErr").textContent="Invalid token."; }
+  }
+  async function unlock() {
+    try {
+      await j("/api/review/summary"); // validate
+      $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
+      loadIdentity(); renderIdentity();
+      await loadProgress(); await loadList();
+    } catch(e){ onErr(e); }
+  }
+
+  const saved = sessionStorage.getItem("mg_admin_token");
+  if (saved) { state.token = saved; unlock(); }
+})();
+</script>
+</body>
+</html>

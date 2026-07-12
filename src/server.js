@@ -17,6 +17,7 @@ import { districtAggregates, nationalSummary, districtsCsv } from "./surveillanc
 import { issueDeviceToken, verifyDeviceToken } from "./deviceToken.js";
 import { createSharedRateLimiter, cleanupRateLimits } from "./rateStore.js";
 import { runPreflight } from "./preflight.js";
+import { listProducts, productDetail, approve, revoke, reviewSummary, reviewLogCsv } from "./review.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -329,6 +330,69 @@ app.get("/api/surveillance/export", requireAdmin, async (req, res) => {
 app.get("/admin/map", (_req, res) => {
   setNoIndexNoStore(res);
   res.sendFile(path.join(ROOT, "admin", "map.html"));
+});
+
+// ---------------------------------------------------------------------------
+// TOXICOLOGIST REVIEW (M10) — the sign-off dashboard. Same admin gate +
+// noindex/no-store as surveillance. There is NO bulk-approve endpoint — each
+// product is approved individually, by design.
+// ---------------------------------------------------------------------------
+
+// GET /admin/review — the review dashboard shell (dataless login form, like /map).
+app.get("/admin/review", (_req, res) => {
+  setNoIndexNoStore(res);
+  res.sendFile(path.join(ROOT, "admin", "review.html"));
+});
+
+// GET /api/review/summary — "N of M products reviewed" (gated).
+app.get("/api/review/summary", requireAdmin, async (_req, res) => {
+  try { res.json({ ok: true, ...(await reviewSummary()) }); }
+  catch (err) { console.error("review summary error:", err); res.status(500).json({ ok: false, error: "internal_error" }); }
+});
+
+// GET /api/review/products?filter= — product list for a filter tab (gated).
+app.get("/api/review/products", requireAdmin, async (req, res) => {
+  try {
+    const filter = ["unreviewed", "approved", "revoked", "all"].includes(req.query.filter) ? req.query.filter : "unreviewed";
+    res.json({ ok: true, filter, products: await listProducts(filter) });
+  } catch (err) { console.error("review products error:", err); res.status(500).json({ ok: false, error: "internal_error" }); }
+});
+
+// GET /api/review/product/:id — the exact farmer-facing detail to review (gated).
+app.get("/api/review/product/:id", requireAdmin, async (req, res) => {
+  try {
+    const detail = await productDetail(req.params.id);
+    if (!detail) return res.status(404).json({ ok: false, error: "not_found" });
+    res.json({ ok: true, product: detail });
+  } catch (err) { console.error("review detail error:", err); res.status(500).json({ ok: false, error: "internal_error" }); }
+});
+
+// POST /api/review/approve { pesticideId, reviewer, credential, notes? } (gated).
+app.post("/api/review/approve", requireAdmin, async (req, res) => {
+  try {
+    const { pesticideId, reviewer, credential, notes } = req.body || {};
+    const r = await approve({ pesticideId, reviewer, credential, notes });
+    res.status(r.ok ? 200 : 400).json(r);
+  } catch (err) { console.error("review approve error:", err); res.status(500).json({ ok: false, error: "internal_error" }); }
+});
+
+// POST /api/review/revoke { pesticideId, reviewer, credential, reason } (gated).
+app.post("/api/review/revoke", requireAdmin, async (req, res) => {
+  try {
+    const { pesticideId, reviewer, credential, reason } = req.body || {};
+    const r = await revoke({ pesticideId, reviewer, credential, reason });
+    res.status(r.ok ? 200 : 400).json(r);
+  } catch (err) { console.error("review revoke error:", err); res.status(500).json({ ok: false, error: "internal_error" }); }
+});
+
+// GET /api/review/export — the append-only review-log CSV audit artifact (gated).
+app.get("/api/review/export", requireAdmin, async (_req, res) => {
+  try {
+    const csv = await reviewLogCsv();
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="review-log.csv"');
+    res.send(csv);
+  } catch (err) { console.error("review export error:", err); res.status(500).json({ ok: false, error: "internal_error" }); }
 });
 
 // POST /api/sms/webhook — Africa's Talking inbound SMS. Guarded by a shared
