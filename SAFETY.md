@@ -60,6 +60,15 @@ translations, and the real poison-control number. **Until the first lands, this
 build cannot serve a farmer — the boot-gate makes that a property of the code,
 not a promise.**
 
+**No borrowed credibility in public copy (Milestone 9).** Anything public — the
+homepage, the README, replies to reviewers — must never state or imply
+endorsement, partnership, funding, or affiliation with any institution, agency,
+university, ministry, or named individual unless a formal agreement exists. Warm
+contacts are not partners. No logos, no "backed by", no "in partnership with".
+The same rule covers scale: describe what the tool *does* and is *designed for*,
+never a deployment that hasn't happened. Honest limits are the stronger pitch —
+and the demonstration banner must never be contradicted by marketing polish.
+
 ## The one rule
 
 > The AI is a **RETRIEVER**, not an **ADVISER**.

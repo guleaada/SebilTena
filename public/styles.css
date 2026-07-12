@@ -424,3 +424,15 @@ body {
   font-weight: 700;
   color: var(--green-ink);
 }
+
+/* Gentle scroll cue at the bottom of the hero (decorative only). */
+.home-scroll-cue {
+  color: var(--muted);
+  font-size: 26px;
+  line-height: 1;
+  margin-top: 6px;
+  animation: cue 1.8s ease-in-out infinite;
+  opacity: 0.7;
+}
+@keyframes cue { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .home-scroll-cue { animation: none; } }

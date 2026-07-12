@@ -158,5 +158,27 @@
     "call_line": "Bilbili {agent}. Sarara summii {poison}.",
     "rate_limited": "Ergaan baay'ee. Xiqqo eegii yaali.",
     "crop_unknown": "Midhaan hin beekamne. CROP sana booda maqaa midhaanii ergi."
+  },
+  "home": {
+    "how_title": "Akkamitti hojjeta",
+    "how_1": "Moggaasa qorichaa suuraa kaasi",
+    "how_2": "Dhugaa, dhorkamaa yookiin kan hin beekamne ta`uu isaa battalumatti ilaali",
+    "how_3": "Hamma sirrii fi gargaarsa duraa afaan keetiin argadhu",
+    "protect_title": "Maal irraa si eega",
+    "protect_1": "Qorichoota sobaa fi kan hin galmoofne",
+    "protect_2": "Hamma dogoggoraa midhaan kee irratti",
+    "protect_3": "Meeshaa ittisaa fi yeroo eeggannoo hir`ate",
+    "protect_4": "Summaa`uu — gargaarsi duraa tuqaa tokkoon, interneetii malees",
+    "real_title": "Haala dhugaatiif kan ijaarame",
+    "real_1": "Interneetii malee dirree irratti hojjeta",
+    "real_2": "Bilbila salphaa irratti SMSn hojjeta",
+    "real_3": "Afaanota Itoophiyaa jahaaf qophaa`e",
+    "real_4": "Warra hin dubbisneef qajeelfama sagaleen",
+    "safe_title": "Akkamitti nagaa ta`ee tura",
+    "safe_body": "MedaGuard gonkumaa hin tilmaamu. Hammi, gargaarsi duraa fi meeshaan ittisaa galmee qorichoota galmaa`anii irraa sadarkaa balaa WHO wajjin fudhatamu — kaameraan moggaasa qofa dubbisa. Mirkaneessuu yoo hin dandeenye sitti hima; deebii uumuu mannaa gara ogeessa ekisteenshinii keetiitti si qajeelcha.",
+    "demo_note": "Sirna agarsiisaa ti. Ammatti tajaajila nageenyaa kallattii miti.",
+    "source": "Koodii maddaa",
+    "skip": "Yeroo appiin banamu fuula iskaanii bani",
+    "skip_on": "Fuula iskaaniin banama — fuula kana deebisanii ilaaluuf tuqi"
   }
 }

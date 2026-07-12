@@ -766,6 +766,36 @@ DEPLOY.md.
   runs) rather than the deployed URL. The image + `fly.toml` + `DEPLOY.md` are in
   place for the actual `fly deploy`.
 
+## Milestone 9 — the homepage (a front door, never a gate)
+
+The app now opens on a welcoming `home` view; the previous opening screen (the
+scan orb) is `view-scan`, reached from the hero in one tap.
+
+- **Front-door-not-gate principle:** a farmer with a bottle — or a poisoning —
+  never reads or scrolls past anything to act. Above the fold there is exactly
+  one hero action ("Scan a bottle", ≥72px), the globally-pinned EMERGENCY button
+  (bypasses everything from every view — verified from the homepage
+  specifically), the language switcher, and the demonstration banner still
+  pinned on top. The story zone (how-it-works / protections / real-conditions /
+  how-it-stays-safe / honest footer + repo link) lives below the fold and is
+  never required.
+- **Returning-visitor logic:** a "skip" control on the homepage sets
+  `mg_home_skip` in localStorage → future loads land directly on the scan
+  screen (zero taps). Reversible: the same control on the homepage shows a
+  ✓-labelled undo that clears the flag. Navigation state and language persist
+  across the home↔scan transition.
+- **Honest public copy (no borrowed credibility):** the page names NO
+  institution, partner, funder or individual (grep-checked: EIAR/GIZ/ministry/
+  university/partner/endorse/backed/funded — zero hits in locales + shell); no
+  false scale claims ("built for real conditions" frames design intent, not
+  deployment); the voice claim was softened ("Get the safe dose…" — voice sits
+  under designed-for). The demonstration footer + banner stay. am/om `home.*`
+  strings are DRAFT pending native review, same status as the rest of the
+  locales; ti/so/aa fall back honestly to English.
+- Emoji-tile iconography (zero-asset, matches the app's established icon-first
+  design language); no new dependency; homepage is part of the cached shell
+  (SW v16) and works offline.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.
