@@ -13,7 +13,7 @@
     "migrate": "node scripts/migrate.js",
     "test:scan": "node scripts/test-scan.js",
     "test:firstaid": "node scripts/test-firstaid.js",
-    "test": "node scripts/test-scan.js && node scripts/test-firstaid.js && node scripts/test-sms.js && node scripts/test-offline.js && node scripts/test-sync.js && node scripts/test-surveillance.js && node scripts/test-surveillance-gate.js && node scripts/test-write-gate.js && node scripts/test-quarantine.js && node scripts/test-ratestore.js && node scripts/test-deploy-config.js",
+    "test": "node scripts/test-scan.js && node scripts/test-firstaid.js && node scripts/test-sms.js && node scripts/test-offline.js && node scripts/test-sync.js && node scripts/test-surveillance.js && node scripts/test-surveillance-gate.js && node scripts/test-write-gate.js && node scripts/test-quarantine.js && node scripts/test-ratestore.js && node scripts/test-review.js && node scripts/test-deploy-config.js",
     "gen:audio": "node scripts/gen-audio-placeholders.js"
   },
   "dependencies": {

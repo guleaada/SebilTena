@@ -19,21 +19,32 @@ Requirements before field use:
 2. **Professional sign-off.** The per-active-ingredient `route → [aid_code]`
    mapping (and the `UNIVERSAL_STEPS` fallback) must be **reviewed and signed off
    by a toxicologist or poison-control professional**.
-3. **`reviewed` marker.** Until sign-off, every seeded product carries
-   `reviewed: false` (DB column `pesticides.reviewed = 0`). The server prints a
-   loud "NOT CLEARED FOR FIELD USE" warning at startup while any product is
-   unreviewed. Production deploys must refuse to start (or be blocked in CI)
-   while that warning fires.
-4. **Record the sign-off.** When cleared, set `reviewed: true` for the signed
-   rows and record **who signed off, their credential, and the date** here:
+3. **`cleared` marker (stricter than `reviewed`).** A product is CLEARED only
+   when `reviewed = 1` **AND** `reviewed_by` **AND** `reviewed_at` are all set — a
+   bare `reviewed = 1` flag does NOT pass the gate. The startup preflight
+   (`src/preflight.js`) counts NOT-cleared products against this definition; a
+   cleared production build refuses to start while any product is uncleared, and
+   the staging boot log reports progress ("13 of 20 products reviewed").
 
-   | Date | Reviewer | Credential | Scope (ingredients/universal) |
-   |------|----------|------------|-------------------------------|
-   | _pending_ | _pending_ | _pending_ | _pending_ |
+4. **Sign-off happens through the review workflow (Milestone 10), not by hand.**
+   The reviewing toxicologist uses the gated `/admin/review` dashboard
+   (`requireAdmin` + noindex/no-store, same as the surveillance map). For each
+   product it shows the EXACT first-aid the farmer would receive, and:
+   - **Approve** requires a reviewer **name + credential** (both mandatory) and a
+     server timestamp; it sets the cleared fields.
+   - **Revoke** requires a **reason** and is loud — it clears the cleared fields
+     so the gate re-engages on the next production boot (new toxicology
+     information must be able to un-clear a product).
+   - Every action is appended to `review_log` (`src/review.js`) — **append-only;
+     never updated or deleted** — the auditable record you hand a regulator or
+     attach to a grant application (gated CSV export).
+   - **There is no bulk "approve all".** Each product is approved individually;
+     the friction is the point. **The dashboard makes sign-off auditable; it does
+     NOT lower the bar for who may sign off.**
 
 The same sign-off requirement applies to the localized `aid.*` strings and the
 recorded audio clips (a mistranslated first-aid step is as dangerous as a wrong
-one).
+one). Do not weaken any of this; do not add a bulk-approve or a self-review path.
 
 ## Staging is a demonstration, not a launch (Milestone 8)
 

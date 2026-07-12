@@ -796,6 +796,42 @@ scan orb) is `view-scan`, reached from the hero in one tap.
   design language); no new dependency; homepage is part of the cached shell
   (SW v16) and works offline.
 
+## Milestone 10 — toxicologist sign-off workflow
+
+The SAFETY.md release gate existed (unreviewed first-aid → production boot
+refusal) but there was no tool to perform the sign-off. M10 builds the tool and
+makes the review **auditable**, without lowering the bar for who may sign off.
+
+### Part A — data model + stricter gate
+- `pesticides` gains `reviewed_by` / `reviewer_credential` / `reviewed_at` /
+  `review_notes` (idempotent ALTERs). New **append-only** `review_log`
+  (id, pesticide_id, action ∈ {approved,revoked,annotated}, reviewer, credential,
+  notes, created_at) — `src/review.js` only ever INSERTs; a test greps the source
+  to prove no `UPDATE`/`DELETE` against it.
+- **"Cleared" is stricter than `reviewed = 1`** (`CLEARED_SQL` = reviewed AND
+  reviewed_by AND reviewed_at). The preflight boot-gate counts NOT-cleared
+  products against this — a bare `reviewed = 1` (old seed, manual edit) does not
+  pass. Revocation is loud: it clears the cleared fields, so the gate re-engages.
+
+### Part B — the gated dashboard (`/admin/review`)
+- Same `requireAdmin` + noindex/no-store as the surveillance map; a dataless
+  token-gated shell. Progress header + plain gate statement; a reviewer-identity
+  bar (name + credential, recorded on every action, set once per session); filter
+  tabs (Unreviewed default / Approved / Revoked); a detail view rendering the
+  EXACT resolved first-aid steps per route + PPE + hazard + dosages the farmer
+  would receive — the reviewer approves the real thing. Approve (optional notes)
+  / Revoke (mandatory reason); per-product append-only history; gated review-log
+  CSV export. **No bulk-approve endpoint or UI anywhere — the friction is the
+  point** (grep-checked).
+
+### Part C — wired to the gate, honestly
+- Preflight uses the stricter cleared definition; the staging boot log reports
+  "N of M products reviewed" instead of a bare unreviewed count. SAFETY.md
+  release-gate section rewritten around the workflow; `test-review.js` (29
+  assertions) covers approve/revoke/mandatory-fields/stricter-cleared/append-only
+  log/detail resolution/CSV, and resets the DB to 20-unreviewed on exit so
+  downstream suites + the demo keep their baseline. `npm test` now 12 suites.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.
