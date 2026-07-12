@@ -25,8 +25,26 @@
   </header>
 
   <main id="app">
-    <!-- HOME / SCAN -->
+    <!-- HOME — the front door, never a gate (M9). Above the fold: brand, one
+         hero action, emergency (global pin), language (topbar). Below: the
+         story, for people who scroll. A farmer never needs the story zone. -->
     <section id="view-home" class="view is-active">
+      <div class="home-hero">
+        <div class="home-brand" aria-hidden="true">🌿</div>
+        <h1 class="home-name" id="homeName">MedaGuard</h1>
+        <p class="home-tag" id="homeTag"></p>
+        <button id="heroScanBtn" class="hero-scan">
+          <span class="hero-scan-icon" aria-hidden="true">📷</span>
+          <span id="heroScanLabel"></span>
+        </button>
+        <button id="skipIntro" class="home-skip"></button>
+      </div>
+      <div id="homeStory" class="home-story"></div>
+    </section>
+
+    <!-- SCAN (the previous opening screen; reached from the hero) -->
+    <section id="view-scan" class="view">
+      <button class="ghost-btn scan-home-link" data-nav="home">← <span id="aboutLabel"></span></button>
       <p class="tagline" id="tagline"></p>
       <button id="scanBtn" class="scan-orb">
         <span class="orb-ring"></span>
@@ -42,7 +60,7 @@
         <div class="reticle" aria-hidden="true"></div>
       </div>
       <div class="camera-bar">
-        <button id="camBack" class="ghost-btn" data-nav="home">✕</button>
+        <button id="camBack" class="ghost-btn" data-nav="scan">✕</button>
         <button id="captureBtn" class="capture-btn" aria-label="capture"></button>
         <label class="file-fallback" id="fileFallback">
           <input id="fileInput" type="file" accept="image/*" capture="environment" hidden />

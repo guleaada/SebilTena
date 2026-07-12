@@ -161,5 +161,27 @@
     "crop_unknown": "Crop not recognized. Text CROP then the crop name.",
     "lang_unavailable": "{lang} not available yet. Reply LANG AM for Amharic or LANG EN for English.",
     "lang_invite": "Reply LANG then your language (am/om/ti/so/aa/en)."
+  },
+  "home": {
+    "how_title": "How it works",
+    "how_1": "Photograph the pesticide label",
+    "how_2": "See at once if it is genuine, banned or unknown",
+    "how_3": "Hear the safe dose and first aid in your language",
+    "protect_title": "What it protects against",
+    "protect_1": "Counterfeit and unregistered pesticides",
+    "protect_2": "Wrong dosage on your crop",
+    "protect_3": "Missing safety gear and waiting periods",
+    "protect_4": "Poisoning — first aid is one tap away, even offline",
+    "real_title": "Built for real conditions",
+    "real_1": "Works offline in the field",
+    "real_2": "Works by SMS on a basic phone",
+    "real_3": "Made for six Ethiopian languages",
+    "real_4": "Voice guidance for non-readers",
+    "safe_title": "How it stays safe",
+    "safe_body": "MedaGuard never guesses. Doses, first aid and safety gear are looked up from a registry of registered pesticides with WHO hazard classes — the camera only reads the label. When it cannot be sure, it says so and points you to your extension agent instead of inventing an answer.",
+    "demo_note": "A demonstration system. Not yet a live safety service.",
+    "source": "Source code",
+    "skip": "Open the scan screen when the app starts",
+    "skip_on": "Opens on the scan screen — tap to show this page again"
   }
 }

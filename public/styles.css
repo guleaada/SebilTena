@@ -80,8 +80,10 @@ body {
 .view.is-active { display: block; animation: fade 0.18s ease; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: none; } }
 
-/* ---- Home / scan orb ---- */
-#view-home.is-active { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 28px; }
+/* ---- Scan screen (orb) — the previous opening screen, reached from the hero ---- */
+#view-scan.is-active { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 28px; }
+/* Homepage flows top-down: hero fills the first screen, story scrolls below. */
+#view-home.is-active { display: block; padding: 0 0 40px; }
 .tagline { font-size: 1.5rem; font-weight: 700; color: var(--brown); max-width: 18ch; margin: 8px 0 0; line-height: 1.25; }
 .scan-orb {
   position: relative;
@@ -326,3 +328,99 @@ body {
   flex: 0 0 auto;
 }
 .staging-banner span[aria-hidden] { font-size: 16px; }
+
+/* ---- Homepage (M9) — the front door, never a gate ----------------------- */
+.home-hero {
+  min-height: calc(100dvh - 220px);   /* hero owns the first screen; story below the fold */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 24px 20px 40px;
+}
+.home-brand { font-size: 56px; line-height: 1; }
+.home-name {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--green-ink);
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+.home-tag { font-size: 18px; color: var(--muted); margin: 0 0 14px; max-width: 30ch; }
+.hero-scan {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  background: radial-gradient(120% 120% at 30% 20%, var(--green-2), var(--green));
+  border: none;
+  border-radius: 999px;
+  padding: 22px 34px;
+  min-height: 72px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.hero-scan:active { transform: scale(0.98); }
+.hero-scan-icon { font-size: 30px; }
+.home-skip {
+  font: inherit;
+  font-size: 14px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  padding: 14px;
+  min-height: var(--tap);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Story zone — below the fold, icon-led, warm cards. */
+.home-story { display: flex; flex-direction: column; gap: 14px; padding: 6px 16px 120px; }
+.story-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+.story-title { font-size: 19px; color: var(--green-ink); margin: 0 0 12px; }
+.story-list { display: flex; flex-direction: column; gap: 12px; }
+.story-item { display: flex; align-items: center; gap: 12px; }
+.story-icon {
+  flex: 0 0 44px;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  font-size: 22px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.story-num {
+  flex: 0 0 22px;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 800;
+  color: #fff; background: var(--green-2);
+  border-radius: 50%;
+}
+.story-text { font-size: 16px; line-height: 1.4; }
+.story-safe { background: var(--cream); }
+.story-body { margin: 0; font-size: 15.5px; line-height: 1.55; color: var(--ink); }
+.home-foot { text-align: center; color: var(--muted); font-size: 13.5px; padding: 8px 12px 0; }
+.home-foot p { margin: 0 0 6px; }
+.home-foot a { color: var(--green-2); font-weight: 700; text-decoration: none; }
+
+/* Small home link on the scan screen (back to the front door). */
+.scan-home-link {
+  align-self: flex-start;
+  margin: 4px 0 0 4px;
+  min-height: var(--tap);
+  font-weight: 700;
+  color: var(--green-ink);
+}

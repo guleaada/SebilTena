@@ -160,6 +160,67 @@
     // Keep the demonstration banner in the current language.
     const sb = $("#stagingBanner span:last-child");
     if (sb) sb.textContent = t("ui.staging_notice");
+    paintHome();
+  }
+
+  // ---- Homepage (M9) — a front door, never a gate --------------------------
+  // Above the fold: brand + tagline + ONE hero action (+ the global emergency
+  // button and language switcher). Below: the story, for people who scroll.
+  // A farmer never needs the story zone to act.
+  const STORY = [
+    { id: "how", title: "home.how_title", items: [
+      ["📷", "home.how_1"], ["✅", "home.how_2"], ["🔊", "home.how_3"],
+    ], numbered: true },
+    { id: "protect", title: "home.protect_title", items: [
+      ["🚫", "home.protect_1"], ["🌱", "home.protect_2"], ["🛡️", "home.protect_3"], ["🆘", "home.protect_4"],
+    ] },
+    { id: "real", title: "home.real_title", items: [
+      ["📴", "home.real_1"], ["✉️", "home.real_2"], ["🗣️", "home.real_3"], ["🔊", "home.real_4"],
+    ] },
+  ];
+  function paintHome() {
+    $("#homeName").textContent = t("ui.app_name");
+    $("#homeTag").textContent = t("ui.tagline");
+    $("#heroScanLabel").textContent = t("ui.scan_button");
+    const about = $("#aboutLabel");
+    if (about) about.textContent = t("ui.app_name");
+    paintSkipIntro();
+    const story = $("#homeStory");
+    if (!story) return;
+    story.innerHTML = "";
+    for (const sec of STORY) {
+      const card = el("section", "story-card");
+      card.appendChild(el("h2", "story-title", esc(t(sec.title))));
+      const list = el("div", "story-list");
+      sec.items.forEach(([icon, key], i) => {
+        const row = el("div", "story-item");
+        row.innerHTML =
+          `<span class="story-icon" aria-hidden="true">${icon}</span>` +
+          (sec.numbered ? `<span class="story-num">${i + 1}</span>` : "") +
+          `<span class="story-text">${esc(t(key))}</span>`;
+        list.appendChild(row);
+      });
+      card.appendChild(list);
+      story.appendChild(card);
+    }
+    // How it stays safe — the honest design paragraph (retriever, not adviser).
+    const safe = el("section", "story-card story-safe");
+    safe.appendChild(el("h2", "story-title", esc(t("home.safe_title"))));
+    safe.appendChild(el("p", "story-body", esc(t("home.safe_body"))));
+    story.appendChild(safe);
+    // Quiet, honest footer. The repo link is user-triggered navigation only.
+    const foot = el("footer", "home-foot");
+    foot.innerHTML =
+      `<p>${esc(t("home.demo_note"))}</p>` +
+      `<a href="https://github.com/guleaada/medaguard" rel="noopener">${esc(t("home.source"))} ↗</a>`;
+    story.appendChild(foot);
+  }
+  // Returning-visitor speed (M9 Part B): once the skip is chosen, the app opens
+  // on the scan screen. Reversible from the same control on the homepage.
+  const homeSkipOn = () => localStorage.getItem("mg_home_skip") === "true";
+  function paintSkipIntro() {
+    const b = $("#skipIntro");
+    if (b) b.textContent = homeSkipOn() ? "✓ " + t("home.skip_on") : t("home.skip") + " →";
   }
 
   // ---- Language sheet ----------------------------------------------------
@@ -527,7 +588,7 @@
       <div class="verdict-title">${esc(t("ui.no_connection"))}</div>
       <div class="verdict-actions"></div>`;
     const again = el("button", "btn btn-amber btn-block", esc(t("ui.try_again")));
-    again.onclick = () => show("home");
+    again.onclick = () => show("scan");
     card.querySelector(".verdict-actions").appendChild(again);
     $("#verdictCard").replaceChildren(card);
     speak({ key: "verdict_offline", text: t("ui.no_connection") });
@@ -618,7 +679,7 @@
       // NO = counterfeit-suspicion signal.
       if (res.offline) queueConfirmResolution(res.queueUuid, false);
       else confirmScan(res.scanId, false, res.confirmRegistrationNo).catch(() => {});
-      show("home");
+      show("scan");
     };
     yn.append(yes, no);
     actions.appendChild(yn);
@@ -756,7 +817,7 @@
 
   function addScanAgain(actions) {
     const b = el("button", "btn btn-replay btn-block", "📷 " + esc(t("ui.scan_again")));
-    b.onclick = () => show("home");
+    b.onclick = () => show("scan");
     actions.appendChild(b);
   }
   function addAgentAction(actions) {
@@ -945,6 +1006,12 @@
 
   // ---- Wire up -----------------------------------------------------------
   function bind() {
+    // Hero: one tap from the front door to the scan screen. Never a gate.
+    $("#heroScanBtn").onclick = () => show("scan");
+    $("#skipIntro").onclick = () => {
+      if (homeSkipOn()) { localStorage.setItem("mg_home_skip", "false"); paintSkipIntro(); }
+      else { localStorage.setItem("mg_home_skip", "true"); paintSkipIntro(); show("scan"); }
+    };
     $("#scanBtn").onclick = () => {
       if (state.geoConsent == null) { $("#geoSheet").hidden = false; }
       else openCamera();
@@ -1021,6 +1088,9 @@
       await loadLang(state.lang);
       paintChrome();
     }
+    // Returning-visitor path (M9): a user who chose "skip" lands on the scan
+    // screen in zero taps. The homepage is a front door, never a gate.
+    if (homeSkipOn()) show("scan");
     window.AudioLayer.loadManifest();
     loadEmergencyBundle(); // prefetch + cache the offline emergency data
     ensureDeviceToken();   // obtain the app-issued write token (M7.5) in the background
