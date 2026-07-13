@@ -74,7 +74,14 @@
     "offline_saved": "Saved data",
     "days_today": "today",
     "offline_ready": "Offline ready ✓",
-    "staging_notice": "DEMONSTRATION ONLY — not a live safety service. Do not rely on it for real pesticide decisions."
+    "staging_notice": "DEMONSTRATION ONLY — not a live safety service. Do not rely on it for real pesticide decisions.",
+    "fill_the_box": "Fill the box with the label",
+    "hint_more_light": "More light",
+    "hint_too_bright": "Too bright — avoid glare",
+    "retake": "Retake",
+    "use_anyway": "Use anyway",
+    "try_another_photo": "Try another photo",
+    "checking_more": "Checking more carefully…"
   },
   "crop": {
     "potato": "Potato",
@@ -183,5 +190,21 @@
     "source": "Source code",
     "skip": "Open the scan screen when the app starts",
     "skip_on": "Opens on the scan screen — tap to show this page again"
+  },
+  "quality": {
+    "blurry_title": "Blurry",
+    "blurry_tip": "Hold steady and try again",
+    "dark_title": "Too dark",
+    "dark_tip": "Move to the light",
+    "bright_title": "Too bright",
+    "bright_tip": "Avoid glare — shade the label",
+    "far_title": "Too far",
+    "far_tip": "Move closer — fill the box",
+    "read_as": "Read as",
+    "photo": "Your photo",
+    "tip_blur": "The last photo looked blurry — hold steady.",
+    "tip_dark": "The last photo was dark — find more light.",
+    "tip_bright": "The last photo was too bright — avoid glare.",
+    "tip_far": "Move closer so the label fills the box."
   }
 }

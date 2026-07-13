@@ -5,7 +5,7 @@
    audio clips beyond the critical set runtime-cache on first use (lean install).
    API calls are network-first with graceful offline fallback; the registry is
    cached in IndexedDB by the app (not here). */
-const CACHE = "medaguard-shell-v16";
+const CACHE = "medaguard-shell-v17";
 
 const SHELL = [
   "/",
@@ -13,6 +13,7 @@ const SHELL = [
   "/styles.css",
   "/app.js",
   "/js/net.js",
+  "/js/quality.js",
   "/js/verdict.js",
   "/js/registry.js",
   "/js/queue.js",

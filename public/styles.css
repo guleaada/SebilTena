@@ -436,3 +436,42 @@ body {
 }
 @keyframes cue { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 @media (prefers-reduced-motion: reduce) { .home-scroll-cue { animation: none; } }
+
+/* ---- Scan quality guidance (M11) --------------------------------------- */
+.reticle { display: flex; align-items: flex-end; justify-content: center; }
+.reticle-hint {
+  margin-bottom: -34px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.light-hint {
+  position: absolute;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.62);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 6px;
+  animation: fade 0.2s ease;
+}
+/* Post-capture quality suggestion (Part B) */
+#view-quality.is-active { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 20px; }
+.q-icon { font-size: 5rem; line-height: 1; }
+.q-title { font-size: 1.8rem; font-weight: 900; color: var(--brown); margin: 0; }
+.q-tip { font-size: 1.25rem; color: var(--muted); margin: 0; max-width: 26ch; }
+.q-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
+.q-thumb { width: 190px; border-radius: 14px; border: 2px solid var(--line); box-shadow: var(--shadow); }
+/* CONFIRM transparency: photo thumbnail + what was read (Part C) */
+.confirm-read { display: flex; gap: 14px; align-items: center; margin-top: 12px; }
+.confirm-read img { width: 96px; height: 96px; object-fit: cover; border-radius: 12px; border: 2px solid var(--line); flex: 0 0 auto; }
+.confirm-read .read-what { font-size: 0.98rem; }
+.confirm-read .read-what .lbl { color: var(--muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.confirm-read .read-what .val { font-weight: 800; word-break: break-word; }
+.try-tip { font-size: 0.98rem; color: var(--muted); margin: 10px 0 0; }

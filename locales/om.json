@@ -73,7 +73,14 @@
     "offline_saved": "Daataa olkaa’e",
     "days_today": "har’a",
     "offline_ready": "Offline qophaa’eera ✓",
-    "staging_notice": "AGARSIISA QOFA — tajaajila nageenyaa kan dhugaa miti. Murtii qorichaa dhugaatiif itti hin fayyadaminaa."
+    "staging_notice": "AGARSIISA QOFA — tajaajila nageenyaa kan dhugaa miti. Murtii qorichaa dhugaatiif itti hin fayyadaminaa.",
+    "fill_the_box": "Moggaasa saanduqicha keessa guuti",
+    "hint_more_light": "Ifa dabalataa",
+    "hint_too_bright": "Baayee ifa — calaqqisa oolchi",
+    "retake": "Irra deebiʼii kaasi",
+    "use_anyway": "Haaluma kanaan fayyadami",
+    "try_another_photo": "Suuraa biraa yaali",
+    "checking_more": "Of eeggannoodhaan ilaalaa jira…"
   },
   "crop": {
     "potato": "Dinnicha",
@@ -180,5 +187,21 @@
     "source": "Koodii maddaa",
     "skip": "Yeroo appiin banamu fuula iskaanii bani",
     "skip_on": "Fuula iskaaniin banama — fuula kana deebisanii ilaaluuf tuqi"
+  },
+  "quality": {
+    "blurry_title": "Ifa hin qabu",
+    "blurry_tip": "Tasgabbaaʼii irra deebiʼii yaali",
+    "dark_title": "Baayee dukkana",
+    "dark_tip": "Gara ifaatti deemi",
+    "bright_title": "Baayee ifa",
+    "bright_tip": "Calaqqisa oolchi — moggaasa gaaddisessi",
+    "far_title": "Baayee fagoo",
+    "far_tip": "Dhiyaadhu — saanduqicha guuti",
+    "read_as": "Akka dubbifame",
+    "photo": "Suuraa kee",
+    "tip_blur": "Suuraan dhumaa ifa hin qabu ture — tasgabbaaʼi.",
+    "tip_dark": "Suuraan dhumaa dukkanaaʼaa ture — ifa dabalataa barbaadi.",
+    "tip_bright": "Suuraan dhumaa baayee ifa ture — calaqqisa oolchi.",
+    "tip_far": "Moggaasi saanduqicha akka guutuuf dhiyaadhu."
   }
 }

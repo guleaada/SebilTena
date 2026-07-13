@@ -827,20 +827,58 @@
   }
 
   // ---- Camera ------------------------------------------------------------
+  // A small offscreen canvas reused for cheap frame sampling (live light hint,
+  // Part A) and the post-capture quality check (Part B). ~200px wide is plenty.
+  const sampleCanvas = document.createElement("canvas");
   async function openCamera() {
     show("camera");
+    // Framing guide: spoken once, written on the reticle. Never blocks capture.
+    $("#frameHint").textContent = t("ui.fill_the_box");
+    speak({ key: "fill_the_box", text: t("ui.fill_the_box") });
+    state.lightSpoken = null;
     try {
       state.stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" } }, audio: false,
       });
       $("#cam").srcObject = state.stream;
+      startLightSampling();
     } catch (err) {
       // Camera blocked/unavailable -> file fallback is always visible anyway.
       console.info("camera unavailable, using file fallback:", err && err.name);
     }
   }
   function stopCamera() {
+    if (state.lightTimer) { clearInterval(state.lightTimer); state.lightTimer = null; }
     if (state.stream) { state.stream.getTracks().forEach((t) => t.stop()); state.stream = null; }
+  }
+  // Live lighting hint: sample the preview ~2x/sec to a tiny canvas, check mean
+  // luminance, show a gentle icon hint. Sampling is cheap and off the preview
+  // path, so it never lags the video. Each distinct hint is spoken once.
+  function startLightSampling() {
+    if (!window.Quality) return;
+    state.lightTimer = setInterval(() => {
+      const video = $("#cam");
+      if (!video || !video.videoWidth) return;
+      const w = 120, h = Math.max(1, Math.round(video.videoHeight * (w / video.videoWidth)));
+      sampleCanvas.width = w; sampleCanvas.height = h;
+      const ctx = sampleCanvas.getContext("2d", { willReadFrequently: true });
+      try {
+        ctx.drawImage(video, 0, 0, w, h);
+        const mean = window.Quality.meanLuminance(ctx.getImageData(0, 0, w, h));
+        updateLightHint(window.Quality.lightHint(mean));
+      } catch { /* sampling must never break the preview */ }
+    }, 500);
+  }
+  function updateLightHint(hint) {
+    const el = $("#lightHint");
+    if (!el) return;
+    if (hint === "ok") { el.hidden = true; return; }
+    const map = { dark: ["🔅", "ui.hint_more_light"], bright: ["⚠️", "ui.hint_too_bright"] };
+    const [icon, key] = map[hint];
+    el.innerHTML = `<span aria-hidden="true">${icon}</span> ${esc(t(key))}`;
+    el.hidden = false;
+    // Speak a given hint only once per camera session (never nag).
+    if (state.lightSpoken !== hint) { state.lightSpoken = hint; speak({ key: "light_" + hint, text: t(key) }); }
   }
   function capture() {
     const video = $("#cam");

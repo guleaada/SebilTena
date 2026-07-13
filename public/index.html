@@ -58,7 +58,10 @@
     <section id="view-camera" class="view">
       <div class="camera-wrap">
         <video id="cam" autoplay playsinline muted></video>
-        <div class="reticle" aria-hidden="true"></div>
+        <div class="reticle" aria-hidden="true">
+          <span class="reticle-hint" id="frameHint"></span>
+        </div>
+        <div class="light-hint" id="lightHint" hidden></div>
       </div>
       <div class="camera-bar">
         <button id="camBack" class="ghost-btn" data-nav="scan">✕</button>
@@ -117,6 +120,7 @@
 
   <canvas id="snap" hidden></canvas>
   <script src="/js/net.js"></script>
+  <script src="/js/quality.js"></script>
   <script src="/js/verdict.js"></script>
   <script src="/js/registry.js"></script>
   <script src="/js/queue.js"></script>
