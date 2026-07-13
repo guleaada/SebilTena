@@ -830,8 +830,11 @@
   // A small offscreen canvas reused for cheap frame sampling (live light hint,
   // Part A) and the post-capture quality check (Part B). ~200px wide is plenty.
   const sampleCanvas = document.createElement("canvas");
-  async function openCamera() {
+  async function openCamera(isRetake) {
     show("camera");
+    // A fresh scan session resets the quality counters (retakes accumulate only
+    // across a retry of the SAME attempt). See M11 Part B/C.
+    if (!isRetake) state.quality = { retakes: 0, useAnyway: 0 };
     // Framing guide: spoken once, written on the reticle. Never blocks capture.
     $("#frameHint").textContent = t("ui.fill_the_box");
     speak({ key: "fill_the_box", text: t("ui.fill_the_box") });
@@ -887,14 +890,72 @@
     const w = 1000, scale = w / video.videoWidth;
     canvas.width = w; canvas.height = Math.round(video.videoHeight * scale);
     canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-    runScan(canvas.toDataURL("image/jpeg", 0.7));
+    assessThenScan(canvas.toDataURL("image/jpeg", 0.7));
   }
   function onFile(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => runScan(reader.result);
+    reader.onload = () => assessThenScan(reader.result);
     reader.readAsDataURL(file);
+  }
+
+  // ---- Post-capture quality check (M11 Part B) ---------------------------
+  // Runs the pure client-side checks on the still BEFORE OCR. Pass -> scan with
+  // no friction. Fail -> a large, spoken, icon-led suggestion naming the ONE
+  // biggest problem, with Retake (primary) and Use anyway. "Use anyway" ALWAYS
+  // proceeds — a farmer in a hurry (or a photo our heuristic misjudges) is never
+  // locked out; the worst case is the conservative UNCONFIRMED default.
+  const Q_ICON = { blur: "🌀", dark: "🔅", bright: "☀️", far: "🔍" };
+  const Q_TITLE = { blur: "quality.blurry_title", dark: "quality.dark_title", bright: "quality.bright_title", far: "quality.far_title" };
+  const Q_TIP = { blur: "quality.blurry_tip", dark: "quality.dark_tip", bright: "quality.bright_tip", far: "quality.far_tip" };
+
+  function assessThenScan(dataURL) {
+    state.lastPhoto = dataURL; // kept for the CONFIRM transparency thumbnail (Part C)
+    qualityAssess(dataURL).then((res) => {
+      state.lastQuality = res ? res.signals : null;
+      if (!res || res.pass) return proceedScan(dataURL);
+      showQualitySuggestion(res.problem, dataURL);
+    });
+  }
+  // Load, downscale to ~200px, assess. Never throws — on any failure we simply
+  // proceed to the scan (a quality check must never block).
+  function qualityAssess(dataURL) {
+    return new Promise((resolve) => {
+      if (!window.Quality) return resolve(null);
+      const im = new Image();
+      im.onload = () => {
+        try {
+          const w = 200, h = Math.max(1, Math.round(im.height * (w / im.width)));
+          sampleCanvas.width = w; sampleCanvas.height = h;
+          const ctx = sampleCanvas.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(im, 0, 0, w, h);
+          resolve(window.Quality.assess(ctx.getImageData(0, 0, w, h)));
+        } catch { resolve(null); }
+      };
+      im.onerror = () => resolve(null);
+      im.src = dataURL;
+    });
+  }
+  function proceedScan(dataURL) { runScan(dataURL); }
+
+  function showQualitySuggestion(problem, dataURL) {
+    state.quality = state.quality || { retakes: 0, useAnyway: 0 };
+    const root = $("#qualityRoot");
+    root.innerHTML = "";
+    root.appendChild(el("div", "q-icon", Q_ICON[problem] || "📷"));
+    root.appendChild(el("h2", "q-title", esc(t(Q_TITLE[problem] || "quality.blurry_title"))));
+    root.appendChild(el("p", "q-tip", esc(t(Q_TIP[problem] || "quality.blurry_tip"))));
+    const thumb = el("img", "q-thumb"); thumb.src = dataURL; thumb.alt = ""; root.appendChild(thumb);
+    const actions = el("div", "q-actions");
+    const retake = el("button", "btn btn-primary btn-block", "📷 " + esc(t("ui.retake")));
+    retake.onclick = () => { state.quality.retakes++; openCamera(true); };
+    const useAny = el("button", "btn btn-replay btn-block", esc(t("ui.use_anyway")));
+    useAny.onclick = () => { state.quality.useAnyway++; proceedScan(dataURL); };
+    actions.append(retake, useAny);
+    root.appendChild(actions);
+    show("quality");
+    speakSeq([{ key: "q_title", text: t(Q_TITLE[problem]) }, { key: "q_tip", text: t(Q_TIP[problem]) }]);
   }
 
   // ---- Emergency: one-tap, offline poison-control flow -------------------
@@ -1070,6 +1131,7 @@
     scanBase64: runScan, openEmergency, renderFirstAid, renderRouteChooser,
     audio: () => window.AudioLayer, lastSpoken: () => window.__mgAudio,
     verifyOfflineAndRender, prepareOffline,   // M6 offline verification hooks
+    assessThenScan, showQualitySuggestion,    // M11 quality-check verification hooks
   };
 
   // Staging posture (M8 Part D): a clear, NON-DISMISSIBLE "demonstration" banner

@@ -18,11 +18,16 @@ window.Quality = (() => {
   // downscaled grayscale copy (~200px wide) — cheap on a low-end phone.
   const DEFAULTS = {
     blurThreshold: 55,     // variance-of-Laplacian below this = blurry
-    clipDark: 26, clipBright: 230, // per-pixel luminance clipping bounds
-    darkMean: 52, brightMean: 205, // whole-frame mean luminance bounds
-    darkFrac: 0.62, brightFrac: 0.35, // fraction of clipped pixels that flags exposure
+    clipDark: 26, clipBright: 248, // per-pixel luminance clipping bounds
+    darkMean: 52, brightMean: 235, // whole-frame mean luminance bounds
+    // Bright is tuned CONSERVATIVELY: real pesticide labels are usually
+    // white/light, and a well-exposed white label must NOT read as "too bright".
+    // Only genuine glare / blow-out (lots of near-pure-white clipping, or an
+    // extreme overall mean) trips it. Dark can be stricter — an underexposed
+    // photo is genuinely hard to read.
+    darkFrac: 0.62, brightFrac: 0.55, // fraction of clipped pixels that flags exposure
     minEdgeDensity: 0.018, // fraction of strong-gradient pixels; below = too far / no label
-    liveDark: 58, liveBright: 200, // live-preview mean-luminance hint bounds
+    liveDark: 58, liveBright: 216, // live-preview mean-luminance hint bounds
   };
 
   // Rec.601 luminance of RGBA pixel at byte offset i.
@@ -80,16 +85,18 @@ window.Quality = (() => {
     return Math.max(0, sumSq / n - mean * mean); // variance
   }
 
-  /** Fraction of pixels whose gradient magnitude is strong — proxy for "there is text/detail". */
+  /** Fraction of pixels whose gradient magnitude is strong — proxy for "there is
+   *  text/detail". Uses ADJACENT differences (not central) so fine, high-frequency
+   *  text edges aren't cancelled out. */
   function edgeDensity(img, cfg = DEFAULTS) {
     const g = grayPlane(img), w = img.width, h = img.height;
-    if (w < 3 || h < 3) return 0;
+    if (w < 2 || h < 2) return 0;
     let strong = 0, n = 0;
     const thr = 28; // gradient magnitude threshold (provisional)
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
+    for (let y = 0; y < h - 1; y++) {
+      for (let x = 0; x < w - 1; x++) {
         const i = y * w + x;
-        const gx = g[i + 1] - g[i - 1], gy = g[i + w] - g[i - w];
+        const gx = g[i + 1] - g[i], gy = g[i + w] - g[i];
         if (Math.abs(gx) + Math.abs(gy) > thr) strong++;
         n++;
       }
