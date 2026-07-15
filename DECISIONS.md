@@ -832,6 +832,43 @@ makes the review **auditable**, without lowering the bar for who may sign off.
   log/detail resolution/CSV, and resets the DB to 20-unreviewed on exit so
   downstream suites + the demo keep their baseline. `npm test` now 12 suites.
 
+## Milestone 11 — scan quality feedback (attack OCR from the input side)
+
+The biggest untested risk is OCR on real labels — faded, angled, glared, shot
+one-handed in sunlight. M11 helps the farmer take a readable photo BEFORE OCR and
+makes retry effortless. **All client-side image guidance; it never touches the
+verdict, the matcher, or any safety rule. A quality check can only DELAY a scan
+for a better photo — never block it** (the "Use anyway" button always proceeds,
+and a bad photo still safely resolves to UNCONFIRMED).
+
+- **`public/js/quality.js`** — pure, Node-testable analysis (blur =
+  variance-of-Laplacian, exposure = histogram, edgeDensity = adjacent-difference
+  strong-gradient fraction, plus `assess()` and the live `lightHint`). Every
+  threshold lives in `Quality.DEFAULTS`, **marked PROVISIONAL — to be tuned
+  against real Ethiopian label photos** (this pairs with the pending real-photo
+  work; the Part C telemetry is exactly the tuning data). Notable tuning choice:
+  exposure "bright" is deliberately conservative — real labels are usually
+  white/light, so a well-exposed white label must not read as glare.
+- **Part A (pre-capture):** a framing reticle with a spoken + written "Fill the
+  box" hint, and a live light hint sampling the preview ~2×/sec to a tiny 120px
+  canvas (off the preview path — no lag), each hint spoken once, never blocking.
+- **Part B (post-capture, before OCR):** on capture/upload, assess a downscaled
+  still; pass → OCR with zero friction; fail → a large spoken icon-led suggestion
+  naming the ONE biggest problem (blur → exposure → size) with Retake (primary) +
+  **Use anyway**. Never runs on the emergency path (no camera there; grep-verified).
+- **Part C (retry + transparency):** UNCONFIRMED/low-confidence verdicts gain a
+  spoken "Try another photo" + a contextual tip from the failed attempt's
+  signals; the CONFIRM card shows the captured photo thumbnail next to what was
+  READ (reg-no), so the farmer sees the basis of the match (confirm logic +
+  dosage-withholding unchanged); quality signals (blur/exposure/retakes/
+  use-anyway/verdict) are logged to **`events`, never `scans`, with no image**
+  (anonymized, via `/api/client-event`); loading shows "Reading the label…" then,
+  after a long wait, "Checking more carefully…" (vision fallback) — no silent
+  spinners.
+- Fully localized en/am/om (ti/so/aa honest English fallback); hints spoken via
+  the audio layer. `test-quality.js` (19 assertions) tests the pure functions
+  incl. a real-world guard that a white label passes. SW shell v14→v18.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

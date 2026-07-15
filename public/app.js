@@ -350,14 +350,62 @@
   // ---- Scan flow ---------------------------------------------------------
   async function runScan(imageBase64) {
     show("loading");
+    setLoadingText(t("ui.reading"));            // "Reading the label…"
     speak({ key: "scanning", text: t("ui.reading") });
+    startVisionHint();                          // a long wait -> "Checking more carefully…"
     // Online-ness is decided by OUTCOME (net.js), never by the onLine flag.
     const r = await postScan(imageBase64);
+    stopVisionHint();
     if (r.online) flushQueue(); // reachable -> flush any queued offline scans
-    if (r.online && r.ok) return renderResult(r.data);
+    if (r.online && r.ok) {
+      logScanQuality(r.data.verify?.status || r.data.status, false); // tuning signal -> events
+      return renderResult(r.data);
+    }
     if (r.online && !r.ok) { console.warn("scan http error", r.status); return renderOffline(); }
     // Unreachable (timeout / network error) -> local OCR + cached registry.
     return scanOffline(imageBase64);
+  }
+
+  // Loading states (M11 Part C): no silent spinners. "Reading the label…" first;
+  // if the request runs long the server is likely trying the vision fallback, so
+  // switch to a distinct "Checking more carefully…" state (spoken once).
+  function setLoadingText(txt) { const n = $("#loadingText"); if (n) n.textContent = txt; }
+  function startVisionHint() {
+    stopVisionHint();
+    state.visionTimer = setTimeout(() => {
+      setLoadingText(t("ui.checking_more"));
+      speak({ key: "checking_more", text: t("ui.checking_more") });
+    }, 2200);
+  }
+  function stopVisionHint() { if (state.visionTimer) { clearTimeout(state.visionTimer); state.visionTimer = null; } }
+
+  // Anonymized quality telemetry -> events (NEVER scans, NEVER an image). This is
+  // exactly the data needed to tune the provisional thresholds during the pilot.
+  function beacon(type, payload) {
+    try {
+      const body = JSON.stringify({ type, payload });
+      if (navigator.sendBeacon) navigator.sendBeacon("/api/client-event", new Blob([body], { type: "application/json" }));
+      else fetch("/api/client-event", { method: "POST", headers: { "Content-Type": "application/json" }, body }).catch(() => {});
+    } catch { /* telemetry must never break the UI */ }
+  }
+  function logScanQuality(status, offline) {
+    const q = state.lastQuality || {};
+    const c = state.quality || { retakes: 0, useAnyway: 0 };
+    beacon("scan_quality", {
+      blur: q.blur ?? null, exposure: q.exposure ?? null, mean: q.mean ?? null, edge_density: q.edgeDensity ?? null,
+      retakes: c.retakes, use_anyway: c.useAnyway, status: status || null, offline: !!offline,
+    });
+  }
+  // Derive the worst quality problem from the last attempt's signals (for tips).
+  const Q_TIP_CTX = { blur: "quality.tip_blur", dark: "quality.tip_dark", bright: "quality.tip_bright", far: "quality.tip_far" };
+  function qualityProblemFromSignals() {
+    const q = state.lastQuality; if (!q || !window.Quality) return null;
+    const D = window.Quality.DEFAULTS;
+    if (q.blur != null && q.blur < D.blurThreshold) return "blur";
+    if (q.exposure === "dark") return "dark";
+    if (q.exposure === "bright") return "bright";
+    if (q.edgeDensity != null && q.edgeDensity < D.minEdgeDensity) return "far";
+    return null;
   }
   // Offline scan path: client OCR (Part A) -> cached registry (Part B). If OCR
   // is not ready yet, fall back to the conservative "no connection" state.
@@ -376,6 +424,7 @@
       confidence: vres.matchTier === 1 ? "high" : vres.matchTier === 2 ? "medium" : "low",
       lat: geo?.lat ?? null, lon: geo?.lon ?? null, language: state.lang,
     });
+    logScanQuality(status, true); // tuning signal -> events (queued/best-effort while offline)
     return renderOfflineVerify(vres);
   }
   // Best-effort "what reg-no did OCR read" for the queued row (longest alnum token with a digit).
@@ -640,13 +689,35 @@
       renderRecord(record); // safety + dosage
     } else {
       // UNREGISTERED / BANNED / SUSPENDED / EXPIRED / UNCONFIRMED — no dosage.
+      // A conservative UNCONFIRMED / low-confidence read is often a bad photo —
+      // offer "Try another photo" with a contextual tip (M11 Part C).
+      const lowConf = status === "UNCONFIRMED" || res.confidence === "low" || record?.confidence === "low";
+      if (lowConf) addTryAnotherPhoto(actions);
       addAgentAction(actions);
       addScanAgain(actions);
       $("#verdictCard").replaceChildren(card);
     }
 
-    // Auto-speak the verdict the instant it appears.
-    speakSeq(verdictItems(status, headline, message));
+    // Auto-speak the verdict the instant it appears. For UNCONFIRMED, append the
+    // spoken "try another photo" + a contextual tip AFTER the verdict.
+    const spoken = verdictItems(status, headline, message);
+    if (status === "UNCONFIRMED") {
+      spoken.push({ key: "try_another", text: t("ui.try_another_photo") });
+      const prob = qualityProblemFromSignals();
+      if (prob && Q_TIP_CTX[prob]) spoken.push({ key: "q_tip", text: t(Q_TIP_CTX[prob]) });
+    }
+    speakSeq(spoken);
+  }
+
+  // "Try another photo" action + one contextual tip from the failed attempt's
+  // quality signals (if it was blurry, say so). Not spoken here (the verdict
+  // sequence handles the audio, to avoid cancelling it).
+  function addTryAnotherPhoto(actions) {
+    const b = el("button", "btn btn-primary btn-block", "📷 " + esc(t("ui.try_another_photo")));
+    b.onclick = () => show("scan");
+    actions.appendChild(b);
+    const prob = qualityProblemFromSignals();
+    if (prob && Q_TIP_CTX[prob]) actions.appendChild(el("p", "try-tip", "💡 " + esc(t(Q_TIP_CTX[prob]))));
   }
 
   function renderConfirm(res, card, actions) {
@@ -657,6 +728,19 @@
         <span class="product-name">${esc(c.product_name || "")}</span>
         <span class="product-meta">${esc(t("ui.active_ingredient"))}: ${esc(c.active_ingredient || "")}</span>
       </div>`;
+    // Transparency (M11 Part C): show the captured photo next to what was READ,
+    // so the farmer confirming "is this my product?" can SEE the basis of the
+    // match. This does not change the confirm logic or the dosage-withholding.
+    const readText = res.registration_no_read || c.registration_no || c.product_name || "";
+    if (state.lastPhoto && readText) {
+      const cr = el("div", "confirm-read");
+      cr.innerHTML =
+        `<img src="${esc(state.lastPhoto)}" alt="">` +
+        `<div class="read-what">` +
+        `<div class="lbl">${esc(t("quality.read_as"))}</div>` +
+        `<div class="val">${esc(readText)}</div></div>`;
+      ident.appendChild(cr);
+    }
     const yn = el("div", "yn-row");
     const yes = el("button", "btn btn-yes", "✓ " + esc(t("ui.yes")));
     const no = el("button", "btn btn-no", "✕ " + esc(t("ui.no")));
