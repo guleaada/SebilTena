@@ -1,7 +1,10 @@
-# MedaGuard — Fly.io STAGING deployment (M8). This is a demonstration system,
-# not a farmer-facing launch (see SAFETY.md + DEPLOY.md). The production boot-gate
-# refuses to serve unreviewed first-aid; the demo runs via the explicit,
-# banner-showing STAGING path (STAGING=true), never by flipping data to reviewed.
+# Sebil Tena (formerly MedaGuard) — Fly.io STAGING deployment (M8). This is a
+# demonstration system, not a farmer-facing launch (see SAFETY.md + DEPLOY.md).
+# The production boot-gate refuses to serve unreviewed first-aid; the demo runs
+# via the explicit, banner-showing STAGING path (STAGING=true), never by flipping
+# data to reviewed. NOTE (M12): the Fly `app` below stays "medaguard-staging" —
+# Fly apps can't be renamed in place, and the custom domain sebiltena.com masks
+# it entirely. Do not change the app name.
 
 app = "medaguard-staging"
 
