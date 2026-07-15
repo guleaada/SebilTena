@@ -30,7 +30,7 @@
     "official": "Official information. If unsure, contact your extension agent."
   },
   "ui": {
-    "app_name": "MedaGuard",
+    "app_name": "Sebil Tena",
     "tagline": "Use pesticides safely",
     "scan_button": "Scan a bottle",
     "emergency": "EMERGENCY",
@@ -185,7 +185,7 @@
     "real_3": "Made for six Ethiopian languages",
     "real_4": "Voice guidance for non-readers",
     "safe_title": "How it stays safe",
-    "safe_body": "MedaGuard never guesses. Doses, first aid and safety gear are looked up from a registry of registered pesticides with WHO hazard classes — the camera only reads the label. When it cannot be sure, it says so and points you to your extension agent instead of inventing an answer.",
+    "safe_body": "Sebil Tena never guesses. Doses, first aid and safety gear are looked up from a registry of registered pesticides with WHO hazard classes — the camera only reads the label. When it cannot be sure, it says so and points you to your extension agent instead of inventing an answer.",
     "demo_note": "A demonstration system. Not yet a live safety service.",
     "source": "Source code",
     "skip": "Open the scan screen when the app starts",

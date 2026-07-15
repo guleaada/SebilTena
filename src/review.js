@@ -172,7 +172,7 @@ export async function reviewLogCsv(deps = {}) {
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = [
-    "# MedaGuard first-aid review log — append-only audit trail (who signed off what, when).",
+    "# Sebil Tena first-aid review log — append-only audit trail (who signed off what, when).",
     ["log_id", "pesticide_id", "product_name", "action", "reviewer", "credential", "notes", "created_at"].join(","),
   ];
   for (const r of res.rows) {

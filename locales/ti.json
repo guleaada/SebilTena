@@ -5,5 +5,8 @@
   "_status": "STUB — no translations yet; falls back to English. Native-speaker + agronomist translation required before deployment (see DECISIONS.md).",
   "status": {},
   "msg": {},
-  "disclaimer": {}
+  "disclaimer": {},
+  "ui": {
+    "app_name": "ሰቢል ጤና"
+  }
 }
