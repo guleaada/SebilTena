@@ -4,7 +4,7 @@
 
 ## 🚫 RELEASE GATE — First-aid content must be toxicologist-signed-off
 
-**MedaGuard must not be deployed to production, or used by any real farmer, until
+**Sebil Tena must not be deployed to production, or used by any real farmer, until
 this gate is cleared. This is a hard gate, not a to-do.**
 
 First aid genuinely differs by chemical class, and a wrong step here injures the

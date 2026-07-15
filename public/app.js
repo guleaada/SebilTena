@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MedaGuard PWA — vanilla, no framework (see DECISIONS.md for the why).
+   Sebil Tena PWA — vanilla, no framework (see DECISIONS.md for the why).
    Consumes the existing APIs: /api/scan, /api/verify-number, /api/dosage.
    No dosage/safety value is ever produced on the client — all come from the
    server responses. This file only renders + speaks what the server returns.

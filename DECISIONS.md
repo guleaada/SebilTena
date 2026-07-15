@@ -1,4 +1,14 @@
-# DECISIONS.md — MedaGuard build decisions
+# DECISIONS.md — Sebil Tena build decisions
+
+> **M12 rename (2026-07):** the product was renamed **MedaGuard → Sebil Tena**
+> (ሰቢል ጤና, "path of health"), served at <https://sebiltena.com>. Branding only —
+> no logic, safety rule, schema, API, or test semantics changed. Historical
+> "MedaGuard" mentions below are left as-is where they record a past decision;
+> internal identifiers (localStorage/IndexedDB keys, the `medaguard-shell` SW
+> cache name, the `medaguard-staging` Fly app, the Turso DB, env vars,
+> `events`/`scans` channel values) were deliberately KEPT to avoid orphaning any
+> user's queued offline scan, language choice, or device token. See the M12
+> section for the full rationale.
 
 Running log of reasonable choices made without blocking on the user, per the
 build brief ("make reasonable choices and record them"). Each is revisable.

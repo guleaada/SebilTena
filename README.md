@@ -1,8 +1,11 @@
-# MedaGuard
+# Sebil Tena
+
+**ሰቢል ጤና** ("path of health") — formerly *MedaGuard*. Staging demonstration:
+<https://sebiltena.com>.
 
 Safety-critical tool that helps Ethiopian smallholder farmers use pesticides
 safely and detect counterfeit / unregistered products. Farmers photograph a
-bottle; MedaGuard tells them — in their language, with voice for non-readers —
+bottle; Sebil Tena tells them — in their language, with voice for non-readers —
 whether the product is genuine and registered, the correct dose for their crop,
 the safety gear and waiting period, and emergency first-aid if poisoned.
 

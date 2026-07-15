@@ -1,4 +1,4 @@
-# MedaGuard — production image (M8 STAGING demo).
+# Sebil Tena — production image (M8 STAGING demo).
 # Node 20, non-root, NODE_ENV=production, self-contained: the Tesseract core +
 # English language data are vendored into our own origin at BUILD time so client
 # OCR works offline and the server NEVER fetches language data from a third party

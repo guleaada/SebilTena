@@ -1,4 +1,8 @@
-# DEPLOY.md — MedaGuard staging deploy runbook (Milestone 8)
+# DEPLOY.md — Sebil Tena staging deploy runbook (Milestone 8)
+
+> The product is **Sebil Tena** (formerly MedaGuard). The Fly app is still named
+> `medaguard-staging` (Fly apps can't be renamed in place; the custom domain
+> `sebiltena.com` masks it) — keep every `medaguard-staging` reference below.
 
 > **This is a STAGING demonstration deploy, not a farmer-facing launch.** It
 > exists to show a real, secure, working system to EIAR, Dr. Mastewal, GIZ and
@@ -94,7 +98,7 @@ Expected boot log (demonstration path):
 ```
 [preflight] DEMONSTRATION build (STAGING=true): unreviewed first-aid present — NOT CLEARED FOR FIELD USE. Serving with the demonstration banner.
 [preflight] OK — required secrets present.
-MedaGuard listening on http://localhost:8080  (db: turso)
+Sebil Tena listening on http://localhost:8080  (db: turso)
 ```
 
 If you see `[preflight] FATAL ... refusing to start`, a required secret is

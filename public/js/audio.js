@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MedaGuard audio layer — pre-recorded clips first, TTS bridge second, silent
+   Sebil Tena audio layer — pre-recorded clips first, TTS bridge second, silent
    fallback last. This is the ONLY place in the app allowed to touch
    speechSynthesis. See DECISIONS.md (audio architecture).
 

@@ -1,4 +1,4 @@
-/* MedaGuard service worker — app shell + audio + offline OCR (M3–M6).
+/* Sebil Tena service worker — app shell + audio + offline OCR (M3–M6).
    Precaches the app shell, locale JSON, icons, the offline JS (net/verdict/
    registry/ocr + tesseract), and the safety-critical audio clips for every
    AVAILABLE language. The large tesseract wasm + eng.traineddata.gz and the

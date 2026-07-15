@@ -1,4 +1,4 @@
-# MedaGuard — Native Speaker Recording Script
+# Sebil Tena — Native Speaker Recording Script
 
 **Version 1.2** (language realignment): recording languages are now **Amharic,
 Afaan Oromo, Tigrinya, Somali, Afar** (`am, om, ti, so, aa`); the earlier set's
@@ -8,7 +8,7 @@ anything already recorded stays valid. (v1.1 added the
 `hazard_unlikely` clip (§2) and made the nine `aid_*` first-aid clips (§3) the
 highest-priority recordings, used for every product.)
 
-**Purpose:** These are all the phrases MedaGuard speaks aloud to farmers. Recording them once per language gives us perfect pronunciation, full offline operation, and coverage for Afar and Tigrinya, which have poor or no commercial text-to-speech support.
+**Purpose:** These are all the phrases Sebil Tena speaks aloud to farmers. Recording them once per language gives us perfect pronunciation, full offline operation, and coverage for Afar and Tigrinya, which have poor or no commercial text-to-speech support.
 
 **Languages needed (record all five):** Amharic · Afaan Oromo · Tigrinya · Somali · Afar
 _(English is covered by the on-device TTS bridge and needs no recordings.)_

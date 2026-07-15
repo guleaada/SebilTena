@@ -428,7 +428,7 @@ initSchema()
     const pf = await runPreflight();
     if (!pf.ok) process.exit(1);
     app.listen(PORT, () => {
-      console.log(`MedaGuard listening on http://localhost:${PORT}  (db: ${dbMode})`);
+      console.log(`Sebil Tena listening on http://localhost:${PORT}  (db: ${dbMode})`);
     });
     // Sweep expired rate-limit counters periodically (shared-store TTL cleanup).
     cleanupRateLimits();

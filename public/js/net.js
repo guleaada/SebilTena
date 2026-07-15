@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MedaGuard reachability (M6 Part A.5) — the ONLY place navigator.onLine is read.
+   Sebil Tena reachability (M6 Part A.5) — the ONLY place navigator.onLine is read.
    No other module may read it (grep-enforced).
 
    navigator.onLine reports whether a network *interface* exists, not whether the

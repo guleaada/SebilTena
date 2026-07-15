@@ -1,5 +1,7 @@
 # MedaGuard — Full-Codebase Safety Audit
 
+> **Addendum (M12):** the product was later renamed **MedaGuard → Sebil Tena**. This branding change touched no logic; the findings and verdict below are unaffected. The historical name is retained in this audit record.
+
 **Date:** 2026-07-11 · **Auditor:** Claude (Fable 5), acting as senior safety auditor
 **Scope:** entire repository at commit `7e6e303` (M1–M7 complete; M8 not started — no `fly.toml`/`Dockerfile` exists yet, so the deploy config named in the audit brief could not be reviewed)
 **Method:** full read of every source file, test, locale, governance doc, recording script, manifest and seed datum **before** any conclusion; every invariant then verified by tracing the code path, grepping for violations, and — where the invariant guards a wire boundary — **proving the gap dynamically** before grading it.
