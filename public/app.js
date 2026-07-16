@@ -208,11 +208,9 @@
     safe.appendChild(el("h2", "story-title", esc(t("home.safe_title"))));
     safe.appendChild(el("p", "story-body", esc(t("home.safe_body"))));
     story.appendChild(safe);
-    // Quiet, honest footer. The repo link is user-triggered navigation only.
+    // Quiet, honest footer — the demonstration note only (no source-code link).
     const foot = el("footer", "home-foot");
-    foot.innerHTML =
-      `<p>${esc(t("home.demo_note"))}</p>` +
-      `<a href="https://github.com/guleaada/medaguard" rel="noopener">${esc(t("home.source"))} ↗</a>`;
+    foot.innerHTML = `<p>${esc(t("home.demo_note"))}</p>`;
     story.appendChild(foot);
   }
   // Returning-visitor speed (M9 Part B): once the skip is chosen, the app opens
