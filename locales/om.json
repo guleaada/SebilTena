@@ -282,5 +282,48 @@
     "sticky_traps": "Use yellow sticky traps",
     "physical_barrier": "Use a barrier or collar around stems",
     "weed_control": "Remove weeds that shelter pests"
+  },
+  "symptom_voice": {
+    "leaves_yellow": [
+      "Baalli keelloo ta`aa jira",
+      "baala keelloo",
+      "keelloo ta`aa",
+      "baalli keelloo",
+      "keelloo"
+    ],
+    "holes_in_leaves": [
+      "Baala keessa boolla",
+      "boolla",
+      "boolla baala",
+      "baalli nyaatame",
+      "nyaatame"
+    ],
+    "spots_on_leaves": [
+      "Baala irratti tuqaa",
+      "tuqaa",
+      "tuqaalee",
+      "tuqaa gurraacha"
+    ],
+    "wilting": [
+      "Biqiltuun goggogaa jira",
+      "goggogaa",
+      "goggoge",
+      "biqiltuun goge",
+      "coollige"
+    ],
+    "insects_visible": [
+      "Ilbiisota nan arga",
+      "ilbiisota",
+      "ilbiisa",
+      "raammoo",
+      "ilbiisota jiru"
+    ],
+    "stunted_growth": [
+      "Biqiltuun hin guddatu",
+      "hin guddatu",
+      "guddina dhabe",
+      "xiqqaa dha",
+      "hin guddanne"
+    ]
   }
 }

@@ -285,5 +285,55 @@
     "sticky_traps": "Use yellow sticky traps",
     "physical_barrier": "Use a barrier or collar around stems",
     "weed_control": "Remove weeds that shelter pests"
+  },
+  "symptom_voice": {
+    "leaves_yellow": [
+      "leaves turning yellow",
+      "yellow leaves",
+      "leaves are yellow",
+      "yellowing",
+      "going yellow",
+      "yellow"
+    ],
+    "holes_in_leaves": [
+      "holes in leaves",
+      "holes in my leaves",
+      "holes",
+      "eaten leaves",
+      "chewed leaves",
+      "leaves eaten"
+    ],
+    "spots_on_leaves": [
+      "spots on leaves",
+      "spots",
+      "brown spot",
+      "black spot",
+      "patches on leaves"
+    ],
+    "wilting": [
+      "plants wilting",
+      "wilting",
+      "wilt",
+      "drooping",
+      "falling over",
+      "plants are dying"
+    ],
+    "insects_visible": [
+      "i can see insects",
+      "insects",
+      "bugs",
+      "worms",
+      "caterpillar",
+      "aphids",
+      "pests on my plants"
+    ],
+    "stunted_growth": [
+      "plants not growing",
+      "not growing",
+      "stunted",
+      "small plants",
+      "growth stopped",
+      "too small"
+    ]
   }
 }
