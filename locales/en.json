@@ -224,7 +224,15 @@
     "unreviewed_note": "Demonstration guidance. Not approved by an agronomist — check with your extension agent.",
     "ask_agent": "Ask your extension agent",
     "start_over": "Start over",
-    "how_to_tell": "How to tell"
+    "how_to_tell": "How to tell",
+    "voice_say": "Or say what you see",
+    "voice_listening": "Listening…",
+    "voice_confirm": "Did you say:",
+    "voice_yes": "Yes, that is it",
+    "voice_no": "No — choose from the list",
+    "voice_which": "Which one do you mean?",
+    "voice_none": "I did not catch that. Please choose from the list.",
+    "voice_unavailable": "Voice is not available. Please choose from the list."
   },
   "symptom": {
     "leaves_yellow": "Leaves turning yellow",

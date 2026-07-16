@@ -21,7 +21,7 @@ See [SAFETY.md](SAFETY.md). Do not break this boundary.
 
 ## Status
 
-Milestones 1–13 complete:
+Milestones 1–14 complete:
 - **M1** — Express + libSQL (Turso / local-SQLite fallback), schema, seed script,
   `/api/verify-number`.
 - **M2** — scan pipeline: `lib/aiClient.js` vision fallback chain
@@ -70,6 +70,13 @@ Milestones 1–13 complete:
   It never diagnoses with an LLM and never invents a product: chemical options
   appear only for cleared, registered products, so on unreviewed data the
   chemical section stays **dark** by design.
+- **M14** — voice symptom input (`public/js/voice.js`): a farmer can *say* what
+  they see instead of tapping. Speech is an input method, never a source of
+  meaning — a transcript deterministically selects a code from the controlled
+  vocabulary (no LLM, no fuzzy ranking), two matches means we ask, and a match is
+  confirmed before it becomes a plan. The tap menu is always present: no
+  recognizer, no permission, offline, or nothing understood all degrade to it.
+  Offered in `en`/`am`/`om` only — the languages with reviewed spoken aliases.
 
 **Release gate** ([SAFETY.md](SAFETY.md)): with unreviewed first-aid data the
 server **refuses to start** under `NODE_ENV=production`. Staging runs only
@@ -79,11 +86,11 @@ A full-codebase safety audit (Claude Fable 5) checked the retriever boundary,
 the gate, and the offline/sync paths end-to-end — findings and fixes are in
 [AUDIT_REPORT.md](AUDIT_REPORT.md).
 
-Run the tests (no network / API keys needed): `npm test` — 14 suites, all green
+Run the tests (no network / API keys needed): `npm test` — 15 suites, all green
 (scan, first-aid, SMS, offline verdict/merge, scan quality, sync hardening,
 surveillance aggregation, surveillance gate, write gate, quarantine, rate store,
-review workflow, advisor, deploy config). Regenerate English audio placeholders
-with `npm run gen:audio` (macOS `say`).
+review workflow, advisor, voice input, deploy config). Regenerate English audio
+placeholders with `npm run gen:audio` (macOS `say`).
 
 ## Quick start (local dev)
 
@@ -178,7 +185,8 @@ M1 DB + verify ✅ · M2 vision/OCR scan ✅ · M3 PWA + 6 languages + voice ✅
 M4 poison-control emergency path ✅ · M5 SMS webhook ✅ · M6 offline PWA ✅ ·
 M7 admin surveillance map ✅ · M8 Fly.io staging deploy ✅ · M9 homepage ✅ ·
 M10 toxicologist sign-off dashboard ✅ · M11 scan-quality guidance ✅ ·
-M12 rename to Sebil Tena ✅ · M13 Safe Action Plan advisor ✅.
+M12 rename to Sebil Tena ✅ · M13 Safe Action Plan advisor ✅ ·
+M14 voice symptom input ✅.
 
 Next is not a feature: it is **toxicologist review of the first-aid and safety
 content**. Until that is signed off through `/admin/review`, this stays a

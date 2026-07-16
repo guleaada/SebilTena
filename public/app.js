@@ -140,6 +140,9 @@
     const n = $(`#view-${view}`);
     if (n) n.classList.add("is-active");
     if (view !== "camera") stopCamera();
+    // The mic must never outlive the screen that offered it (same rule as the
+    // camera): leaving the advisor releases it immediately.
+    if (view !== "advisor") stopListening();
     window.scrollTo(0, 0);
   }
 
@@ -1050,6 +1053,100 @@
   const ADVISOR_CACHE = "mg_advisor_options";
   const advisorPlanKey = (crop, symptom) => `mg_advisor_plan_${crop}_${symptom}`;
 
+  // ---- Voice symptom input (M14) -----------------------------------------
+  // The mic is a SHORTCUT TO A MENU ITEM, never a source of meaning: a
+  // transcript resolves through VoiceMatch to a code the farmer could equally
+  // have tapped, and the server re-validates it. The tap menu is always present
+  // and always sufficient — every failure below silently degrades to it.
+  //
+  // `blocked` latches when the recognizer refuses this language, so we stop
+  // offering a mic that cannot work (see voice.js LANG_TAGS).
+  const voice = { blocked: {}, rec: null, phase: "idle", heard: "", candidates: [] };
+
+  // Reviewed spoken aliases for the CURRENT language ONLY. Deliberately read
+  // straight from the dictionary instead of t(): t() falls back to English, and
+  // matching Amharic speech against English aliases would be a silent bug.
+  const symptomAliases = () => (state.dict && state.dict.symptom_voice) || {};
+
+  function micAvailable() {
+    return window.VoiceMatch.canOffer({
+      win: window,
+      lang: state.lang,
+      aliasMap: symptomAliases(),
+      // onlineHint() is the right tool here and only here: showing a button is
+      // proactive UI, never a verdict (net.js). A wrong hint costs a tap.
+      online: window.Net.onlineHint(),
+      blocked: !!voice.blocked[state.lang],
+    });
+  }
+
+  function stopListening() {
+    if (voice.rec) { try { voice.rec.abort(); } catch {} voice.rec = null; }
+  }
+
+  function startListening() {
+    stopSpeaking();      // do not record ourselves talking
+    stopListening();
+    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const tag = window.VoiceMatch.recognitionTag(state.lang);
+    if (!Rec || !tag) { voice.phase = "unavailable"; return renderAdvisorPickers(); }
+
+    const rec = new Rec();
+    rec.lang = tag;
+    rec.interimResults = false;
+    rec.maxAlternatives = 3; // try alternates before giving up — still menu-bound
+    rec.continuous = false;
+    voice.rec = rec;
+    voice.phase = "listening";
+    renderAdvisorPickers();
+
+    rec.onresult = (ev) => {
+      const allowed = advisorSymptoms();
+      const aliases = symptomAliases();
+      // Take the first alternative that lands on exactly one symptom. An
+      // alternative that is ambiguous or unmatched is not evidence of anything,
+      // so it never outranks a clean match further down the list.
+      let best = null;
+      for (const alt of [...(ev.results[0] || [])]) {
+        const r = window.VoiceMatch.matchSymptom(alt.transcript, aliases, allowed);
+        if (r.status === "match") { best = { ...r, heard: alt.transcript }; break; }
+        if (!best) best = { ...r, heard: alt.transcript };
+      }
+      voice.rec = null;
+      voice.heard = best ? best.heard : "";
+      if (!best || best.status === "none") { voice.phase = "none"; voice.candidates = []; }
+      else if (best.status === "ambiguous") { voice.phase = "ambiguous"; voice.candidates = best.candidates; }
+      else { voice.phase = "confirm"; voice.candidates = [best.symptom]; }
+      renderAdvisorPickers();
+    };
+
+    rec.onerror = (ev) => {
+      voice.rec = null;
+      // `language-not-supported` / `service-not-allowed` are permanent for this
+      // language on this device: stop offering the mic rather than let a farmer
+      // tap a button that will never work. Everything else is a one-off.
+      if (ev.error === "language-not-supported" || ev.error === "service-not-allowed") {
+        voice.blocked[state.lang] = true;
+        voice.phase = "unavailable";
+      } else if (ev.error === "not-allowed") {
+        voice.phase = "unavailable"; // permission denied — menu still works
+      } else if (ev.error === "no-speech" || ev.error === "aborted") {
+        voice.phase = "idle";
+      } else {
+        voice.phase = "none";
+      }
+      renderAdvisorPickers();
+    };
+
+    rec.onend = () => { if (voice.phase === "listening") { voice.phase = "idle"; renderAdvisorPickers(); } };
+
+    try { rec.start(); } catch { voice.phase = "unavailable"; renderAdvisorPickers(); }
+  }
+
+  // The symptom codes the SERVER offers — the only codes a match may produce.
+  let advisorSymptomList = [];
+  const advisorSymptoms = () => advisorSymptomList;
+
   // Crop + symptom lists. Cached so the picker works offline (M13 requirement).
   async function advisorOptions() {
     let cached = null;
@@ -1064,6 +1161,8 @@
 
   function openAdvisor() {
     state.advisor = { crop: null, symptom: null };
+    stopListening();
+    voice.phase = "idle"; voice.candidates = []; voice.heard = "";
     show("advisor");
     renderAdvisorPickers();
     speak({ key: "advisor_title", text: t("advisor.title") });
@@ -1082,6 +1181,8 @@
       root.appendChild(advisorBackBtn());
       return;
     }
+    // The server's list is the ONLY vocabulary a voice match may resolve into.
+    advisorSymptomList = Array.isArray(opts.symptoms) ? opts.symptoms : [];
 
     // 1. Crop
     const cropCard = el("section", "card");
@@ -1100,19 +1201,94 @@
     if (state.advisor.crop) {
       const symCard = el("section", "card");
       symCard.appendChild(el("h3", null, "👁️ " + esc(t("advisor.choose_symptom"))));
+
+      // Voice is an OPTIONAL shortcut that sits above the menu. The menu below
+      // renders unconditionally — a farmer must never be left with only a mic.
+      renderVoicePanel(symCard);
+
       const symList = el("div", "sym-list");
-      const SYM_EMOJI = { leaves_yellow: "🟡", holes_in_leaves: "🕳️", spots_on_leaves: "🔴", wilting: "🥀", insects_visible: "🐛", stunted_growth: "📉" };
-      opts.symptoms.forEach((s) => {
-        const b = el("button", "sym-btn");
-        b.innerHTML = `<span class="sym-emoji">${SYM_EMOJI[s] || "❓"}</span><span>${esc(t("symptom." + s))}</span>`;
-        b.onclick = () => requestPlan(state.advisor.crop, s);
-        b.addEventListener("focus", () => speak({ key: "sym_" + s, text: t("symptom." + s) }));
-        symList.appendChild(b);
-      });
+      opts.symptoms.forEach((s) => symList.appendChild(symptomButton(s)));
       symCard.appendChild(symList);
       root.appendChild(symCard);
     }
     root.appendChild(advisorBackBtn());
+  }
+
+  const SYM_EMOJI = { leaves_yellow: "🟡", holes_in_leaves: "🕳️", spots_on_leaves: "🔴", wilting: "🥀", insects_visible: "🐛", stunted_growth: "📉" };
+
+  function symptomButton(s) {
+    const b = el("button", "sym-btn");
+    b.innerHTML = `<span class="sym-emoji">${SYM_EMOJI[s] || "❓"}</span><span>${esc(t("symptom." + s))}</span>`;
+    b.onclick = () => { stopListening(); requestPlan(state.advisor.crop, s); };
+    b.addEventListener("focus", () => speak({ key: "sym_" + s, text: t("symptom." + s) }));
+    return b;
+  }
+
+  /**
+   * The voice shortcut. Renders one of: the mic, a listening indicator, a
+   * confirmation, a disambiguation, or a "didn't catch that" note.
+   *
+   * A recognized phrase is NEVER submitted straight to a plan — the farmer
+   * confirms first. A wrong symptom yields wrong IPM guidance, and the whole
+   * screen exists to slow that down, so one tap to confirm is the right price.
+   */
+  function renderVoicePanel(card) {
+    const phase = voice.phase;
+
+    if (phase === "listening") {
+      const box = el("div", "voice-box is-listening");
+      box.appendChild(el("p", "voice-status", "🎤 " + esc(t("advisor.voice_listening"))));
+      const cancel = el("button", "ghost-btn wide", esc(t("ui.back")));
+      cancel.onclick = () => { stopListening(); voice.phase = "idle"; renderAdvisorPickers(); };
+      box.appendChild(cancel);
+      card.appendChild(box);
+      return;
+    }
+
+    if (phase === "confirm" && voice.candidates.length === 1) {
+      const s = voice.candidates[0];
+      const box = el("div", "voice-box");
+      box.appendChild(el("p", "voice-status", esc(t("advisor.voice_confirm"))));
+      const heard = el("p", "voice-heard", `“${esc(t("symptom." + s))}”`);
+      box.appendChild(heard);
+      const yes = el("button", "btn btn-primary btn-block", "✓ " + esc(t("advisor.voice_yes")));
+      yes.onclick = () => { voice.phase = "idle"; requestPlan(state.advisor.crop, s); };
+      box.appendChild(yes);
+      const no = el("button", "ghost-btn wide", "✕ " + esc(t("advisor.voice_no")));
+      no.style.marginTop = "8px";
+      no.onclick = () => { voice.phase = "idle"; renderAdvisorPickers(); };
+      box.appendChild(no);
+      card.appendChild(box);
+      speakSeq([{ key: "advisor_voice_confirm", text: t("advisor.voice_confirm") },
+                { key: "sym_" + s, text: t("symptom." + s) }]);
+      return;
+    }
+
+    if (phase === "ambiguous" && voice.candidates.length > 1) {
+      // Two symptoms genuinely fit what was said. We do not rank or guess —
+      // only the farmer knows which they meant (voice.js matchSymptom).
+      const box = el("div", "voice-box");
+      box.appendChild(el("p", "voice-status", esc(t("advisor.voice_which"))));
+      const list = el("div", "sym-list");
+      voice.candidates.forEach((s) => list.appendChild(symptomButton(s)));
+      box.appendChild(list);
+      card.appendChild(box);
+      speak({ key: "advisor_voice_which", text: t("advisor.voice_which") });
+      return;
+    }
+
+    if (phase === "none" || phase === "unavailable") {
+      const key = phase === "none" ? "advisor.voice_none" : "advisor.voice_unavailable";
+      card.appendChild(el("p", "adv-note", esc(t(key))));
+      speak({ key: "advisor_" + (phase === "none" ? "voice_none" : "voice_unavailable"), text: t(key) });
+      voice.phase = "idle";
+      if (!micAvailable()) return;    // fall through to the mic so they can retry
+    }
+
+    if (!micAvailable()) return;      // no recognizer / offline / unreviewed language -> menu only
+    const mic = el("button", "voice-mic", "🎤 " + esc(t("advisor.voice_say")));
+    mic.onclick = startListening;
+    card.appendChild(mic);
   }
 
   const advisorBackBtn = () => {

@@ -110,6 +110,35 @@ construction — and these properties are load-bearing. Do not relax them:
    Score": risk is the WHO hazard class we already store.
 6. **Unreviewed content is labelled** (`content_reviewed`) and the UI says so.
 
+## Voice input selects, it does not interpret (Milestone 14)
+
+The mic on the symptom picker (`public/js/voice.js`) is an INPUT METHOD, never a
+source of meaning. Speech is not an exception to the retriever rule — it is the
+most tempting place to break it, so the boundary is drawn in code:
+
+1. **A transcript can only ever select a code that already exists.**
+   `matchSymptom()` takes the allowed vocabulary (the server's own symptom list)
+   and returns one of those codes or nothing. Free text never reaches a plan, a
+   dose, or a product, and `POST /api/safe-advisor/recommend` re-validates the
+   code against `SYMPTOM_SET` regardless — the mic gets no privileged path.
+2. **No LLM, no fuzzy scoring, no ranking.** Matching is deterministic against
+   REVIEWED aliases in `locales/*.json` (`symptom_voice`), so what the app hears
+   is auditable and testable. Aliases are read from the active locale directly,
+   never through `t()` — falling back to English aliases would silently match
+   Amharic speech against English phrases.
+3. **Two matches means we ask.** "Insects made holes in my leaves" is genuinely
+   two symptoms; the farmer disambiguates. We never rank a guess.
+4. **A match is confirmed, never submitted.** A wrong symptom yields wrong IPM
+   guidance, so the farmer sees what we think they said and agrees first.
+5. **The tap menu is always present and always sufficient.** No recognizer, no
+   permission, offline, an unsupported language, or nothing understood — every
+   failure degrades to the list. Voice is never the only way in.
+6. **We only offer a mic we can honour.** Languages without reviewed spoken
+   aliases (`ti`/`so`/`aa`) get no mic, and a recognizer that refuses a language
+   latches it off for the session rather than leave a dead button. The Web Speech
+   API is a cloud service, so the mic hides offline — offline is this app's
+   normal, and the menu is what works there.
+
 Adding a symptom→product shortcut, a risk score, or a default `cause_products`
 row would each break this. The agronomist-reviewed crop×pest×product dataset is a
 real-world input like the registry — see DEPLOY.md.

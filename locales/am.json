@@ -221,7 +221,15 @@
     "unreviewed_note": "የማሳያ መመሪያ ነው። በግብርና ባለሙያ አልጸደቀም — የግብርና ባለሙያዎን ያማክሩ።",
     "ask_agent": "የግብርና ባለሙያዎን ይጠይቁ",
     "start_over": "እንደገና ይጀምሩ",
-    "how_to_tell": "እንዴት እንደሚለዩ"
+    "how_to_tell": "እንዴት እንደሚለዩ",
+    "voice_say": "ወይም የሚያዩትን ይናገሩ",
+    "voice_listening": "እያዳመጥኩ ነው…",
+    "voice_confirm": "ይህን ነው ያሉት?",
+    "voice_yes": "አዎ፣ ትክክል ነው",
+    "voice_no": "አይደለም — ከዝርዝሩ እመርጣለሁ",
+    "voice_which": "የትኛውን ማለትዎ ነው?",
+    "voice_none": "አልሰማሁትም። እባክዎ ከዝርዝሩ ይምረጡ።",
+    "voice_unavailable": "ድምፅ አይሰራም። እባክዎ ከዝርዝሩ ይምረጡ።"
   },
   "symptom": {
     "leaves_yellow": "ቅጠሎች ወደ ቢጫ እየተቀየሩ",

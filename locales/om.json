@@ -221,7 +221,15 @@
     "unreviewed_note": "Qajeelfama agarsiisaa ti. Ogeessa qonnaatiin hin mirkanoofne — ogeessa ekisteenshinii kee gaafadhu.",
     "ask_agent": "Ogeessa ekisteenshinii kee gaafadhu",
     "start_over": "Irra deebi'ii jalqabi",
-    "how_to_tell": "How to tell"
+    "how_to_tell": "How to tell",
+    "voice_say": "Yookaan waan argitu dubbadhu",
+    "voice_listening": "Nan dhaggeeffachaa jira…",
+    "voice_confirm": "Kana jette?",
+    "voice_yes": "Eeyyee, sirrii dha",
+    "voice_no": "Lakki — tarree keessaa nan filadha",
+    "voice_which": "Kam jechuu barbaadda?",
+    "voice_none": "Sirriitti hin dhageenye. Maaloo tarree keessaa fili.",
+    "voice_unavailable": "Sagaleen hin hojjetu. Maaloo tarree keessaa fili."
   },
   "symptom": {
     "leaves_yellow": "Baalli keelloo ta`aa jira",
