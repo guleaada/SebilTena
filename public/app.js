@@ -182,6 +182,7 @@
     $("#homeName").textContent = t("ui.app_name");
     $("#homeTag").textContent = t("ui.tagline");
     $("#heroScanLabel").textContent = t("ui.scan_button");
+    const ab = $("#advisorBtnLabel"); if (ab) ab.textContent = t("ui.advisor");
     const about = $("#aboutLabel");
     if (about) about.textContent = t("ui.app_name");
     paintSkipIntro();
@@ -1040,6 +1041,204 @@
     speakSeq([{ key: "q_title", text: t(Q_TITLE[problem]) }, { key: "q_tip", text: t(Q_TIP[problem]) }]);
   }
 
+  // ---- Safe Action Plan (M13): IPM-first crop-problem help ----------------
+  // The plan NEVER diagnoses and NEVER recommends a chemical — the server's
+  // chemical layer stays dark until an agronomist signs the mappings. This
+  // screen only renders what the server returns, resolving controlled CODES to
+  // reviewed localized strings (exactly like the first-aid renderer). See
+  // SAFETY.md and src/advisor.js.
+  const ADVISOR_CACHE = "mg_advisor_options";
+  const advisorPlanKey = (crop, symptom) => `mg_advisor_plan_${crop}_${symptom}`;
+
+  // Crop + symptom lists. Cached so the picker works offline (M13 requirement).
+  async function advisorOptions() {
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(ADVISOR_CACHE) || "null"); } catch {}
+    const r = await window.Net.requestJSON("/api/safe-advisor/options");
+    if (r.online && r.ok && r.data && r.data.ok) {
+      localStorage.setItem(ADVISOR_CACHE, JSON.stringify(r.data));
+      return r.data;
+    }
+    return cached; // offline -> last known lists (or null if never fetched)
+  }
+
+  function openAdvisor() {
+    state.advisor = { crop: null, symptom: null };
+    show("advisor");
+    renderAdvisorPickers();
+    speak({ key: "advisor_title", text: t("advisor.title") });
+  }
+
+  async function renderAdvisorPickers() {
+    const root = $("#advisorRoot");
+    root.innerHTML = "";
+    root.appendChild(el("h1", "adv-title", esc(t("advisor.title"))));
+
+    const opts = await advisorOptions();
+    if (!opts) {
+      // Never fetched and offline -> say so honestly; the scan + emergency paths
+      // still work, so route the farmer there rather than showing a dead screen.
+      root.appendChild(el("p", "adv-note", esc(t("ui.no_connection"))));
+      root.appendChild(advisorBackBtn());
+      return;
+    }
+
+    // 1. Crop
+    const cropCard = el("section", "card");
+    cropCard.appendChild(el("h3", null, "🌾 " + esc(t("advisor.choose_crop"))));
+    const cropGrid = el("div", "crop-grid");
+    opts.crops.forEach((crop) => {
+      const b = el("button", "crop-btn" + (state.advisor.crop === crop ? " is-selected" : ""));
+      b.innerHTML = `<span class="crop-emoji">${CROP_EMOJI[crop] || "🌿"}</span><span class="crop-name">${esc(t("crop." + crop))}</span>`;
+      b.onclick = () => { state.advisor.crop = crop; renderAdvisorPickers(); };
+      cropGrid.appendChild(b);
+    });
+    cropCard.appendChild(cropGrid);
+    root.appendChild(cropCard);
+
+    // 2. Symptom — only once a crop is chosen (keeps the screen calm).
+    if (state.advisor.crop) {
+      const symCard = el("section", "card");
+      symCard.appendChild(el("h3", null, "👁️ " + esc(t("advisor.choose_symptom"))));
+      const symList = el("div", "sym-list");
+      const SYM_EMOJI = { leaves_yellow: "🟡", holes_in_leaves: "🕳️", spots_on_leaves: "🔴", wilting: "🥀", insects_visible: "🐛", stunted_growth: "📉" };
+      opts.symptoms.forEach((s) => {
+        const b = el("button", "sym-btn");
+        b.innerHTML = `<span class="sym-emoji">${SYM_EMOJI[s] || "❓"}</span><span>${esc(t("symptom." + s))}</span>`;
+        b.onclick = () => requestPlan(state.advisor.crop, s);
+        b.addEventListener("focus", () => speak({ key: "sym_" + s, text: t("symptom." + s) }));
+        symList.appendChild(b);
+      });
+      symCard.appendChild(symList);
+      root.appendChild(symCard);
+    }
+    root.appendChild(advisorBackBtn());
+  }
+
+  const advisorBackBtn = () => {
+    const b = el("button", "ghost-btn wide", "✕ " + esc(t("ui.back")));
+    b.style.marginTop = "16px";
+    b.onclick = () => show("home");
+    return b;
+  };
+
+  // Fetch a plan (cache it per crop+symptom so it re-opens offline).
+  async function requestPlan(crop, symptom) {
+    show("loading");
+    $("#loadingText").textContent = t("ui.reading");
+    const r = await window.Net.requestJSON("/api/safe-advisor/recommend", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ crop, symptom, lang: state.lang }),
+    });
+    let plan = null;
+    if (r.online && r.ok && r.data && r.data.ok) {
+      plan = r.data;
+      try { localStorage.setItem(advisorPlanKey(crop, symptom), JSON.stringify(plan)); } catch {}
+    } else {
+      try { plan = JSON.parse(localStorage.getItem(advisorPlanKey(crop, symptom)) || "null"); } catch {}
+    }
+    show("advisor");
+    if (!plan) { renderAdvisorPickers(); return renderOfflineNoteIntoAdvisor(); }
+    renderPlan(plan);
+  }
+  function renderOfflineNoteIntoAdvisor() {
+    const n = el("p", "adv-note", esc(t("ui.no_connection")));
+    $("#advisorRoot").prepend(n);
+  }
+
+  // Render the Safe Action Plan. ORDER IS THE SAFETY PROPERTY:
+  // not-a-pest warning -> possible causes -> non-chemical IPM -> (gated) chemicals.
+  function renderPlan(plan) {
+    const root = $("#advisorRoot");
+    root.innerHTML = "";
+    state.advisor = { crop: plan.crop, symptom: plan.symptom };
+
+    root.appendChild(el("h1", "adv-title", esc(t("advisor.plan_title"))));
+    root.appendChild(el("p", "adv-sub", `${esc(t("crop." + plan.crop))} · ${esc(t("symptom." + plan.symptom))}`));
+
+    const speakQueue = [];
+
+    // 1. THE HONEST WARNING — first thing on screen when a common not-a-pest
+    //    cause exists. This is the line that stops a farmer spraying poison at a
+    //    nitrogen deficiency.
+    if (plan.spraying_may_not_help) {
+      const warn = el("div", "adv-warn");
+      warn.innerHTML = `<span aria-hidden="true">⚠️</span> <span>${esc(t("advisor.may_not_be_pest"))}</span>`;
+      root.appendChild(warn);
+      speakQueue.push({ key: "advisor_may_not_be_pest", text: t("advisor.may_not_be_pest") });
+    }
+
+    // 2. Possible causes — never a diagnosis. Not-a-pest ones are marked.
+    const causeCard = el("section", "card");
+    causeCard.appendChild(el("h3", null, "🔍 " + esc(t("advisor.possible_causes"))));
+    plan.causes.forEach((c) => {
+      const row = el("div", "cause-row" + (c.abiotic ? " is-abiotic" : ""));
+      row.innerHTML =
+        `<div class="cause-head"><span class="cause-name">${esc(t("cause." + c.cause_key))}</span>` +
+        `<span class="cause-lik lik-${c.likelihood}">${esc(t("likelihood." + c.likelihood))}</span></div>` +
+        (c.distinguish_key ? `<div class="cause-tell">${esc(t("advisor.how_to_tell"))}: ${esc(t("distinguish." + c.distinguish_key))}</div>` : "");
+      causeCard.appendChild(row);
+    });
+    root.appendChild(causeCard);
+
+    // 3. NON-CHEMICAL FIRST — always, before any chemical section exists.
+    if (plan.ipm.length) {
+      const ipmCard = el("section", "card");
+      ipmCard.appendChild(el("h3", null, "🌱 " + esc(t("advisor.try_first"))));
+      let lastCat = null;
+      plan.ipm.forEach((p) => {
+        if (p.category !== lastCat) {
+          ipmCard.appendChild(el("div", "ipm-cat", esc(t("ipm_category." + p.category))));
+          lastCat = p.category;
+        }
+        const row = el("div", "ipm-row");
+        row.innerHTML = `<span class="ipm-tick" aria-hidden="true">✓</span><span>${esc(t("ipm." + p.practice_key))}</span>`;
+        ipmCard.appendChild(row);
+      });
+      root.appendChild(ipmCard);
+      speakQueue.push({ key: "advisor_try_first", text: t("advisor.try_first") });
+      plan.ipm.slice(0, 3).forEach((p) => speakQueue.push({ key: "ipm_" + p.practice_key, text: t("ipm." + p.practice_key) }));
+    }
+
+    // 4. The chemical section. In the shipping state this is the "awaiting
+    //    review" notice + a scan-to-check button: the app never tells the farmer
+    //    what to buy; it offers to CHECK what they are offered.
+    const chemCard = el("section", "card");
+    chemCard.appendChild(el("h3", null, "🧪 " + esc(t("advisor.chemical_title"))));
+    if (plan.chemical.status === "available" && plan.chemical.options.length) {
+      plan.chemical.options.forEach((o) => {
+        const row = el("div", "chem-row");
+        row.innerHTML =
+          `<div class="chem-name">${esc(o.product_name)}</div>` +
+          `<div class="chem-meta">${esc(t("ui.active_ingredient"))}: ${esc(o.active_ingredient)}</div>` +
+          `<div class="dose-big">${esc(o.dose_per_unit)}</div>` +
+          (o.pre_harvest_interval_days != null ? `<div class="phi">⏳ ${esc(t("ui.wait_before_harvest"))}: ${esc(o.pre_harvest_interval_days)} ${esc(t("ui.days"))}</div>` : "") +
+          (o.hazard_class ? `<div class="hazard-band hazard-${esc(o.hazard_class)}"><span>${esc(t("ui.danger_level"))}: ${esc(t("hazard." + o.hazard_class))}</span><span class="hazard-class-chip">${esc(o.hazard_class)}</span></div>` : "");
+        chemCard.appendChild(row);
+      });
+    } else {
+      chemCard.appendChild(el("p", "adv-note", esc(t(plan.chemical.status === "awaiting_review" ? "advisor.chemical_awaiting" : "advisor.chemical_none"))));
+      speakQueue.push({ key: "advisor_chemical_awaiting", text: t("advisor.chemical_awaiting") });
+    }
+    const scanBtn = el("button", "btn btn-primary btn-block", "📷 " + esc(t("advisor.scan_to_check")));
+    scanBtn.style.marginTop = "12px";
+    scanBtn.onclick = () => show("scan"); // hands off to the existing verified scan path
+    chemCard.appendChild(scanBtn);
+    root.appendChild(chemCard);
+
+    // 5. Honesty footer: unreviewed content + route to a human.
+    if (!plan.content_reviewed) root.appendChild(el("p", "adv-unreviewed", "⚠ " + esc(t("advisor.unreviewed_note"))));
+    const agent = el("button", "btn btn-danger btn-block", "☎ " + esc(t("advisor.ask_agent")));
+    agent.onclick = () => show("emergency");
+    root.appendChild(agent);
+    const again = el("button", "ghost-btn wide", "↺ " + esc(t("advisor.start_over")));
+    again.style.marginTop = "12px";
+    again.onclick = openAdvisor;
+    root.appendChild(again);
+
+    speakSeq(speakQueue);
+  }
+
   // ---- Emergency: one-tap, offline poison-control flow -------------------
   // Load the emergency bundle: memory -> localStorage -> opportunistic network.
   // Never blocks the UI (emergency must open instantly with no network call).
@@ -1189,6 +1388,7 @@
   function bind() {
     // Hero: one tap from the front door to the scan screen. Never a gate.
     $("#heroScanBtn").onclick = () => show("scan");
+    $("#advisorBtn").onclick = openAdvisor;   // M13 Safe Action Plan entry
     $("#skipIntro").onclick = () => {
       if (homeSkipOn()) { localStorage.setItem("mg_home_skip", "false"); paintSkipIntro(); }
       else { localStorage.setItem("mg_home_skip", "true"); paintSkipIntro(); show("scan"); }
@@ -1213,6 +1413,7 @@
     scanBase64: runScan, openEmergency, renderFirstAid, renderRouteChooser,
     audio: () => window.AudioLayer, lastSpoken: () => window.__mgAudio,
     verifyOfflineAndRender, prepareOffline,   // M6 offline verification hooks
+    openAdvisor, renderPlan,                  // M13 advisor verification hooks
     assessThenScan, showQualitySuggestion,    // M11 quality-check verification hooks
   };
 

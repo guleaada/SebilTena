@@ -81,7 +81,9 @@
     "retake": "Retake",
     "use_anyway": "Use anyway",
     "try_another_photo": "Try another photo",
-    "checking_more": "Checking more carefully…"
+    "checking_more": "Checking more carefully…",
+    "advisor": "Crop problem help",
+    "advisor_short": "Crop problem"
   },
   "crop": {
     "potato": "Potato",
@@ -206,5 +208,82 @@
     "tip_dark": "The last photo was dark — find more light.",
     "tip_bright": "The last photo was too bright — avoid glare.",
     "tip_far": "Move closer so the label fills the box."
+  },
+  "advisor": {
+    "title": "Crop problem help",
+    "choose_crop": "Which crop?",
+    "choose_symptom": "What do you see?",
+    "plan_title": "Safe Action Plan",
+    "possible_causes": "Possible causes — check which one fits",
+    "may_not_be_pest": "This may not be a pest. Spraying may not help — check the causes below first.",
+    "try_first": "Try these first — no chemicals needed",
+    "chemical_title": "Pesticides",
+    "chemical_awaiting": "No pesticide guidance yet — this has not been approved by an agronomist. If someone offers you a pesticide, scan the bottle and we will check it is registered for your crop.",
+    "chemical_none": "No registered pesticide matches this crop and problem.",
+    "scan_to_check": "Scan a bottle to check it",
+    "unreviewed_note": "Demonstration guidance. Not approved by an agronomist — check with your extension agent.",
+    "ask_agent": "Ask your extension agent",
+    "start_over": "Start over",
+    "how_to_tell": "How to tell"
+  },
+  "symptom": {
+    "leaves_yellow": "Leaves turning yellow",
+    "holes_in_leaves": "Holes in leaves",
+    "spots_on_leaves": "Spots on leaves",
+    "wilting": "Plants wilting",
+    "insects_visible": "I can see insects",
+    "stunted_growth": "Plants not growing"
+  },
+  "likelihood": {
+    "common": "Common",
+    "possible": "Possible",
+    "rare": "Rare"
+  },
+  "ipm_category": {
+    "cultural": "Farming practice",
+    "biological": "Natural helpers",
+    "mechanical": "By hand"
+  },
+  "cause": {
+    "late_blight": "Late blight (disease)",
+    "early_blight": "Early blight (disease)",
+    "leaf_rust": "Leaf rust (disease)",
+    "powdery_mildew": "Powdery mildew (disease)",
+    "aphids": "Aphids (insect)",
+    "stalk_borer": "Stalk borer (insect)",
+    "cutworm": "Cutworm (insect)",
+    "whitefly": "Whitefly (insect)",
+    "red_spider_mite": "Red spider mite",
+    "nitrogen_deficiency": "Not enough nitrogen — NOT a pest",
+    "water_stress": "Too little water — NOT a pest",
+    "waterlogging": "Too much water — NOT a pest",
+    "herbicide_damage": "Weed-killer damage — NOT a pest",
+    "natural_ageing": "Old leaves dying naturally — NOT a pest"
+  },
+  "distinguish": {
+    "check_lower_leaves_first": "Look at the oldest leaves near the ground first",
+    "check_whole_field_pattern": "Look at the whole field — patches or everywhere?",
+    "look_under_leaves": "Turn a leaf over and look underneath",
+    "check_soil_moisture": "Dig a little and feel the soil",
+    "look_for_insects": "Look for insects early morning or evening",
+    "check_recent_spraying": "Was anything sprayed nearby recently?",
+    "check_leaf_edges": "Look at the leaf edges and tips"
+  },
+  "ipm": {
+    "rotate_crops": "Plant a different crop here next season",
+    "remove_infected_plants": "Remove and bury affected plants",
+    "resistant_variety": "Use a resistant variety next planting",
+    "proper_spacing": "Give plants more space for air",
+    "clean_tools": "Clean your tools between plants",
+    "timely_planting": "Plant at the right time",
+    "balanced_fertilizer": "Add the right fertilizer or compost",
+    "improve_drainage": "Improve drainage so water does not sit",
+    "water_correctly": "Water evenly, not too much or too little",
+    "protect_natural_enemies": "Protect helpful insects that eat pests",
+    "neem_extract": "Try a neem preparation",
+    "handpick_pests": "Pick pests off by hand",
+    "sticky_traps": "Use yellow sticky traps",
+    "physical_barrier": "Use a barrier or collar around stems",
+    "weed_control": "Remove weeds that shelter pests"
   }
 }

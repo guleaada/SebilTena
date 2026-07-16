@@ -879,6 +879,53 @@ and a bad photo still safely resolves to UNCONFIRMED).
   the audio layer. `test-quality.js` (19 assertions) tests the pure functions
   incl. a real-world guard that a white label passes. SW shell v14→v18.
 
+## Milestone 13 — Safe Action Plan (IPM-first crop-problem advisor)
+
+**The request was a "SafePesticide Advisor": symptom → pest → recommended
+pesticide + a Green Score.** That crosses the retriever/adviser line the whole
+product is built on, in two ways worth recording:
+
+- **The diagnosis step is the dangerous one.** "Leaves yellow" is most often NOT
+  a pest (nitrogen, water, herbicide drift, ageing). Mapping it to a pest and
+  surfacing a chemical makes a farmer spray a WHO Class Ib product at a fertility
+  problem: money they don't have, real exposure, crop still fails. DB-sourcing the
+  *dose* does not fix a wrong *diagnosis*.
+- **It inverts the trust model.** The app answers "is the bottle in my hand
+  genuine?"; an advisor says "go get this chemical" — and none of the required
+  data (symptom→pest, pest→product, IPM, a score) existed. It would all have been
+  invented, pre-review.
+
+**Decision (with the user): build the full architecture, keep the chemical layer
+review-gated.** The advisor delivers the IPM-first value now and physically cannot
+recommend a chemical until an agronomist signs the mappings. SAFETY.md's rule is
+unchanged; a new section records the six properties that make this safe.
+
+- Content is a controlled vocabulary (`src/advisorCodes.js`), like `aidCodes.js`:
+  the DB stores CODES, the client resolves reviewed localized strings. Seed
+  validates every code and FAILS LOUDLY, and enforces that every ambiguous symptom
+  offers ≥1 abiotic cause (`DIRECT_OBSERVATION_SYMPTOMS` documents why
+  `insects_visible` is exempt — no honest abiotic cause exists, and faking one to
+  satisfy a rule would be worse; its honesty angle is "not every insect is a pest",
+  which belongs in the IPM content at review time).
+- Schema: `symptom_causes` / `ipm_practices` / `cause_products`, each carrying the
+  M10 review fields. `cause_products` seeds EMPTY — the chemical layer never
+  lights up from shipped defaults, only from signed mappings. A re-seed clears the
+  review flags so the gate re-engages (fails safe).
+- **No Green Score.** Inventing a composite risk number is exactly the kind of
+  generated safety judgement the boundary forbids; risk is reported as the WHO
+  hazard class already in the registry.
+- Farmer-facing, so **never rate-limited** (same rule as verdict + emergency).
+  Telemetry → `events` (never `scans`): crop, symptom, counts and flags only —
+  no identity, no location, no free text. This is the data that tunes the content
+  during the pilot.
+- Frontend reuses the existing components (crop grid, cards, voice, SOS). Offline:
+  crop/symptom lists and each plan are cached, so a farmer with no signal still
+  gets the IPM plan (verified with fetch killed). en/am/om; ti/so/aa fall back
+  honestly. SW v19→v21.
+- **Pre-pilot input (new, on the DEPLOY.md list):** an agronomist-reviewed
+  crop×pest×product dataset (EIAR/MoA) + sign-off of the IPM and symptom content.
+  Until then the plan is labelled unreviewed and the chemical layer stays dark.
+
 ## Open questions for the user (non-blocking — will proceed with defaults)
 1. Real registry file: CSV vs XLSX, and the exact column headers, so the
    importer mapping can be finalized.

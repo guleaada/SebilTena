@@ -80,7 +80,9 @@
     "retake": "Irra deebiʼii kaasi",
     "use_anyway": "Haaluma kanaan fayyadami",
     "try_another_photo": "Suuraa biraa yaali",
-    "checking_more": "Of eeggannoodhaan ilaalaa jira…"
+    "checking_more": "Of eeggannoodhaan ilaalaa jira…",
+    "advisor": "Gargaarsa rakkoo midhaanii",
+    "advisor_short": "Rakkoo midhaanii"
   },
   "crop": {
     "potato": "Dinnicha",
@@ -203,5 +205,82 @@
     "tip_dark": "Suuraan dhumaa dukkanaaʼaa ture — ifa dabalataa barbaadi.",
     "tip_bright": "Suuraan dhumaa baayee ifa ture — calaqqisa oolchi.",
     "tip_far": "Moggaasi saanduqicha akka guutuuf dhiyaadhu."
+  },
+  "advisor": {
+    "title": "Gargaarsa rakkoo midhaanii",
+    "choose_crop": "Midhaan kam?",
+    "choose_symptom": "Maal argita?",
+    "plan_title": "Karoora Tarkaanfii Nagaa",
+    "possible_causes": "Sababoota ta`uu danda`an — kam akka sirratu ilaali",
+    "may_not_be_pest": "Kun raammoo ta`uu dhiisuu danda`a. Faca`uun gargaaruu dhiisuu danda`a — dursii sababoota armaan gadii ilaali.",
+    "try_first": "Dursii kanneen yaali — qorichi hin barbaachisu",
+    "chemical_title": "Pesticides",
+    "chemical_awaiting": "Ammatti qajeelfamni qorichaa hin jiru — ogeessa qonnaatiin hin mirkanoofne. Namni qoricha siif dhiheesse yoo jiraate, qaruuraa iskaani godhi; midhaan keetiif galmaa`uu isaa ni mirkaneessina.",
+    "chemical_none": "No registered pesticide matches this crop and problem.",
+    "scan_to_check": "Mirkaneessuuf qaruuraa iskaani godhi",
+    "unreviewed_note": "Qajeelfama agarsiisaa ti. Ogeessa qonnaatiin hin mirkanoofne — ogeessa ekisteenshinii kee gaafadhu.",
+    "ask_agent": "Ogeessa ekisteenshinii kee gaafadhu",
+    "start_over": "Irra deebi'ii jalqabi",
+    "how_to_tell": "How to tell"
+  },
+  "symptom": {
+    "leaves_yellow": "Baalli keelloo ta`aa jira",
+    "holes_in_leaves": "Baala keessa boolla",
+    "spots_on_leaves": "Baala irratti tuqaa",
+    "wilting": "Biqiltuun goggogaa jira",
+    "insects_visible": "Ilbiisota nan arga",
+    "stunted_growth": "Biqiltuun hin guddatu"
+  },
+  "likelihood": {
+    "common": "Common",
+    "possible": "Possible",
+    "rare": "Rare"
+  },
+  "ipm_category": {
+    "cultural": "Farming practice",
+    "biological": "Natural helpers",
+    "mechanical": "By hand"
+  },
+  "cause": {
+    "late_blight": "Late blight (disease)",
+    "early_blight": "Early blight (disease)",
+    "leaf_rust": "Leaf rust (disease)",
+    "powdery_mildew": "Powdery mildew (disease)",
+    "aphids": "Aphids (insect)",
+    "stalk_borer": "Stalk borer (insect)",
+    "cutworm": "Cutworm (insect)",
+    "whitefly": "Whitefly (insect)",
+    "red_spider_mite": "Red spider mite",
+    "nitrogen_deficiency": "Not enough nitrogen — NOT a pest",
+    "water_stress": "Too little water — NOT a pest",
+    "waterlogging": "Too much water — NOT a pest",
+    "herbicide_damage": "Weed-killer damage — NOT a pest",
+    "natural_ageing": "Old leaves dying naturally — NOT a pest"
+  },
+  "distinguish": {
+    "check_lower_leaves_first": "Look at the oldest leaves near the ground first",
+    "check_whole_field_pattern": "Look at the whole field — patches or everywhere?",
+    "look_under_leaves": "Turn a leaf over and look underneath",
+    "check_soil_moisture": "Dig a little and feel the soil",
+    "look_for_insects": "Look for insects early morning or evening",
+    "check_recent_spraying": "Was anything sprayed nearby recently?",
+    "check_leaf_edges": "Look at the leaf edges and tips"
+  },
+  "ipm": {
+    "rotate_crops": "Plant a different crop here next season",
+    "remove_infected_plants": "Remove and bury affected plants",
+    "resistant_variety": "Use a resistant variety next planting",
+    "proper_spacing": "Give plants more space for air",
+    "clean_tools": "Clean your tools between plants",
+    "timely_planting": "Plant at the right time",
+    "balanced_fertilizer": "Add the right fertilizer or compost",
+    "improve_drainage": "Improve drainage so water does not sit",
+    "water_correctly": "Water evenly, not too much or too little",
+    "protect_natural_enemies": "Protect helpful insects that eat pests",
+    "neem_extract": "Try a neem preparation",
+    "handpick_pests": "Pick pests off by hand",
+    "sticky_traps": "Use yellow sticky traps",
+    "physical_barrier": "Use a barrier or collar around stems",
+    "weed_control": "Remove weeds that shelter pests"
   }
 }

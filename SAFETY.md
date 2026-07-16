@@ -80,6 +80,40 @@ The same rule covers scale: describe what the tool *does* and is *designed for*,
 never a deployment that hasn't happened. Honest limits are the stronger pitch —
 and the demonstration banner must never be contradicted by marketing polish.
 
+## The Safe Action Plan does not advise (Milestone 13)
+
+The crop-problem advisor (`src/advisor.js`, `POST /api/safe-advisor/recommend`)
+looks like the one feature that would break the one rule. It does not, by
+construction — and these properties are load-bearing. Do not relax them:
+
+1. **It never diagnoses.** A symptom maps to MANY possible causes, ranked only by
+   a stored `likelihood`, each with an observational "how to tell apart" hint.
+   The app never picks one. There is no `diagnosis` field, by design.
+2. **Not-a-pest comes first.** Every AMBIGUOUS symptom must offer at least one
+   ABIOTIC cause (nutrient/water/herbicide/ageing) — enforced at seed time, and
+   tested. "Leaves yellow" is usually a fertility or water problem: spraying it
+   costs a farmer money and exposure for nothing. When a common abiotic cause
+   exists the plan sets `spraying_may_not_help` and the UI leads with it.
+   (Direct-observation symptoms like `insects_visible` are exempt — there is no
+   honest abiotic cause, and inventing one to satisfy a rule would be worse.)
+3. **Non-chemical IPM always comes before any chemical section.**
+4. **The chemical layer is REVIEW-GATED and ships DARK.** A `cause_products`
+   mapping only surfaces when BOTH the mapping AND the product are cleared
+   (`reviewed = 1 AND reviewed_by AND reviewed_at` — the same gate as first-aid),
+   and the product is currently `registered`. With unsigned content the API
+   returns `chemical.status:"awaiting_review"` and ZERO options: **no agronomist
+   sign-off, no chemical.** Instead the UI offers to *check* a bottle the farmer
+   is offered — retrieval, not advice.
+5. **Nothing is invented.** Even when cleared, a mapping only POINTS AT registry
+   rows; dose/PHI/PPE come from `dosages`/`pesticides`. No dose in the registry
+   for that crop → the option is dropped, never interpolated. There is no "Green
+   Score": risk is the WHO hazard class we already store.
+6. **Unreviewed content is labelled** (`content_reviewed`) and the UI says so.
+
+Adding a symptom→product shortcut, a risk score, or a default `cause_products`
+row would each break this. The agronomist-reviewed crop×pest×product dataset is a
+real-world input like the registry — see DEPLOY.md.
+
 ## The one rule
 
 > The AI is a **RETRIEVER**, not an **ADVISER**.

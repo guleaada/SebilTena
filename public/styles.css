@@ -475,3 +475,50 @@ body {
 .confirm-read .read-what .lbl { color: var(--muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em; }
 .confirm-read .read-what .val { font-weight: 800; word-break: break-word; }
 .try-tip { font-size: 0.98rem; color: var(--muted); margin: 10px 0 0; }
+
+/* ---- Safe Action Plan (M13) -------------------------------------------- */
+.hero-secondary {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: inherit; font-size: 1.05rem; font-weight: 800;
+  color: var(--green-ink); background: var(--surface);
+  border: 2px solid var(--line); border-radius: 999px;
+  padding: 14px 22px; min-height: var(--tap); cursor: pointer; box-shadow: var(--shadow);
+  margin-top: 4px;
+}
+.hero-secondary:active { transform: scale(0.98); }
+#view-advisor.is-active { display: block; }
+.adv-title { font-size: 1.6rem; font-weight: 900; color: var(--green-ink); margin: 4px 0 2px; text-align: center; }
+.adv-sub { text-align: center; color: var(--muted); margin: 0 0 14px; font-size: 1.05rem; }
+.adv-note { color: var(--muted); font-size: 1.02rem; line-height: 1.5; margin: 0; }
+.adv-unreviewed { background: #fff7e6; border: 2px solid #e9d9a8; color: #6a5320; border-radius: 14px; padding: 12px 14px; font-size: 0.98rem; margin: 16px 0; }
+/* The not-a-pest warning — the most important line on the screen. */
+.adv-warn {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: linear-gradient(160deg, #f2a413, var(--amber)); color: #3d2600;
+  border-radius: var(--radius); padding: 16px 18px; font-weight: 800; font-size: 1.1rem;
+  line-height: 1.4; box-shadow: var(--shadow); margin-bottom: 4px;
+}
+.sym-list { display: flex; flex-direction: column; gap: 10px; }
+.sym-btn {
+  display: flex; align-items: center; gap: 14px; text-align: left;
+  font: inherit; font-size: 1.15rem; font-weight: 700; color: var(--ink);
+  background: var(--cream); border: 2px solid var(--line); border-radius: 16px;
+  padding: 14px 16px; min-height: var(--tap); cursor: pointer;
+}
+.sym-emoji { font-size: 1.8rem; }
+.cause-row { padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.cause-row:last-child { border-bottom: none; }
+.cause-row.is-abiotic { background: #f3f8f3; border-radius: 12px; padding: 10px 12px; margin: 4px 0; border-bottom: none; }
+.cause-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.cause-name { font-weight: 800; font-size: 1.05rem; }
+.cause-lik { font-size: 0.8rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.lik-common { background: var(--green-2); color: #fff; }
+.lik-possible { background: var(--amber); color: #3d2600; }
+.lik-rare { background: var(--line); color: var(--muted); }
+.cause-tell { font-size: 0.95rem; color: var(--muted); margin-top: 4px; }
+.ipm-cat { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--green-2); margin: 12px 0 6px; }
+.ipm-row { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; font-size: 1.05rem; }
+.ipm-tick { color: var(--green-2); font-weight: 900; }
+.chem-row { border: 2px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+.chem-name { font-weight: 900; font-size: 1.2rem; }
+.chem-meta { color: var(--muted); font-size: 0.95rem; margin-bottom: 8px; }

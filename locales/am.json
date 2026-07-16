@@ -80,7 +80,9 @@
     "retake": "እንደገና ያንሱ",
     "use_anyway": "ለማንኛውም ተጠቀም",
     "try_another_photo": "ሌላ ፎቶ ይሞክሩ",
-    "checking_more": "በጥንቃቄ እየተመረመረ ነው…"
+    "checking_more": "በጥንቃቄ እየተመረመረ ነው…",
+    "advisor": "የሰብል ችግር እገዛ",
+    "advisor_short": "የሰብል ችግር"
   },
   "crop": {
     "potato": "ድንች",
@@ -203,5 +205,82 @@
     "tip_dark": "የመጨረሻው ፎቶ ጨለማ ነበር — ተጨማሪ ብርሃን ያግኙ።",
     "tip_bright": "የመጨረሻው ፎቶ በጣም ብሩህ ነበር — ነጸብራቅን ያስወግዱ።",
     "tip_far": "መለያው ሳጥኑን እንዲሞላ ቀረብ ይበሉ።"
+  },
+  "advisor": {
+    "title": "የሰብል ችግር እገዛ",
+    "choose_crop": "የትኛው ሰብል?",
+    "choose_symptom": "ምን ያያሉ?",
+    "plan_title": "ደህንነቱ የተጠበቀ የድርጊት እቅድ",
+    "possible_causes": "ሊሆኑ የሚችሉ ምክንያቶች — የትኛው እንደሚስማማ ይመልከቱ",
+    "may_not_be_pest": "ይህ ተባይ ላይሆን ይችላል። መርጨት ላይረዳ ይችላል — በመጀመሪያ ከታች ያሉትን ምክንያቶች ይመልከቱ።",
+    "try_first": "በመጀመሪያ እነዚህን ይሞክሩ — ኬሚካል አያስፈልግም",
+    "chemical_title": "ፀረ-ተባዮች",
+    "chemical_awaiting": "እስካሁን የፀረ-ተባይ መመሪያ የለም — በግብርና ባለሙያ አልጸደቀም። ማንም ፀረ-ተባይ ቢያቀርብልዎ፣ ጠርሙሱን ይቃኙ፤ ለሰብልዎ የተመዘገበ መሆኑን እናረጋግጣለን።",
+    "chemical_none": "ለዚህ ሰብልና ችግር የተመዘገበ ፀረ-ተባይ የለም።",
+    "scan_to_check": "ለማረጋገጥ ጠርሙስ ይቃኙ",
+    "unreviewed_note": "የማሳያ መመሪያ ነው። በግብርና ባለሙያ አልጸደቀም — የግብርና ባለሙያዎን ያማክሩ።",
+    "ask_agent": "የግብርና ባለሙያዎን ይጠይቁ",
+    "start_over": "እንደገና ይጀምሩ",
+    "how_to_tell": "እንዴት እንደሚለዩ"
+  },
+  "symptom": {
+    "leaves_yellow": "ቅጠሎች ወደ ቢጫ እየተቀየሩ",
+    "holes_in_leaves": "በቅጠሎች ላይ ቀዳዳዎች",
+    "spots_on_leaves": "በቅጠሎች ላይ ነጠብጣቦች",
+    "wilting": "ተክሎች እየረገፉ",
+    "insects_visible": "ነፍሳት አያለሁ",
+    "stunted_growth": "ተክሎች እያደጉ አይደለም"
+  },
+  "likelihood": {
+    "common": "የተለመደ",
+    "possible": "ሊሆን ይችላል",
+    "rare": "ብርቅ"
+  },
+  "ipm_category": {
+    "cultural": "የግብርና ልምድ",
+    "biological": "የተፈጥሮ ረዳቶች",
+    "mechanical": "በእጅ"
+  },
+  "cause": {
+    "late_blight": "ዘግይቶ የሚመጣ በሽታ",
+    "early_blight": "ቀድሞ የሚመጣ በሽታ",
+    "leaf_rust": "የቅጠል ዝገት (በሽታ)",
+    "powdery_mildew": "የዱቄት ሻጋታ (በሽታ)",
+    "aphids": "አፊድ (ነፍሳት)",
+    "stalk_borer": "የግንድ ቆፋሪ (ነፍሳት)",
+    "cutworm": "ቆራጭ ትል (ነፍሳት)",
+    "whitefly": "ነጭ ዝንብ (ነፍሳት)",
+    "red_spider_mite": "ቀይ የሸረሪት ንክሻ",
+    "nitrogen_deficiency": "በቂ ናይትሮጅን የለም — ተባይ አይደለም",
+    "water_stress": "ውሃ አነሰ — ተባይ አይደለም",
+    "waterlogging": "ውሃ በዛ — ተባይ አይደለም",
+    "herbicide_damage": "የአረም ማጥፊያ ጉዳት — ተባይ አይደለም",
+    "natural_ageing": "አሮጌ ቅጠሎች በተፈጥሮ እየሞቱ — ተባይ አይደለም"
+  },
+  "distinguish": {
+    "check_lower_leaves_first": "በመጀመሪያ ከመሬት አጠገብ ያሉትን አሮጌ ቅጠሎች ይመልከቱ",
+    "check_whole_field_pattern": "መላውን ማሳ ይመልከቱ — በከፊል ወይስ በሁሉም?",
+    "look_under_leaves": "ቅጠል ገልብጠው ከሥሩ ይመልከቱ",
+    "check_soil_moisture": "ትንሽ ቆፍረው አፈሩን ይዳስሱ",
+    "look_for_insects": "ማለዳ ወይም ማታ ነፍሳትን ይፈልጉ",
+    "check_recent_spraying": "በቅርቡ በአካባቢው የተረጨ ነገር አለ?",
+    "check_leaf_edges": "የቅጠሉን ጠርዞችና ጫፎች ይመልከቱ"
+  },
+  "ipm": {
+    "rotate_crops": "በሚቀጥለው ወቅት እዚህ ሌላ ሰብል ይዝሩ",
+    "remove_infected_plants": "የተጠቁ ተክሎችን አውጥተው ይቅበሩ",
+    "resistant_variety": "በሚቀጥለው ዝርያ የሚቋቋም ይጠቀሙ",
+    "proper_spacing": "ለአየር ዝውውር ተክሎችን ያራርቁ",
+    "clean_tools": "በተክሎች መካከል መሣሪያዎን ያጽዱ",
+    "timely_planting": "በትክክለኛው ጊዜ ይዝሩ",
+    "balanced_fertilizer": "ተገቢውን ማዳበሪያ ወይም ኮምፖስት ይጨምሩ",
+    "improve_drainage": "ውሃ እንዳይቆም የውሃ መውረጃ ያሻሽሉ",
+    "water_correctly": "በእኩል ያጠጡ — አያብዙ አያሳንሱ",
+    "protect_natural_enemies": "ተባይ የሚበሉ ጠቃሚ ነፍሳትን ይጠብቁ",
+    "neem_extract": "የኒም ዝግጅት ይሞክሩ",
+    "handpick_pests": "ተባዮችን በእጅ ይልቀሙ",
+    "sticky_traps": "ቢጫ ተለጣፊ ወጥመዶች ይጠቀሙ",
+    "physical_barrier": "በግንዱ ዙሪያ መከላከያ ያድርጉ",
+    "weed_control": "ተባይ የሚደብቁ አረሞችን ያስወግዱ"
   }
 }

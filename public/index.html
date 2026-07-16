@@ -38,6 +38,9 @@
           <span class="hero-scan-icon" aria-hidden="true">📷</span>
           <span id="heroScanLabel"></span>
         </button>
+        <button id="advisorBtn" class="hero-secondary">
+          <span aria-hidden="true">🌱</span> <span id="advisorBtnLabel"></span>
+        </button>
         <button id="skipIntro" class="home-skip"></button>
         <div class="home-scroll-cue" aria-hidden="true">⌄</div>
       </div>
@@ -91,6 +94,13 @@
     <section id="view-result" class="view">
       <div id="verdictCard"></div>
       <div id="resultBody"></div>
+    </section>
+
+    <!-- SAFE ACTION PLAN (M13) — IPM-first crop-problem help. Built dynamically.
+         The plan never diagnoses and never recommends a chemical: the chemical
+         layer stays dark until an agronomist signs the mappings (SAFETY.md). -->
+    <section id="view-advisor" class="view">
+      <div id="advisorRoot"></div>
     </section>
 
     <!-- EMERGENCY — one-tap poison-control flow (built dynamically) -->
