@@ -18,6 +18,8 @@ import { issueDeviceToken, verifyDeviceToken } from "./deviceToken.js";
 import { createSharedRateLimiter, cleanupRateLimits } from "./rateStore.js";
 import { runPreflight } from "./preflight.js";
 import { listProducts, productDetail, approve, revoke, reviewSummary, reviewLogCsv } from "./review.js";
+import { safeActionPlan, advisorCrops } from "./advisor.js";
+import { SYMPTOMS } from "./advisorCodes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -141,6 +143,62 @@ app.get("/api/emergency-bundle", async (req, res) => {
     res.json(await getEmergencyBundle(req.query.lang || "en"));
   } catch (err) {
     console.error("emergency-bundle error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// SAFE ACTION PLAN (M13) — IPM-first crop-problem advisor. Farmer-facing, so it
+// is NEVER rate-limited (same rule as verdict + emergency). It does not
+// diagnose and does not recommend a chemical: the chemical layer stays dark
+// until an agronomist signs the mappings. See src/advisor.js + SAFETY.md.
+// ---------------------------------------------------------------------------
+
+// GET /api/safe-advisor/options — the crop + symptom lists the client caches for
+// offline use. Pure retrieval from the registry's own crops.
+app.get("/api/safe-advisor/options", async (_req, res) => {
+  try {
+    res.json({ ok: true, crops: await advisorCrops(), symptoms: SYMPTOMS });
+  } catch (err) {
+    console.error("advisor options error:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+// POST /api/safe-advisor/recommend { crop, symptom, lang } -> Safe Action Plan.
+// Strict validation: an unknown symptom is rejected (400), never guessed at.
+app.post("/api/safe-advisor/recommend", async (req, res) => {
+  try {
+    const { crop, symptom, lang } = req.body || {};
+    // Bound the inputs before they reach a query (defensive; the module also
+    // validates the symptom against the controlled vocabulary).
+    const plan = await safeActionPlan({
+      crop: typeof crop === "string" ? crop.slice(0, 40) : null,
+      symptom: typeof symptom === "string" ? symptom.slice(0, 40) : "",
+      lang: lang || "en",
+    });
+    if (!plan.ok) return res.status(400).json(plan);
+
+    // Anonymized telemetry -> `events`, NEVER `scans` (which is verdicts only).
+    // No identity, no location, no free text: just what was asked and whether
+    // the honest "this may not be a pest" path fired — the data needed to tune
+    // the content during the pilot.
+    logEvent({
+      type: "advisor_plan",
+      channel: "app",
+      payload: {
+        crop: plan.crop, symptom: plan.symptom,
+        causes: plan.causes.length,
+        spraying_may_not_help: plan.spraying_may_not_help,
+        ipm_count: plan.ipm.length,
+        chemical_status: plan.chemical.status,
+        content_reviewed: plan.content_reviewed,
+      },
+    }).catch(() => {});
+
+    res.json(plan);
+  } catch (err) {
+    console.error("advisor recommend error:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });

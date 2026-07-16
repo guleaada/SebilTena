@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db, dbMode, initSchema } from "../src/db.js";
 import { validateFirstAid } from "../src/aidCodes.js";
+import { validateCause, validatePractice, DIRECT_OBSERVATION_SET } from "../src/advisorCodes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -86,9 +87,71 @@ function buildHeaderMap(headers) {
 
 async function resetSeedTables() {
   // Reset only the seedable ground-truth tables. `scans` (audit log) is kept.
+  // The M13 advisor content tables are reset too: a re-seed deliberately clears
+  // their `reviewed` flags, so the review gate RE-ENGAGES (fails safe) rather
+  // than carrying a stale sign-off onto replaced content.
   await db.executeMultiple(
-    "DELETE FROM dosages; DELETE FROM pesticides; DELETE FROM extension_agents;"
+    "DELETE FROM dosages; DELETE FROM pesticides; DELETE FROM extension_agents;" +
+    "DELETE FROM symptom_causes; DELETE FROM ipm_practices; DELETE FROM cause_products;"
   );
+}
+
+// Seed the Safe Action Plan content (M13). Every row is validated against the
+// controlled vocabulary (src/advisorCodes.js) and FAILS LOUDLY on a bad code — a
+// bad code would surface to a farmer as a missing or wrong string. Everything
+// seeds `reviewed = 0`: the content is illustrative and NOT agronomist-approved,
+// so the chemical layer stays dark and the plan is labelled unreviewed.
+async function seedAdvisor() {
+  const path_ = path.join(DATA, "advisor_seed.json");
+  if (!fs.existsSync(path_)) return { causes: 0, practices: 0, causeProducts: 0 };
+  const doc = JSON.parse(fs.readFileSync(path_, "utf8"));
+
+  const errors = [];
+  for (const c of doc.symptom_causes ?? []) errors.push(...validateCause(c, `symptom_cause ${c.symptom_key}/${c.cause_key}`));
+  for (const p of doc.ipm_practices ?? []) errors.push(...validatePractice(p, `ipm_practice ${p.cause_key}/${p.practice_key}`));
+  if (errors.length) throw new Error("Invalid advisor seed data:\n  " + errors.join("\n  "));
+
+  // Every AMBIGUOUS symptom MUST offer at least one abiotic (not-a-pest) cause —
+  // the plan's honesty depends on it, and "leaves yellow" is most often a
+  // fertility/water problem no spray can fix. Direct-observation symptoms (the
+  // farmer can see the insect) are exempt: there is no honest abiotic cause, and
+  // faking one to satisfy a rule would be worse than not having it. Enforced at
+  // seed time so the rule cannot silently rot as content is replaced.
+  const bySymptom = {};
+  for (const c of doc.symptom_causes ?? []) (bySymptom[c.symptom_key] ||= []).push(c);
+  for (const [sym, rows] of Object.entries(bySymptom)) {
+    if (DIRECT_OBSERVATION_SET.has(sym)) continue;
+    if (!rows.some((r) => r.kind === "abiotic")) {
+      throw new Error(`Advisor seed: symptom "${sym}" has no abiotic cause. Every ambiguous symptom must show at least one cause a pesticide cannot fix (see SAFETY.md / advisorCodes.js).`);
+    }
+  }
+
+  for (const c of doc.symptom_causes ?? []) {
+    await db.execute({
+      sql: `INSERT INTO symptom_causes (symptom_key, crop, cause_key, kind, likelihood, distinguish_key, reviewed)
+            VALUES (?,?,?,?,?,?,0)`,
+      args: [c.symptom_key, c.crop ?? null, c.cause_key, c.kind, c.likelihood, c.distinguish_key ?? null],
+    });
+  }
+  for (const p of doc.ipm_practices ?? []) {
+    await db.execute({
+      sql: "INSERT INTO ipm_practices (cause_key, crop, category, practice_key, step_order, reviewed) VALUES (?,?,?,?,?,0)",
+      args: [p.cause_key, p.crop ?? null, p.category, p.practice_key, p.step_order ?? 0],
+    });
+  }
+  // cause_products is intentionally empty in the seed: the chemical layer only
+  // ever lights up from agronomist-signed mappings, never from shipped defaults.
+  for (const cp of doc.cause_products ?? []) {
+    await db.execute({
+      sql: "INSERT INTO cause_products (cause_key, crop, pesticide_id, reviewed) VALUES (?,?,?,0)",
+      args: [cp.cause_key, cp.crop, cp.pesticide_id],
+    });
+  }
+  return {
+    causes: (doc.symptom_causes ?? []).length,
+    practices: (doc.ipm_practices ?? []).length,
+    causeProducts: (doc.cause_products ?? []).length,
+  };
 }
 
 async function insertPesticide(p) {
@@ -213,6 +276,7 @@ async function main() {
   }
 
   const result = fs.existsSync(CSV_PATH) ? await seedFromCSV() : await seedSamples();
+  const advisor = await seedAdvisor(); // M13 Safe Action Plan content (all reviewed:false)
 
   const p = await db.execute("SELECT COUNT(*) AS n FROM pesticides");
   const d = await db.execute("SELECT COUNT(*) AS n FROM dosages");
@@ -222,6 +286,10 @@ async function main() {
   console.log(`  pesticides: ${Number(p.rows[0].n)}`);
   console.log(`  dosages:    ${Number(d.rows[0].n)}`);
   console.log(`  banned:     ${Number(banned.rows[0].n)}`);
+  console.log(`  advisor:    ${advisor.causes} symptom-causes, ${advisor.practices} IPM practices, ${advisor.causeProducts} cause->product mappings (all reviewed:false)`);
+  if (advisor.causeProducts === 0) {
+    console.log("  NOTE: the advisor's chemical layer is DARK — it stays hidden until an agronomist signs cause->product mappings via /admin/review (SAFETY.md).");
+  }
 }
 
 main()

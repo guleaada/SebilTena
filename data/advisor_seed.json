@@ -1,0 +1,93 @@
+{
+  "_meta": {
+    "note": "ILLUSTRATIVE SAMPLE CONTENT for the M13 Safe Action Plan. Symptom->cause possibilities and IPM practices are plausible placeholders written to exercise the pipeline — they are NOT authoritative agronomic guidance and have been reviewed by NO ONE. Every row seeds reviewed:false. Before any field use they must be replaced/approved by an agronomist (EIAR / MoA extension), signed off through /admin/review, exactly like the first-aid release gate in SAFETY.md.",
+    "boundary": "This file contains NO dosage, PHI, PPE or product recommendation. Those facts are never authored here — they are retrieved from the `pesticides`/`dosages` registry rows. `cause_products` is deliberately left EMPTY: the chemical layer ships dark and only lights up when an agronomist signs real mappings.",
+    "abiotic_rule": "Every symptom MUST list at least one abiotic cause. 'Leaves yellow' is most often nitrogen deficiency or water stress — a pesticide cannot fix those, and the plan must say so before any chemical is mentioned."
+  },
+
+  "symptom_causes": [
+    { "symptom_key": "leaves_yellow", "crop": null, "cause_key": "nitrogen_deficiency", "kind": "abiotic", "likelihood": "common", "distinguish_key": "check_lower_leaves_first" },
+    { "symptom_key": "leaves_yellow", "crop": null, "cause_key": "water_stress", "kind": "abiotic", "likelihood": "common", "distinguish_key": "check_soil_moisture" },
+    { "symptom_key": "leaves_yellow", "crop": null, "cause_key": "waterlogging", "kind": "abiotic", "likelihood": "possible", "distinguish_key": "check_whole_field_pattern" },
+    { "symptom_key": "leaves_yellow", "crop": null, "cause_key": "herbicide_damage", "kind": "abiotic", "likelihood": "possible", "distinguish_key": "check_recent_spraying" },
+    { "symptom_key": "leaves_yellow", "crop": null, "cause_key": "natural_ageing", "kind": "abiotic", "likelihood": "common", "distinguish_key": "check_lower_leaves_first" },
+    { "symptom_key": "leaves_yellow", "crop": null, "cause_key": "aphids", "kind": "pest", "likelihood": "possible", "distinguish_key": "look_under_leaves" },
+    { "symptom_key": "leaves_yellow", "crop": null, "cause_key": "whitefly", "kind": "pest", "likelihood": "possible", "distinguish_key": "look_under_leaves" },
+
+    { "symptom_key": "holes_in_leaves", "crop": null, "cause_key": "cutworm", "kind": "pest", "likelihood": "common", "distinguish_key": "look_for_insects" },
+    { "symptom_key": "holes_in_leaves", "crop": null, "cause_key": "stalk_borer", "kind": "pest", "likelihood": "possible", "distinguish_key": "look_for_insects" },
+    { "symptom_key": "holes_in_leaves", "crop": null, "cause_key": "herbicide_damage", "kind": "abiotic", "likelihood": "rare", "distinguish_key": "check_recent_spraying" },
+
+    { "symptom_key": "spots_on_leaves", "crop": "potato", "cause_key": "late_blight", "kind": "disease", "likelihood": "common", "distinguish_key": "check_whole_field_pattern" },
+    { "symptom_key": "spots_on_leaves", "crop": "tomato", "cause_key": "late_blight", "kind": "disease", "likelihood": "common", "distinguish_key": "check_whole_field_pattern" },
+    { "symptom_key": "spots_on_leaves", "crop": null, "cause_key": "early_blight", "kind": "disease", "likelihood": "possible", "distinguish_key": "check_lower_leaves_first" },
+    { "symptom_key": "spots_on_leaves", "crop": "wheat", "cause_key": "leaf_rust", "kind": "disease", "likelihood": "common", "distinguish_key": "look_under_leaves" },
+    { "symptom_key": "spots_on_leaves", "crop": null, "cause_key": "herbicide_damage", "kind": "abiotic", "likelihood": "possible", "distinguish_key": "check_recent_spraying" },
+
+    { "symptom_key": "wilting", "crop": null, "cause_key": "water_stress", "kind": "abiotic", "likelihood": "common", "distinguish_key": "check_soil_moisture" },
+    { "symptom_key": "wilting", "crop": null, "cause_key": "waterlogging", "kind": "abiotic", "likelihood": "common", "distinguish_key": "check_soil_moisture" },
+    { "symptom_key": "wilting", "crop": null, "cause_key": "cutworm", "kind": "pest", "likelihood": "possible", "distinguish_key": "look_for_insects" },
+    { "symptom_key": "wilting", "crop": null, "cause_key": "late_blight", "kind": "disease", "likelihood": "possible", "distinguish_key": "check_whole_field_pattern" },
+
+    { "symptom_key": "insects_visible", "crop": null, "cause_key": "aphids", "kind": "pest", "likelihood": "common", "distinguish_key": "look_under_leaves" },
+    { "symptom_key": "insects_visible", "crop": null, "cause_key": "whitefly", "kind": "pest", "likelihood": "common", "distinguish_key": "look_under_leaves" },
+    { "symptom_key": "insects_visible", "crop": null, "cause_key": "red_spider_mite", "kind": "pest", "likelihood": "possible", "distinguish_key": "look_under_leaves" },
+    { "symptom_key": "insects_visible", "crop": null, "cause_key": "stalk_borer", "kind": "pest", "likelihood": "possible", "distinguish_key": "look_for_insects" },
+
+    { "symptom_key": "stunted_growth", "crop": null, "cause_key": "nitrogen_deficiency", "kind": "abiotic", "likelihood": "common", "distinguish_key": "check_whole_field_pattern" },
+    { "symptom_key": "stunted_growth", "crop": null, "cause_key": "water_stress", "kind": "abiotic", "likelihood": "common", "distinguish_key": "check_soil_moisture" },
+    { "symptom_key": "stunted_growth", "crop": null, "cause_key": "herbicide_damage", "kind": "abiotic", "likelihood": "possible", "distinguish_key": "check_recent_spraying" },
+    { "symptom_key": "stunted_growth", "crop": null, "cause_key": "aphids", "kind": "pest", "likelihood": "possible", "distinguish_key": "look_under_leaves" },
+    { "symptom_key": "stunted_growth", "crop": null, "cause_key": "red_spider_mite", "kind": "pest", "likelihood": "rare", "distinguish_key": "look_under_leaves" }
+  ],
+
+  "ipm_practices": [
+    { "cause_key": "nitrogen_deficiency", "crop": null, "category": "cultural", "practice_key": "balanced_fertilizer", "step_order": 1 },
+    { "cause_key": "nitrogen_deficiency", "crop": null, "category": "cultural", "practice_key": "rotate_crops", "step_order": 2 },
+
+    { "cause_key": "water_stress", "crop": null, "category": "cultural", "practice_key": "water_correctly", "step_order": 1 },
+    { "cause_key": "water_stress", "crop": null, "category": "cultural", "practice_key": "timely_planting", "step_order": 2 },
+
+    { "cause_key": "waterlogging", "crop": null, "category": "cultural", "practice_key": "improve_drainage", "step_order": 1 },
+    { "cause_key": "waterlogging", "crop": null, "category": "cultural", "practice_key": "proper_spacing", "step_order": 2 },
+
+    { "cause_key": "herbicide_damage", "crop": null, "category": "cultural", "practice_key": "clean_tools", "step_order": 1 },
+    { "cause_key": "natural_ageing", "crop": null, "category": "cultural", "practice_key": "balanced_fertilizer", "step_order": 1 },
+
+    { "cause_key": "aphids", "crop": null, "category": "biological", "practice_key": "protect_natural_enemies", "step_order": 1 },
+    { "cause_key": "aphids", "crop": null, "category": "mechanical", "practice_key": "sticky_traps", "step_order": 2 },
+    { "cause_key": "aphids", "crop": null, "category": "biological", "practice_key": "neem_extract", "step_order": 3 },
+    { "cause_key": "aphids", "crop": null, "category": "cultural", "practice_key": "weed_control", "step_order": 4 },
+
+    { "cause_key": "whitefly", "crop": null, "category": "mechanical", "practice_key": "sticky_traps", "step_order": 1 },
+    { "cause_key": "whitefly", "crop": null, "category": "biological", "practice_key": "protect_natural_enemies", "step_order": 2 },
+    { "cause_key": "whitefly", "crop": null, "category": "cultural", "practice_key": "weed_control", "step_order": 3 },
+
+    { "cause_key": "red_spider_mite", "crop": null, "category": "cultural", "practice_key": "water_correctly", "step_order": 1 },
+    { "cause_key": "red_spider_mite", "crop": null, "category": "biological", "practice_key": "protect_natural_enemies", "step_order": 2 },
+
+    { "cause_key": "cutworm", "crop": null, "category": "mechanical", "practice_key": "handpick_pests", "step_order": 1 },
+    { "cause_key": "cutworm", "crop": null, "category": "mechanical", "practice_key": "physical_barrier", "step_order": 2 },
+    { "cause_key": "cutworm", "crop": null, "category": "cultural", "practice_key": "weed_control", "step_order": 3 },
+
+    { "cause_key": "stalk_borer", "crop": null, "category": "cultural", "practice_key": "remove_infected_plants", "step_order": 1 },
+    { "cause_key": "stalk_borer", "crop": null, "category": "cultural", "practice_key": "rotate_crops", "step_order": 2 },
+    { "cause_key": "stalk_borer", "crop": null, "category": "biological", "practice_key": "protect_natural_enemies", "step_order": 3 },
+
+    { "cause_key": "late_blight", "crop": null, "category": "cultural", "practice_key": "remove_infected_plants", "step_order": 1 },
+    { "cause_key": "late_blight", "crop": null, "category": "cultural", "practice_key": "resistant_variety", "step_order": 2 },
+    { "cause_key": "late_blight", "crop": null, "category": "cultural", "practice_key": "proper_spacing", "step_order": 3 },
+    { "cause_key": "late_blight", "crop": null, "category": "cultural", "practice_key": "clean_tools", "step_order": 4 },
+
+    { "cause_key": "early_blight", "crop": null, "category": "cultural", "practice_key": "remove_infected_plants", "step_order": 1 },
+    { "cause_key": "early_blight", "crop": null, "category": "cultural", "practice_key": "rotate_crops", "step_order": 2 },
+
+    { "cause_key": "leaf_rust", "crop": null, "category": "cultural", "practice_key": "resistant_variety", "step_order": 1 },
+    { "cause_key": "leaf_rust", "crop": null, "category": "cultural", "practice_key": "timely_planting", "step_order": 2 },
+
+    { "cause_key": "powdery_mildew", "crop": null, "category": "cultural", "practice_key": "proper_spacing", "step_order": 1 },
+    { "cause_key": "powdery_mildew", "crop": null, "category": "cultural", "practice_key": "remove_infected_plants", "step_order": 2 }
+  ],
+
+  "cause_products": []
+}

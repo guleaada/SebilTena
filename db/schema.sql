@@ -38,6 +38,53 @@ CREATE TABLE IF NOT EXISTS review_log (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- ---------------------------------------------------------------------------
+-- SAFE ACTION PLAN (M13). Content tables for the IPM-first crop-problem advisor.
+-- All rows store CONTROLLED CODES (src/advisorCodes.js), never prose, and all are
+-- REVIEW-GATED exactly like first-aid: `reviewed=1 AND reviewed_by AND
+-- reviewed_at` is the only thing that counts as cleared. Seeded content is
+-- illustrative and ships reviewed:false. See SAFETY.md.
+-- ---------------------------------------------------------------------------
+
+-- One symptom -> MANY possible causes, deliberately including ABIOTIC ones a
+-- pesticide cannot fix. This table never yields a diagnosis, only possibilities.
+CREATE TABLE IF NOT EXISTS symptom_causes (
+  id INTEGER PRIMARY KEY,
+  symptom_key TEXT NOT NULL,        -- controlled: advisorCodes.SYMPTOMS
+  crop TEXT,                        -- NULL = applies to any crop
+  cause_key TEXT NOT NULL,          -- controlled: advisorCodes.CAUSE_CODES
+  kind TEXT CHECK(kind IN ('pest','disease','abiotic')) NOT NULL,
+  likelihood TEXT CHECK(likelihood IN ('common','possible','rare')) NOT NULL,
+  distinguish_key TEXT,             -- controlled: how to tell this cause apart
+  reviewed INTEGER DEFAULT 0,
+  reviewed_by TEXT, reviewer_credential TEXT, reviewed_at TEXT
+);
+
+-- Non-chemical practices shown FIRST in every plan (cultural/biological/mechanical).
+CREATE TABLE IF NOT EXISTS ipm_practices (
+  id INTEGER PRIMARY KEY,
+  cause_key TEXT NOT NULL,          -- controlled: advisorCodes.CAUSE_CODES
+  crop TEXT,                        -- NULL = any crop
+  category TEXT CHECK(category IN ('cultural','biological','mechanical')) NOT NULL,
+  practice_key TEXT NOT NULL,       -- controlled: advisorCodes.PRACTICE_CODES
+  step_order INTEGER DEFAULT 0,
+  reviewed INTEGER DEFAULT 0,
+  reviewed_by TEXT, reviewer_credential TEXT, reviewed_at TEXT
+);
+
+-- THE GATED LAYER: cause+crop -> a registered product. Ships DARK (reviewed=0) and
+-- stays hidden until an agronomist signs each mapping. Even once cleared it only
+-- POINTS AT a registry row — the dose/PHI/PPE still come from `dosages`/
+-- `pesticides` via the normal retrieval path. Nothing here invents a fact.
+CREATE TABLE IF NOT EXISTS cause_products (
+  id INTEGER PRIMARY KEY,
+  cause_key TEXT NOT NULL,
+  crop TEXT NOT NULL,
+  pesticide_id INTEGER NOT NULL REFERENCES pesticides(id),
+  reviewed INTEGER DEFAULT 0,
+  reviewed_by TEXT, reviewer_credential TEXT, reviewed_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS dosages (
   id INTEGER PRIMARY KEY,
   pesticide_id INTEGER REFERENCES pesticides(id),
@@ -110,3 +157,7 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 CREATE INDEX IF NOT EXISTS idx_pesticides_regno ON pesticides(registration_no);
 CREATE INDEX IF NOT EXISTS idx_dosages_pesticide ON dosages(pesticide_id);
 CREATE INDEX IF NOT EXISTS idx_scans_status ON scans(result_status);
+
+CREATE INDEX IF NOT EXISTS idx_symptom_causes_lookup ON symptom_causes(symptom_key, crop);
+CREATE INDEX IF NOT EXISTS idx_ipm_practices_cause ON ipm_practices(cause_key, crop);
+CREATE INDEX IF NOT EXISTS idx_cause_products_lookup ON cause_products(cause_key, crop);
